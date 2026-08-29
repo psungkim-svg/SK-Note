@@ -1,0 +1,125 @@
+# 📒 나의 컬러노트 v2 — 완전 무료 설치 가이드 (Vercel + Supabase)
+
+컬러노트(ColorNote)에서 영감을 받은 개인 메모 앱입니다.
+**비용 0원** 구성: **Vercel**(호스팅) + **Supabase**(DB·로그인·실시간 동기화) + **GitHub**(코드 보관)
+
+```
+[휴대폰 PWA]  ←실시간 동기화→  [Supabase DB (내 계정 로그인)]
+[PC 브라우저] ←──────────────↗
+      앱 파일은 Vercel이 배포 (GitHub에 push하면 자동 업데이트)
+```
+
+## ✨ 기능
+
+- 🎨 8색 색상 노트 + 바둑판(그리드)/목록 보기 전환
+- 📁 폴더, ↕️ 정렬 5종(직접 순서 드래그·최근 수정·만든 날짜·제목·**색상순**)
+- **굵게·기울임·밑줄·취소선·글자색·형광펜** 강조 편집
+- ☑️ 체크리스트(메모↔체크리스트 전환, 진행률 표시)
+- 🔒 앱 비밀번호 + 자동 잠금 + 노트 단위 잠금
+- 🔄 **실시간 동기화** (이메일 로그인, 폰·PC에서 즉시 반영)
+- 📴 오프라인 작성 → 인터넷 연결되면 자동 전송
+- 🌙 다크 모드, 글자 크기, 검색, 고정(📌), 휴지통(30일), JSON 백업
+- 📲 휴대폰 홈 화면 설치(PWA)
+
+---
+
+# 🛠 설치 순서 (총 15분)
+
+## 1단계 — Supabase 프로젝트 만들기 (5분)
+
+1. https://supabase.com → **Start your project** → GitHub으로 가입/로그인
+2. **New project** 클릭 → 조직은 기본값, 이름: `colornote` / 데이터베이스 비밀번호: 아무거나(저장해 두기) / 지역: **Northeast Asia (Seoul)** → [Create new project]
+3. 프로젝트가 만들어질 때까지 1~2분 대기
+
+## 2단계 — 테이블 만들기 (2분)
+
+1. 좌측 메뉴 **[SQL Editor]** → **New query**
+2. 이 폴더의 `supabase/schema.sql` 내용을 **전부 붙여넣기**
+3. **[Run]** → "Success. No rows returned" 확인
+4. 좌측 **[Table Editor]**에 `notes`, `folders` 테이븩이 생긴 것 확인
+
+## 3단계 — 이메일 로그인 켜기 (1분)
+
+"Confirm email"(가입 시 메일 확인 강제)을 끄면 가입 즉시 로그인됩니다. **Supabase UI 버전에 따라 위치가 두 곳으로 갈립니다:**
+
+- **새 관리화면**: ⚙️ **Project Settings → Configuration → Authentication → Email** 항목 → "Confirm email" 끄기
+- **클래식 화면**: **Authentication → Providers (Sign In / Providers) → Email 펼치기 → "Confirm email" 끄기 → Save**
+- **빠른 길**: 주소창에 `https://supabase.com/dashboard/project/프로젝트ID/auth/providers` 직접 입력
+
+⚠️ 토글을 끄기 **전에** 만든 계정은 여전히 미확인 상태 → Authentication → Users에서 사용자 클릭 → 수동 Confirm.
+
+> 💡 못 찾겠으면 그냥 켜두고 진행해도 됨(Plan B): 회원가입 후 Gmail로 온 Supabase 확인 메일의 링크를 누른 뒤 로그인하면 됨 — 앱이 이미 이 경우를 안내함.
+
+## 4단계 — URL·키 확인 (30초)
+
+1. **[Project Settings]** (톱니) → **[API]**
+2. 두 가지를 복사해 두세요:
+   - **Project URL** (`https://xxxx.supabase.co`)
+   - **anon public** 키 (`eyJhbGciOi...`로 시작)
+   - ※ `service_role` 키는 절대 앱에 넣지 마세요 (anon만 사용)
+
+## 5단계 — GitHub에 코드 올리기 (3분)
+
+1. https://github.com/new → 저장소 생성 (예: `colornote`, Public 또는 Private 모두 OK — Vercel 무료는 개인용)
+2. **[Add file] → [Upload files]** → 이 폴더의 파일 전부 끌어놓기:
+   ```
+   index.html, sw.js, manifest.webmanifest,
+   icons/icon-192.png, icons/icon-512.png, icons/icon-maskable-512.png
+   ```
+   (`supabase/schema.sql`은 이미 2단계에서 썼으니 안 올려도 됩니다)
+3. **[Commit changes]**
+
+## 6단계 — Vercel 배포 (3분)
+
+1. https://vercel.com → **Continue with GitHub**으로 로그인
+2. **[Add New...] → [Project]** → 위에서 만든 저장소 **[Import]**
+3. 설정은 아무것도 안 건드려도 됨 (정적 사이트 자동 인식) → **[Deploy]**
+4. 1분 후 `https://colornote-내아이디.vercel.app` 완성! 🎉
+
+> 코드를 고쳐 GitHub에 다시 push하면 Vercel이 **자동으로 재배포**합니다.
+
+## 7단계 — 앱에서 로그인·연결 (1분)
+
+1. 배포된 주소 접속 → 우측 상단 **☁️** 클릭
+2. **Supabase URL + anon 키** 입력 → [저장 · 연결] → [연결 테스트]로 "성공 ✅" 확인
+3. **회원가입** (내 이메일 + 6자 이상 비밀번호) → 자동 로그인
+4. 노트를 쓰면 ☁️ 버튼에 초록불이 들어오고 Supabase Table Editor → `notes`에 데이터가 쌓입니다
+
+## 8단계 — 휴대폰에 앱처럼 설치 (1분)
+
+- **안드로이드(Chrome)**: 주소 접속 → 메뉴 ⋮ → **"홈 화면에 추가"/"앱 설치"**
+- **아이폰(Safari)**: 공유 버튼 → **"홈 화면에 추가"**
+- 다른 기기에서도 같은 주소 → ☁️ → 같은 계정 로그인 → 노트가 실시간 동기화됩니다
+
+---
+
+# ⚠️ 무료 한도와 한계 (정직하게)
+
+| 항목 | 내용 |
+|---|---|
+| Supabase 무료 | DB 500MB(텍스트 노트 수만~수십만 개), 월 5GB 트래픽, 로그인 5만 명 — 개인용으론 넉넉 |
+| **프로젝트 일시정지** | **무료 프로젝트는 7일간 한 번도 사용 안 하면 일시 정지**됩니다. 매일 한 번이라도 앱을 열면 발생 안 함. 정지되면 Supabase 대시보드에서 [Restore] 버튼 한 번이면 복구 |
+| Vercel 무료(Hobby) | 개인·비상업용. 월 100GB 트래픽 — 충분 |
+| 동시 수정 | 같은 노트를 두 기기에서 **동시에** 고치면 나중에 저장한 것이 이깁니다 (실시간 동기화라 실제 충돌은 드묾) |
+| 비밀번호(앱 잠금) | 기기별 저장(해시). 서버와 무관. 잊으면 초기화만 가능 |
+| 시계 오차 | 동기화 판정이 기기 시간 기준 — 기기 시각을 자동으로 맞춰두세요 (보통 이미 그렇게 됨) |
+| anon 키 노출 | 앱에 들어가는 anon 키는 원래 공개용입니다. 내 데이터는 **이메일 로그인 + RLS**(내 계정만 내 행 접근)로 보호됩니다 |
+
+**권장 습관**: 가끔 설정 → 백업 내보내기로 JSON 파일 보관.
+
+---
+
+# 🔧 문제 해결 FAQ
+
+- **연결 테스트 실패 "relation does not exist"** → 2단계 schema.sql 실행 안 함. SQL Editor에서 다시 Run
+- **연결 테스트 실패 (URL/키)** → 4단계에서 복사한 값이 맞는지, `https://` 포함인지 확인
+- **회원가입 후 "이메일 확인" 안내가 나옴** → 3단계 "Confirm email"이 켜져 있음. 끄고 다시 시도 (또는 메일함에서 확인 링크 클릭)
+- **비밀번호를 잊음** → Supabase 대시보드 → Authentication → Users → 내 계정 삭제 후 앱에서 재가입 (노트는 DB에 있어서 계정 삭제 시 함께 삭제되니, 이 경우 백업 JSON으로 복원)
+- **폰에서 안 열림/오래된 화면** → PWA 캐시 문제. 홈 화면 앱 지우고 재설치, 또는 브라우저에서 새로고침
+- **다른 기기에서 노트 안 보임** → ☁️에서 같은 계정 로그인했는지 확인. 로그인 직후 자동으로 전체 가져오기 진행
+- **코드 수정 후 반영 안 됨** → GitHub push → Vercel 자동 배포 확인 (대시보드 Deployments) → 앱 완전히 닫고 재실행
+
+# ▶ 다음 단계 (예정)
+
+- **AI 다듬기/재작성/체크리스트 변환** — 2단계 기능 (Apps Script나 자체 프록시로 무료 API 키 보호 구조 검토 중)
+- **앱2: Gmail 정리 앱** — 별개 프로젝트. 내 메일함 접근은 Google Apps Script가 무료 경로 (기존 `apps-script/` 폴더 참고용으로 보관)
