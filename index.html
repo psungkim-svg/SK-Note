@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#f2f3f5">
 <title>SK 노트</title>
 <link rel="manifest" href="manifest.webmanifest">
@@ -28,6 +28,7 @@ html[data-fontsize="m"]{--fs:21.3px} html[data-fontsize="l"]{--fs:25.3px} html[d
 html[data-cols="2"]{--cols:2} html[data-cols="3"]{--cols:3} html[data-cols="4"]{--cols:4}
 
 *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%; text-size-adjust:100%}
 html,body{margin:0;padding:0}
 /* ▼ 한글 Horizontal Scale 90% */
 body{
@@ -199,12 +200,16 @@ main{padding:8px;max-width:1000px;margin:0 auto}
 
 
 /* ── 전체화면 에디터 ── */
+#edOverlay{align-items:stretch}
 #edOverlay .sheet{
-  width:100vw;max-width:100vw;height:100dvh;max-height:100dvh;
-  border-radius:0;padding:0;background:var(--bg);animation:sheetUp .26s cubic-bezier(.2,.8,.3,1)
+  position:fixed;top:0;left:0;right:0;bottom:0;
+  width:100%;height:100vh;height:100dvh;
+  max-width:100%;max-height:100%;border-radius:0;padding:0;margin:0;
+  display:flex;flex-direction:column;background:var(--bg);
+  animation:ovIn .2s ease-out
 }
 .edbar{
-  display:flex;align-items:center;gap:.35em;
+  flex:none;display:flex;align-items:center;gap:.35em;
   padding:calc(.35em + env(safe-area-inset-top)) .5em .3em;
   border-bottom:1px solid var(--line);background:var(--bar)
 }
@@ -226,7 +231,7 @@ main{padding:8px;max-width:1000px;margin:0 auto}
   animation:popIn .16s ease-out
 }
 .cpop button{width:1.6em;height:1.6em;border-radius:.3em;border:1px solid rgba(0,0,0,.15)}
-#edWrap{display:flex;flex-direction:column;height:calc(100dvh - 2.6em)}
+#edWrap{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden}
 #edBody{
   flex:1;width:100%;background:var(--bg);border:none;border-radius:0;
   min-height:0;padding:.55em .6em calc(1em + env(safe-area-inset-bottom));
@@ -462,7 +467,7 @@ input#acUrl,input#acKey{letter-spacing:normal}
 
     <div class="setsec">
       <h4>정보</h4>
-      <div class="hint">SK 노트 v2.2 · Vercel + Supabase 무료 구성</div>
+      <div class="hint">SK 노트 v2.3 · Vercel + Supabase 무료 구성</div>
     </div>
   </div>
 </div>
@@ -562,6 +567,9 @@ input#acUrl,input#acKey{letter-spacing:normal}
 
 <script>
 'use strict';
+/* 오류가 나면 화면에 표시 — 무음 실패 방지 */
+window.addEventListener('error',e=>{try{const t=document.querySelector('#toast');if(t){t.textContent='⚠️ 오류: '+String(e.message||'').slice(0,90);t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3500)}}catch(_){}});
+window.addEventListener('unhandledrejection',e=>{try{const t=document.querySelector('#toast');if(t){t.textContent='⚠️ '+String(e.reason&&e.reason.message||e.reason||'').slice(0,90);t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3500)}}catch(_){}});
 /* ═══════════════ 저장소 폴백 ═══════════════ */
 const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.removeItem(t);return localStorage}
   catch(e){const m={};return{getItem:k=>(k in m?m[k]:null),setItem:(k,v)=>{m[k]=String(v)},removeItem:k=>{delete m[k]}}}})();
@@ -589,7 +597,7 @@ let ui={folder:'',nofolder:false,view:null,search:'',trash:false,editingId:null,
 
 const DEF={theme:'auto',view:'grid',sort:'color',font:'xs',box:'2',sbUrl:'',sbKey:'',autoLock:5,lastSync:0,pinHash:null};
 function load(){
-  /* ── v2.0(cn.*) → v2.2(sk.*) 자동 마이그레이션 (v2.1 사용자는 이미 sk.*) ── */
+  /* ── v2.0(cn.*) → v2.3(sk.*) 자동 마이그레이션 ── */
   try{
     if(!STORE.getItem(LS.notes)&&STORE.getItem('cn.notes')){
       const cnNotes=JSON.parse(STORE.getItem('cn.notes')||'[]');
