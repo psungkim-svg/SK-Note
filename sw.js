@@ -1,5 +1,5 @@
 /* 나의 컬러노트 — Service Worker (오프라인 지원) */
-const CACHE = 'colornote-v3';
+const CACHE = 'colornote-v4';
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'];
 
 self.addEventListener('install', e => {

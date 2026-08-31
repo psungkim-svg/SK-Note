@@ -1,6 +1,6 @@
 {
-  "name": "SK-Note",
-  "short_name": "SK-Note",
+  "name": "SK 노트",
+  "short_name": "SK 노트",
   "description": "색상 노트·체크리스트·폴더·보관노트·실시간 동기화를 지원하는 개인 메모 앱",
   "lang": "ko",
   "start_url": "./",
