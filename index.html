@@ -56,6 +56,7 @@ header{
   order:3; position:sticky; bottom:0; z-index:30; background:var(--bar);
   box-shadow:0 -1px 3px rgba(0,0,0,.12); padding:.3em .5em;
   padding-bottom:calc(.3em + env(safe-area-inset-bottom));
+  position:sticky;
 }
 .hrow{display:flex;align-items:center;gap:.3em}
 .logo{font-weight:800;font-size:.9em;color:var(--text);margin-right:.2em;white-space:nowrap}
@@ -118,9 +119,10 @@ main{order:1;flex:1;padding:0;max-width:1000px;width:100%;margin:0 auto;overflow
 mark{background:#ffe14d;color:#212121;border-radius:2px;padding:0 1px}
 html[data-theme="dark"] mark{background:#c8a000;color:#fff}
 
-/* ── 플로팅 + 버튼 ── */
+/* ── 플로팅 + 버튼 (하단 바 바로 위에 붙음) ── */
+#folderNav{position:relative}
 #fab,#vFab{
-  position:fixed;right:.9em;bottom:calc(2.6em + env(safe-area-inset-bottom));z-index:31;
+  position:absolute;right:.7em;bottom:100%;margin-bottom:.5em;z-index:31;
   width:1.7em;height:1.7em;padding:0;line-height:1;
   display:flex;align-items:center;justify-content:center;
   border-radius:50%;border:none;background:var(--accent);
@@ -133,7 +135,7 @@ html[data-theme="dark"] mark{background:#c8a000;color:#fff}
 #addMenu{position:fixed;inset:0;z-index:45;background:rgba(0,0,0,.35);
   opacity:0;visibility:hidden;transition:opacity .2s}
 #addMenu.show{opacity:1;visibility:visible}
-#addMenu .menucard{position:absolute;right:1em;bottom:calc(6.1em + env(safe-area-inset-bottom));
+#addMenu .menucard{position:absolute;right:1em;bottom:calc(4.5em + env(safe-area-inset-bottom));
   background:var(--card);border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.28);
   padding:.4em;min-width:12em;transform:translateY(12px) scale(.96);opacity:0;transition:transform .22s,opacity .22s}
 #addMenu.show .menucard{transform:translateY(0) scale(1);opacity:1}
@@ -307,10 +309,9 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
 </main>
 
 <nav id="folderNav">
+  <button id="fab" title="추가">+</button>
   <div class="folderbar" id="folderBar"></div>
 </nav>
-
-<button id="fab" title="추가">+</button>
 
 <!-- (요구4) 추가 메뉴 -->
 <div id="addMenu">
@@ -330,7 +331,6 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
       <input id="edTitle" placeholder="제목" title="누르면 첫째 줄이 제목으로 채워집니다">
       <button class="edtool" id="edSaveBtn" title="저장">✓</button>
       <button class="edtool" id="edPencil" title="편집 모드 (본문 더블탭=그 자리 편집)">✏️</button>
-      <button class="edtool" id="edMicBtn" title="음성으로 받아쓰기">🎤</button>
       <button class="edtool" id="edImgBtn" title="사진 넣기">📷</button>
       <button class="edtool" id="edColorBtn" title="색상 (5색)"></button>
       <button class="edtool" id="edKebab" title="더보기">⋮</button>
@@ -418,10 +418,13 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
       <h4>내 계정</h4>
       <div class="setrow"><span id="acEmailView" style="font-weight:700"></span></div>
       <div class="setrow"><span>동기화 상태</span><span class="stat" id="acSyncState"></span></div>
+      <div class="setrow"><span>마지막 동기화</span><span class="stat" id="acLastSync"></span></div>
       <div class="btnrow">
         <button class="btn primary" id="acSyncNow">지금 동기화</button>
+        <button class="btn" id="acDiag">동기화 점검</button>
         <button class="btn danger" id="acLogout">로그아웃</button>
       </div>
+      <div class="hint">⚠️ 두 기기(PC·폰)에서 <b>같은 이메일</b>로 로그인해야 노트가 공유됩니다. 로그인한 이메일이 서로 다르면 동기화되지 않습니다.</div>
     </div>
   </div>
 </div>
@@ -564,9 +567,9 @@ const SSTORE=(()=>{try{const t='__cn__';sessionStorage.setItem(t,'1');sessionSto
   catch(e){const m={};return{getItem:k=>(k in m?m[k]:null),setItem:(k,v)=>{m[k]=String(v)},removeItem:k=>{delete m[k]}}}})();
 
 /* ═══════════════ 파스텔 5색 (우선순위 순) + 제목줄 진한색 (요구16) ═══════════════ */
-/* (요청3) 노란색(index 1)만 유지, 나머지 4색은 조금 더 다운 */
-const COLORS =['#ffc2d1','#fff3b0','#c0e8cf','#b8dbff','#d8c4f0'];
-const HEADS_L=['#f09fb6','#f2dd8a','#93d4b0','#8fc1ec','#b89fe0'];
+/* (요청3) 노란색(index1)만 유지, 나머지 4색은 더 연하게 / 제목바는 바탕과 차이 적게(약하게) */
+const COLORS =['#ffe1e8','#fff3b0','#dcf3e6','#dcecff','#ece2f7'];
+const HEADS_L=['#ffd0da','#f6e392','#cbebda','#c9e0fb','#ddccf0'];
 const COLORS_D=['#6b4a56','#665e38','#3f5f4a','#3f586d','#584a6d'];
 const HEADS_D =['#7d5a66','#78704a','#4d7159','#4d6780','#6a5a80'];
 const COLOR_NAMES=['핑크','노랑','민트','하늘','라벤더'];
@@ -610,6 +613,8 @@ function load(){
   S.notes.forEach(n=>{ if(n.color==null)n.color=0; if(n.color>4)n.color=n.color%5; });
   if(!['xs','s','m','l','xl'].includes(S.settings.font))S.settings.font='xs';
   if(!['2','3','4'].includes(S.settings.box))S.settings.box='2';
+  // (요청4) 정렬은 색상 우선을 기본으로 강제 (기존 기기의 '최근수정' 설정 1회 교정)
+  if(!S.settings._sortFixed){ S.settings.sort='color'; S.settings._sortFixed=true; }
 }
 function save(){ STORE.setItem(LS.notes,JSON.stringify(S.notes)); STORE.setItem(LS.folders,JSON.stringify(S.folders)); STORE.setItem(LS.settings,JSON.stringify(S.settings)); }
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),2200)}
@@ -715,10 +720,11 @@ function visibleNotes(){
   const sort=S.settings.sort;
   arr.sort((a,b)=>{
     if(ui.trash)return b.updatedAt-a.updatedAt;
+    // (요청4) 색상이 '항상' 최우선. 같은 색이면 최근 저장이 위. (라벤더는 무조건 맨 아래)
+    if(sort==='color')return (a.color||0)-(b.color||0)||b.updatedAt-a.updatedAt;
     if(sort==='updated')return (b.pinned?1:0)-(a.pinned?1:0)||b.updatedAt-a.updatedAt;
     if(sort==='created')return (b.pinned?1:0)-(a.pinned?1:0)||b.createdAt-a.createdAt;
     if(sort==='title')return (a.title||'').localeCompare(b.title||'','ko');
-    if(sort==='color')return (a.color||0)-(b.color||0)||(b.pinned?1:0)-(a.pinned?1:0)||b.updatedAt-a.updatedAt;
     return (b.pinned?1:0)-(a.pinned?1:0)||(a.sortIndex||0)-(b.sortIndex||0);
   });
   return arr;
@@ -930,7 +936,7 @@ function edSnapshot(){
 /* (요청3) 에디터 배경 = 선택 색의 아주 연한색 / 제목바 = 진한색 */
 function applyEditorColor(sel){
   const dark=isDark(); const PAL=dark?COLORS_D:COLORS, HEAD=dark?HEADS_D:HEADS_L;
-  const soft=dark?PAL[sel]:mix(PAL[sel],'#ffffff',0.45);   // 본문: 아주 연하게
+  const soft=dark?PAL[sel]:mix(PAL[sel],'#ffffff',0.55);   // 본문: 아주 연하게
   $('#edOverlay').style.background=soft;
   $('#edBody').style.background=soft;
   $('#edItems').style.background=soft;
@@ -986,7 +992,6 @@ function flushEd(silent){
 }
 function closeEditor(fromBack){
   clearTimeout(edSaveTimer);
-  if(recActive){try{recog.stop()}catch(e){}}            // (요청4) 받아쓰기 중이면 종료
   flushEd(true);                                       // (요구9) Back으로 닫아도 저장(변경 시에만)
   const n=cur();
   if(n && !n.title && !plain(n.content).trim() && !(n.items||[]).some(i=>i.text.trim())){
@@ -1021,6 +1026,14 @@ $('#edTitle').addEventListener('focus',()=>{
 });
 $('#edTitle').addEventListener('input',schedSave);
 $('#edBody').addEventListener('input',schedSave);
+/* (요청5) 전체 선택(Ctrl/Cmd+A)은 노트 본문 텍스트만 선택 */
+$('#edBody').addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey) && (e.key==='a'||e.key==='A')){
+    e.preventDefault();
+    const r=document.createRange();r.selectNodeContents($('#edBody'));
+    const s=window.getSelection();s.removeAllRanges();s.addRange(r);
+  }
+});
 
 /* (요청5) 이미지 붙여넣기: 클립보드 그림을 본문에 삽입 */
 async function insertImageFile(file){
@@ -1033,30 +1046,6 @@ async function insertImageFile(file){
   document.execCommand('insertHTML',false,img+'<br>');
   schedSave();toast('이미지를 넣었습니다');
 }
-/* (요청4 대안) 음성 받아쓰기: 말하면 글자로 입력 (브라우저 내장, 무료) */
-let recog=null, recActive=false;
-function startDictation(){
-  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){toast('이 브라우저는 음성 받아쓰기를 지원하지 않습니다(크롬 권장)');return}
-  if(recActive){ try{recog.stop()}catch(e){} return; }
-  if(!ui.edEdit){ui.edEdit=true;applyEdMode();}
-  recog=new SR();
-  recog.lang='ko-KR';recog.continuous=true;recog.interimResults=false;
-  recog.onstart=()=>{recActive=true;$('#edMicBtn').classList.add('on');toast('🎤 듣고 있어요… 말씀하세요 (끄려면 다시 탭)')};
-  recog.onerror=ev=>{toast('음성 인식 오류: '+(ev.error||''));};
-  recog.onend=()=>{recActive=false;$('#edMicBtn').classList.remove('on')};
-  recog.onresult=ev=>{
-    let txt='';
-    for(let i=ev.resultIndex;i<ev.results.length;i++){ if(ev.results[i].isFinal) txt+=ev.results[i][0].transcript; }
-    if(txt){
-      $('#edBody').focus();
-      document.execCommand('insertText',false,txt+' ');
-      schedSave();
-    }
-  };
-  try{recog.start()}catch(e){}
-}
-$('#edMicBtn').onclick=e=>{e.stopPropagation();startDictation()};
 $('#edImgBtn').onclick=e=>{e.stopPropagation();$('#edImgFile').click()};
 $('#edImgFile').addEventListener('change',e=>{const f=e.target.files[0];insertImageFile(f);e.target.value=''});
 $('#edBody').addEventListener('paste',e=>{
@@ -1290,7 +1279,7 @@ const SYNC={
     if(ev==='PASSWORD_RECOVERY'){ setTimeout(()=>doPasswordRecovery(),200); }
     if(session&&session.user){
       this.uid=session.user.id;
-      this.pullAll().then(()=>this.pushDirty());
+      this.pushDirty().then(()=>this.pullAll());   // (요청7) 올리고 나서 내려받기
       this.subscribe();
     }else{
       this.uid=null;
@@ -1392,6 +1381,8 @@ const SYNC={
 };
 let syncTimer=null;
 function syncSoon(){clearTimeout(syncTimer);syncTimer=setTimeout(()=>SYNC.pushDirty(),2500)}
+/* (요청7) 올리기+내려받기 둘 다 하는 완전 동기화 */
+async function syncNow(){ if(!SYNC.session)return; await SYNC.pushDirty(); await SYNC.pullAll(); }
 function setStatus(st,txt){
   const d=$('#syncDot');d.className='syncdot '+(st||'');
   const map={ok:'동기화됨',syncing:'동기화 중...',err:'오류','':'미설정'};
@@ -1401,8 +1392,11 @@ function setStatus(st,txt){
   if(b)b.textContent=label||'미설정';
   $('#btnAccount').classList.toggle('on',st==='ok');
 }
-setInterval(()=>{if(SYNC.session&&!document.hidden)SYNC.pushDirty()},60000);
-window.addEventListener('online',()=>SYNC.pushDirty());
+/* (요청7) 주기 동기화: 올리기+내려받기 둘 다 (기존엔 올리기만 해서 상대 노트를 못 받아왔음) */
+setInterval(()=>{if(SYNC.session&&!document.hidden)syncNow()},20000);
+window.addEventListener('online',()=>syncNow());
+/* 앱을 다시 볼 때(탭 전환/화면 켜기)마다 즉시 내려받기 */
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden && SYNC.session) syncNow(); });
 
 /* ═══════════════ 계정 UI ═══════════════ */
 function updateAccountUI(){
@@ -1410,6 +1404,8 @@ function updateAccountUI(){
   $('#acFormSec').classList.toggle('hidden',logged);
   $('#acLoggedSec').classList.toggle('hidden',!logged);
   if(logged)$('#acEmailView').textContent=SYNC.session.user.email||'(이메일 ?)';
+  const ls=$('#acLastSync');
+  if(ls)ls.textContent=S.settings.lastSync?new Date(S.settings.lastSync).toLocaleString('ko-KR'):'아직 없음';
 }
 function openAccount(){
   $('#acUrl').value=S.settings.sbUrl||'';
@@ -1497,7 +1493,20 @@ $('#acLogout').onclick=async()=>{
   if(SYNC.client)await SYNC.client.auth.signOut();
   SYNC.reset();updateAccountUI();setStatus('','미로그인');toast('로그아웃했습니다');
 };
-$('#acSyncNow').onclick=async()=>{await SYNC.pullAll();SYNC.pushDirty()};
+$('#acSyncNow').onclick=async()=>{ await SYNC.pushDirty(); await SYNC.pullAll(); updateAccountUI(); toast('동기화 완료'); };
+$('#acDiag').onclick=async()=>{
+  const st=$('#acAuthStat');st.style.whiteSpace='pre-line';
+  if(!SYNC.session){st.textContent='❌ 로그인되어 있지 않습니다.';return}
+  st.textContent='점검 중...';
+  const c=SYNC.client;
+  try{
+    const email=SYNC.session.user.email;
+    const {count,error}=await c.from('notes').select('id',{head:true,count:'exact'});
+    if(error){st.textContent='❌ 테이블 오류: '+error.message+'\n(설치 안내서의 SQL을 실행했는지 확인하세요)';return}
+    const mine=S.notes.filter(n=>!n.deleted).length;
+    st.textContent=`✅ 로그인: ${email}\n서버 노트 수: ${count}개\n이 기기 노트 수: ${mine}개\n\n→ 다른 기기에서도 "${email}" 로 로그인했는지 확인하세요. 같은 이메일이면 자동으로 합쳐집니다.`;
+  }catch(e){ st.textContent='❌ 점검 실패: '+(e.message||e); }
+};
 
 /* ═══════════════ 설정 UI (요구13: 저장 버튼으로 확실 저장) ═══════════════ */
 function openSettings(){
