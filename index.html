@@ -22,9 +22,9 @@ html[data-theme="dark"]{
   --line:#33363c; --bar:#1c1e24; --chip:#2e3138; --accent2:#ffb300;
   --shadow:0 1px 4px rgba(0,0,0,.5);
 }
-/* (요구2) 글자 크기 5단계 = 10pt 기준 3pt씩 (차이 확실) */
-html[data-fontsize="xs"]{--fs:10pt} html[data-fontsize="s"]{--fs:13pt}
-html[data-fontsize="m"]{--fs:16pt}  html[data-fontsize="l"]{--fs:19pt} html[data-fontsize="xl"]{--fs:22pt}
+/* (요청4) 글자 크기 5단계 = 14pt 기준 2pt씩 → 매주작게14 / 작게16 / 중간18 / 크게20 / 매우크게22 */
+html[data-fontsize="xs"]{--fs:14pt} html[data-fontsize="s"]{--fs:16pt}
+html[data-fontsize="m"]{--fs:18pt}  html[data-fontsize="l"]{--fs:20pt} html[data-fontsize="xl"]{--fs:22pt}
 /* 노트박스: 한 줄에 2/3/4개 */
 html[data-cols="2"]{--cols:2} html[data-cols="3"]{--cols:3} html[data-cols="4"]{--cols:4}
 
@@ -41,6 +41,9 @@ body{
 }
 button,input,textarea,select{font-family:inherit; letter-spacing:0; font-stretch:90%; font-weight:700}
 button{cursor:pointer}
+/* (요청1) 앱 상단/하단 바·선택바(제목줄·아이콘·버튼)는 선택 안 되게 → '텍스트만' 선택 보조 */
+/* (요청1) 앱 상/하단 바·선택바·에디터 도구줄(제목줄)은 선택 안 되게 → '텍스트만' 선택 보조 */
+header,#folderNav,#selMode,.edbar,.edmain #addItemBtn,.edbar *:not(#edTitle),.edbar button{user-select:none;-webkit-user-select:none}
 .iconbtn{background:none;border:none;color:var(--text);padding:.4em;border-radius:.4em;font-size:.95em;line-height:1;transition:background .15s,transform .1s}
 .iconbtn:active{background:var(--chip);transform:scale(.9)}
 .iconbtn.on{filter:drop-shadow(0 0 4px var(--ok))}
@@ -60,6 +63,8 @@ header{
 }
 .hrow{display:flex;align-items:center;gap:.3em}
 .logo{font-weight:800;font-size:.9em;color:var(--text);margin-right:.2em;white-space:nowrap}
+/* (요청10) 항상 보이는 버전 배지 → 새 버전이 떴는지 눈으로 확인 */
+.verbadge{font-size:.5em;color:var(--sub);font-weight:700;background:var(--chip);border-radius:.5em;padding:.15em .5em;vertical-align:middle;white-space:nowrap}
 
 #search{
   flex:1;min-width:0;background:var(--chip);border:none;border-radius:1.2em;
@@ -144,7 +149,12 @@ html[data-theme="dark"] mark{background:#c8a000;color:#fff}
 .menuitem:active{background:var(--chip)}
 .menuitem .emo{font-size:1.2em}
 .menuitem.danger{color:var(--danger)}
+#edTitle{user-select:text;-webkit-user-select:text}
 .menuhead{font-size:.62em;color:var(--sub);font-weight:700;padding:.4em .9em .2em}
+/* (요청5) 케밥 메뉴 안 '글자 크기(이 노트만)' 선택 */
+.fontpick{display:flex;gap:.25em;flex-wrap:wrap;padding:.25em .9em .55em}
+.fpbtn{background:var(--chip);border:none;color:var(--text);border-radius:.4em;padding:.35em .5em;font-size:.72em;font-weight:700}
+.fpbtn.on{background:var(--accent);color:#3d2c00}
 
 /* ── 모달 공통 (요구15: 부드러운 열림/닫힘) ── */
 .overlay{
@@ -175,6 +185,7 @@ html[data-theme="dark"] mark{background:#c8a000;color:#fff}
 #edOverlay{
   position:fixed;inset:0;z-index:55;background:var(--bg);
   display:flex;flex-direction:column;
+  font-size:17pt;                       /* (요청3) 제목·버튼 등 '앱 글자'는 17pt 고정 (노트 글자 크기와 무관) */
   transform:translateX(100%);transition:transform .28s ease;visibility:hidden
 }
 #edOverlay.show{transform:translateX(0);visibility:visible}
@@ -202,7 +213,7 @@ html[data-theme="dark"] mark{background:#c8a000;color:#fff}
 /* (요구7) 첫째 줄 아래 = 화면 전체 입력영역 */
 .edmain{flex:1;overflow:auto;position:relative}
 #edBody{
-  min-height:100%;padding:.9em 1em 3em;font-size:.9em;line-height:1.7;font-weight:700;
+  min-height:100%;padding:.9em 1em 3em;font-size:var(--edfs,var(--fs));line-height:1.7;font-weight:700;
   outline:none;color:var(--text);background:transparent;border:none
 }
 #edBody:empty:before{content:attr(data-ph);color:var(--sub)}
@@ -211,7 +222,7 @@ html[data-theme="dark"] mark{background:#c8a000;color:#fff}
 #edItems{padding:.6em 1em 3em}
 .itemrow{display:flex;align-items:center;gap:.5em;padding:.4em .2em;border-bottom:1px solid var(--line)}
 .itemrow input[type=checkbox]{width:1.2em;height:1.2em;accent-color:var(--accent);flex:none}
-.itemrow .itxt{flex:1;font-size:.85em;border:none;background:transparent;color:var(--text);outline:none}
+.itemrow .itxt{flex:1;font-size:var(--edfs,var(--fs));border:none;background:transparent;color:var(--text);outline:none}
 .itemrow .itxt.done{text-decoration:line-through;color:var(--sub)}
 .itemrow .mv{background:var(--chip);border:none;border-radius:.3em;width:1.5em;height:1.5em;font-size:.65em;color:var(--text)}
 #addItemBtn{margin:.6em 1em;width:calc(100% - 2em)}
@@ -294,6 +305,7 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
 <header>
   <div class="hrow">
     <span class="logo" id="logoText">SK 노트</span>
+    <span class="verbadge" id="appVer">v4.0</span>
     <input id="search" type="search" placeholder="검색...">
     <span class="syncdot" id="syncDot" title="동기화 상태"></span>
     <button class="iconbtn" id="btnView" title="보기 전환">▦</button>
@@ -456,10 +468,10 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
           <option value="manual">직접 순서</option>
         </select>
       </div>
-      <div class="setrow"><label>글자 크기 (10~22pt)</label>
+      <div class="setrow"><label>노트 글자 크기 (14~22pt)</label>
         <select id="stFont">
-          <option value="xs">매우작게 (10pt)</option><option value="s">작게 (13pt)</option><option value="m">중간 (16pt)</option>
-          <option value="l">크게 (19pt)</option><option value="xl">매우크게 (22pt)</option>
+          <option value="xs">매우작게 (14pt)</option><option value="s">작게 (16pt)</option><option value="m">중간 (18pt)</option>
+          <option value="l">크게 (20pt)</option><option value="xl">매우크게 (22pt)</option>
         </select>
       </div>
       <div class="setrow"><label>노트박스 크기 (한 줄 개수)</label>
@@ -481,9 +493,17 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
 
     <div class="setsec">
       <h4>보관 노트</h4>
-      <div class="hint">일반 노트는 비밀번호가 필요 없습니다. 보관 노트는 열 때마다 비밀번호를 확인합니다.</div>
+      <div class="hint">일반 노트는 비밀번호가 필요 없습니다. 보관 노트는 열 때마다 비밀번호를 확인합니다.<br>아래에서 시간을 정하면, 그 시간 동안은 암호 없이 다시 들어갈 수 있습니다.</div>
       <div class="setrow"><label>🔐 보관 노트</label><button class="btn" id="stVaultBtn">열기</button></div>
       <div class="setrow"><label>보관 노트 비밀번호</label><button class="btn" id="stPinBtn">설정 / 변경</button></div>
+      <div class="setrow"><label>암호 없이 열리는 시간</label>
+        <select id="stVaultOpen">
+          <option value="0">항상 비밀번호 물어보기</option>
+          <option value="5">5분</option>
+          <option value="10">10분</option>
+          <option value="15">15분</option>
+        </select>
+      </div>
     </div>
 
     <div class="setsec">
@@ -498,7 +518,7 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
 
     <div class="setsec">
       <h4>정보</h4>
-      <div class="hint">SK 노트 v3.0 · Vercel + Supabase 무료 구성</div>
+      <div class="hint">SK 노트 v4.0 · Vercel + Supabase 무료 구성</div>
     </div>
   </div>
 </div>
@@ -581,7 +601,7 @@ const $=s=>document.querySelector(s);
 const $$=s=>[...document.querySelectorAll(s)];
 const esc=s=>(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const uid=()=> 'n'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
-function isDark(){const t=S.settings.theme;return t==='dark'||(t==='auto'&&matchMedia('(prefers-color-scheme: dark)').matches)}
+function isDark(){const t=curSettings().theme;return t==='dark'||(t==='auto'&&matchMedia('(prefers-color-scheme: dark)').matches)}
 
 let S={notes:[],folders:[],settings:{}};
 let ui={folder:'',nofolder:false,view:null,search:'',trash:false,editingId:null,dragId:null,
@@ -591,7 +611,19 @@ let ui={folder:'',nofolder:false,view:null,search:'',trash:false,editingId:null,
 function NOTES(){ return ui.vault ? VLT.notes : S.notes; }
 function persistActive(){ if(ui.vault) VLT.persist(); else save(); }
 
+/* (요청6) 일반 노트와 보관 노트는 서로 '설정'의 영향을 주지 않음.
+   현재 화면(보관 모드면 VLT.settings, 아니면 S.settings)을 돌려준다. */
+function curSettings(){ return ui.vault ? VLT.settings : S.settings; }
+
+/* (요청4) 글자 크기 5단계 → pt */
+const FONTS_PT={xs:14,s:16,m:18,l:20,xl:22};
+function noteFontPt(n){ n=n||cur(); const sc=curSettings(); const lvl=(n&&n.font)||sc.font||'m'; return FONTS_PT[lvl]||18; }
+/* (요청5) 노트 글자 크기(현재 노트 전용)를 에디터 본문에 적용 */
+function applyEditorFont(n){ n=n||cur(); const pt=noteFontPt(n); const ov=$('#edOverlay'); if(ov){ov.style.setProperty('--edfs',pt+'pt');} }
+
 const DEF={theme:'auto',view:'grid',sort:'color',font:'xs',box:'2',sbUrl:'',sbKey:'',lastSync:0,pinHash:null};
+/* (요청6) 보관 노트 전용 설정 기본값 — 일반 노트 설정과 별도로 저장됨 */
+const VAULT_DEF={theme:'auto',view:'grid',sort:'color',font:'xs',box:'2',unlockMinutes:0};
 function load(){
   /* v2.x → v3 자동 마이그레이션 */
   try{
@@ -705,9 +737,10 @@ async function sha256(str){
 
 /* ═══════════════ 렌더링 ═══════════════ */
 function applyPrefs(){
+  const sc=curSettings();
   document.documentElement.dataset.theme=isDark()?'dark':'light';
-  document.documentElement.dataset.fontsize=S.settings.font||'xs';
-  document.documentElement.dataset.cols=S.settings.box||'2';
+  document.documentElement.dataset.fontsize=sc.font||'xs';
+  document.documentElement.dataset.cols=sc.box||'2';
 }
 function visibleNotes(){
   let arr=NOTES().filter(n=>ui.trash?!!n.deleted:!n.deleted);
@@ -717,7 +750,7 @@ function visibleNotes(){
   }
   const q=ui.search.trim().toLowerCase();
   if(q)arr=arr.filter(n=>(n.title||'').toLowerCase().includes(q)||plain(n.content).toLowerCase().includes(q)||(n.items||[]).some(i=>(i.text||'').toLowerCase().includes(q)));
-  const sort=S.settings.sort;
+  const sort=curSettings().sort;
   arr.sort((a,b)=>{
     if(ui.trash)return b.updatedAt-a.updatedAt;
     // (요청4) 색상이 '항상' 최우선. 같은 색이면 최근 저장이 위. (라벤더는 무조건 맨 아래)
@@ -814,7 +847,7 @@ function attachNoteHandlers(el,n){
   el.addEventListener('pointerup',cancel);
   el.addEventListener('pointermove',cancel);
   el.addEventListener('pointercancel',cancel);
-  if(S.settings.sort==='manual'&&!ui.selMode){el.draggable=true;
+  if(curSettings().sort==='manual'&&!ui.selMode){el.draggable=true;
     el.ondragstart=e=>{ui.dragId=n.id;e.dataTransfer.effectAllowed='move'};
     el.ondragover=e=>{e.preventDefault();el.style.outline='2px dashed var(--accent)'};
     el.ondragleave=()=>el.style.outline='';
@@ -920,6 +953,7 @@ function openEditor(id){
   $('#addItemBtn').classList.toggle('hidden',!isCheck);
   $('#edBody').innerHTML=linkify(n.content||'');
   applyEditorColor(n.color||0);                      // (요청3) 노트 색 적용
+  applyEditorFont(n);                                // (요청5) 노트 전용 글자 크기 적용
   updateColorBtn(n.color||0);
   renderItems(n);
   applyEdMode();
@@ -971,7 +1005,9 @@ function updateColorBtn(sel){
   const pop=$('#edColorPop');pop.innerHTML='';
   PAL.forEach((c,i)=>{const b=document.createElement('button');b.className='swatch'+(i===sel?' on':'');
     b.style.background=c;b.title=COLOR_NAMES[i];
-    b.onclick=()=>{const n=cur();if(!n)return;n.color=i;n.updatedAt=Date.now();n.dirty=true;updateColorBtn(i);pop.classList.remove('show');schedSave()};pop.append(b)});
+    b.onclick=()=>{const n=cur();if(!n)return;n.color=i;n.updatedAt=Date.now();n.dirty=true;
+      updateColorBtn(i);applyEditorColor(i);                          // (요청1) 색 바꾸면 배경·제목바 즉시 변화
+      pop.classList.remove('show');schedSave()};pop.append(b)});
 }
 function schedSave(){                                  // (요구9) 3초 후 자동 저장(조용히)
   clearTimeout(edSaveTimer);
@@ -1026,13 +1062,53 @@ $('#edTitle').addEventListener('focus',()=>{
 });
 $('#edTitle').addEventListener('input',schedSave);
 $('#edBody').addEventListener('input',schedSave);
-/* (요청5) 전체 선택(Ctrl/Cmd+A)은 노트 본문 텍스트만 선택 */
-$('#edBody').addEventListener('keydown',e=>{
-  if((e.ctrlKey||e.metaKey) && (e.key==='a'||e.key==='A')){
-    e.preventDefault();
-    const r=document.createRange();r.selectNodeContents($('#edBody'));
-    const s=window.getSelection();s.removeAllRanges();s.addRange(r);
+/* (요청5→완전해결) 전체 선택(Ctrl/Cmd+A) = 노트 본문의 '텍스트만' 선택.
+   · 보기 모드에서도 동작(포커스가 본문 밖이어도 됨)
+   · 이미지(<img>)·<br>·빈 텍스트는 선택에서 제외 → '텍스트만' 확실히 선택
+   · 제목 입력창에 포커스가 있으면 입력창 기본 동작(제목 텍스트만)을 그대로 둠 */
+function selectBodyTextOnly(){
+  const body=$('#edBody');if(!body)return;
+  const skipTag=t=>t==='IMG'||t==='BR'||t==='SCRIPT'||t==='STYLE';
+  const walker=document.createTreeWalker(body,NodeFilter.SHOW_TEXT,{acceptNode(n){
+    const p=n.parentElement;if(!p)return NodeFilter.FILTER_REJECT;
+    if(skipTag(p.tagName))return NodeFilter.FILTER_REJECT;
+    if(!n.nodeValue||!n.nodeValue.length)return NodeFilter.FILTER_REJECT;
+    return NodeFilter.FILTER_ACCEPT;
+  }});
+  let first=null,last=null;
+  while(walker.nextNode()){ if(!first)first=walker.currentNode; last=walker.currentNode; }
+  const s=window.getSelection();s.removeAllRanges();
+  if(!first||!last){                       // 텍스트가 전혀 없으면(이미지만 있거나 빈 경우) 전체 선택 폴백
+    const r=document.createRange();r.selectNodeContents(body);s.addRange(r);return;
   }
+  const r=document.createRange();
+  // 첫 텍스트의 앞부분(서식/줄바꿈)까지 자연스럽게 포함하도록 첫 노드 시작부터 선택
+  r.setStart(first,0);r.setEnd(last,last.length);
+  s.addRange(r);
+}
+/* (요청1) 전체 선택(Ctrl/Cmd+A)는 노트 안의 '입력한 텍스트'만 선택.
+   · 제목 입력칸/체크리스트 입력칸에 포커스가 있으면 → 브라우저 기본(그 입력칸의 텍스트만) 유지.
+   · 그 외(본문 또는 보기 모드)에는 → 본문 '텍스트만' 선택 (이미지·아이콘·버튼은 제외).
+   capture 단계에서 잡아 브라우저의 '전체 페이지 선택'을 막는다. */
+document.addEventListener('keydown',e=>{
+  if(!(e.ctrlKey||e.metaKey)||String(e.key).toLowerCase()!=='a')return;
+  if(!ui.editingId)return;                                     // 에디터 열려 있을 때만
+  const ae=document.activeElement;
+  if(ae&&(ae.tagName==='INPUT'||ae.tagName==='TEXTAREA'))return; // 입력칸: 그 칸 텍스트만(기본)
+  e.preventDefault();
+  const n=cur();
+  if(n&&n.type==='check'){                                     // 체크리스트: 입력칸 외에는 크롬 선택 방지
+    const first=$('#edItems .itxt'); if(first){first.focus();first.select();} return;
+  }
+  selectBodyTextOnly();
+},true);
+/* (요청1) 모바일 롱프레스/드래그로 '도구줄·제목줄'이 선택되는 것까지 차단 → 본문/체크 입력칸만 선택 허용 */
+$('#edOverlay').addEventListener('selectstart',e=>{
+  const t=e.target; if(!t)return;
+  if(t.closest('#edTitle'))return;                              // 제목 입력칸은 허용
+  if(t.closest('#edBody'))return;                               // 본문은 허용
+  if(t.closest('#edItems'))return;                              // 체크 항목은 허용
+  e.preventDefault();                                           // 그 외(도구줄·버튼·배경) 선택 차단
 });
 
 /* (요청5) 이미지 붙여넣기: 클립보드 그림을 본문에 삽입 */
@@ -1123,11 +1199,31 @@ function buildKebab(){
   item('📌',n.pinned?'고정 해제':'상단 고정',()=>{n.pinned=!n.pinned;n.updatedAt=Date.now();n.dirty=true;schedSave();toast(n.pinned?'고정했습니다':'고정을 해제했습니다')});
   item('⏰','알림 설정',()=>openRemind(n.id));
   item('📤','공유',()=>shareNote(n));
+  item('📑','전체 텍스트 선택',()=>{                                  // (요청1) 입력한 텍스트만 선택
+    if(n.type==='check'){const f=$('#edItems .itxt');if(f){f.focus();f.select()}return;}
+    selectBodyTextOnly();
+  });
   if(!ui.vault)item('📁','폴더로 이동',()=>moveNoteFolder(n));
   item(n.type==='check'?'📝':'☑️', n.type==='check'?'메모로 전환':'체크리스트로 전환',()=>switchType(n.type==='check'?'note':'check'));
   if(ui.vault)item('📤','일반 노트로 이동',()=>moveFromVault(n));
   else item('📦','보관 노트로 이동',()=>moveToVault(n));
   item('🗑️','삭제',()=>deleteFromEditor(),'danger');
+  /* (요청5) 노트별 글자 크기 — 이 노트에만 적용 (일반/보관 각자 별도 설정도 반영) */
+  const fh=document.createElement('div');fh.className='menuhead';fh.textContent='📐 글자 크기 (이 노트만)';m.append(fh);
+  const frow=document.createElement('div');frow.className='fontpick';
+  const selLvl=n.font||'__default__';
+  const picks=[['__default__','기본'],['xs','14'],['s','16'],['m','18'],['l','20'],['xl','22']];
+  picks.forEach(([v,lab])=>{
+    const b=document.createElement('button');b.className='fpbtn'+(v===selLvl?' on':'');b.textContent=lab;
+    b.onclick=()=>{
+      if(v==='__default__')delete n.font; else n.font=v;
+      n.updatedAt=Date.now();n.dirty=true;schedSave();
+      applyEditorFont(n);
+      buildKebab();m.classList.add('show');           // 메뉴를 열어두고 강조 갱신
+    };
+    frow.append(b);
+  });
+  m.append(frow);
 }
 function moveFromVault(n){
   const copy={id:uid(),folder:'',color:n.color||0,type:n.type,title:n.title,content:n.content,items:n.items||[],pinned:false,
@@ -1257,6 +1353,19 @@ $('#addFolderBtn').onclick=()=>{
 $('#newFolderName').addEventListener('keydown',e=>{if(e.key==='Enter')$('#addFolderBtn').click()});
 
 /* ═══════════════ Supabase 동기화 ═══════════════ */
+/* (요청2 진단) 초보가 겪는 흔한 Supabase 설정 문제를 에러 메시지에 바로 안내 */
+function syncHint(m){
+  m=m||'';const s=String(m).toLowerCase();
+  if(s.includes('row-level security')||s.includes('policy')||s.includes('permission denied'))
+    return m+'\n→ RLS/정책 문제입니다. "설치_따라하기_왕초보"의 schema.sql을 SQL 에디터에서 실행했는지 확인하세요.';
+  if(s.includes('uuid'))
+    return m+'\n→ id 컬럼이 uuid로 만들어진 것 같습니다. notes 테이블을 삭제하고 schema.sql로 다시 만드세요.';
+  if(s.includes('does not exist')||s.includes('relation')||s.includes('table'))
+    return m+'\n→ 테이블이 없습니다. schema.sql을 SQL 에디터에서 실행하세요.';
+  if(s.includes('fetch')||s.includes('network')||s.includes('failed to'))
+    return m+'\n→ 네트워크 연결/URL을 확인하세요. 방금 저장한 URL과 키가 맞는지도 확인하세요.';
+  return m;
+}
 const SYNC={
   client:null, channel:null, uid:null, session:null, busy:false,
   cfg(){return{url:(S.settings.sbUrl||'').trim(),key:(S.settings.sbKey||'').trim()}},
@@ -1280,7 +1389,7 @@ const SYNC={
     if(session&&session.user){
       this.uid=session.user.id;
       this.pushDirty().then(()=>this.pullAll());   // (요청7) 올리고 나서 내려받기
-      this.subscribe();
+      try{this.subscribe()}catch(e){/* Realtime 오류여도 push/pull 동기화는 계속됨 */} // (요청7) 실시간이 막혀도 양방향은 보장
     }else{
       this.uid=null;
       if(this.channel){try{this.channel.unsubscribe()}catch(e){} this.channel=null}
@@ -1313,7 +1422,7 @@ const SYNC={
       }
       S.settings.lastSync=Date.now();save();
       setStatus('ok');
-    }catch(e){ setStatus('err','동기화 실패: '+(e.message||e)) }
+    }catch(e){ setStatus('err','동기화 실패: '+syncHint(e.message||e)) }
     this.busy=false;
   },
   async pullAll(){
@@ -1343,7 +1452,7 @@ const SYNC={
       S.settings.lastSync=Date.now();save();scheduleReminders();
       if(!$('#edOverlay').classList.contains('show'))render();
       setStatus('ok');
-    }catch(e){ setStatus('err','불러오기 실패: '+(e.message||e)) }
+    }catch(e){ setStatus('err','불러오기 실패: '+syncHint(e.message||e)) }
     this.busy=false;
   },
   subscribe(){
@@ -1502,31 +1611,49 @@ $('#acDiag').onclick=async()=>{
   try{
     const email=SYNC.session.user.email;
     const {count,error}=await c.from('notes').select('id',{head:true,count:'exact'});
-    if(error){st.textContent='❌ 테이블 오류: '+error.message+'\n(설치 안내서의 SQL을 실행했는지 확인하세요)';return}
+    if(error){st.textContent='❌ 테이블 오류: '+syncHint(error.message)+'\n(설치 안내서의 SQL을 실행했는지 확인하세요)';return}
     const mine=S.notes.filter(n=>!n.deleted).length;
-    st.textContent=`✅ 로그인: ${email}\n서버 노트 수: ${count}개\n이 기기 노트 수: ${mine}개\n\n→ 다른 기기에서도 "${email}" 로 로그인했는지 확인하세요. 같은 이메일이면 자동으로 합쳐집니다.`;
+    st.textContent=
+`✅ 로그인: ${email}
+서버 노트 수: ${count}개
+이 기기 노트 수: ${mine}개
+
+→ 다른 기기에서도 "${email}" 로 로그인했는지 확인하세요. 같은 이메일이면 자동으로 합쳐집니다.
+
+🗂️ 서버에 노트가 0개인데 나는 노트가 있는 경우:
+   이 기기 노트를 "한 번 더보기(동기화)" 버튼으로 올려보세요.
+   (바로 아래의 "지금 동기화" 버튼을 누르세요.)
+
+⚠️ 여전히 안 되면 색상·제목·id 형식이 문제일 수 있습니다.
+   Supabase의 notes 테이블 id 컬럼이 "text(문자열)"인지 확인하고,
+   아니면 테이블을 삭제한 뒤 schema.sql을 실행하세요.`;
   }catch(e){ st.textContent='❌ 점검 실패: '+(e.message||e); }
 };
 
 /* ═══════════════ 설정 UI (요구13: 저장 버튼으로 확실 저장) ═══════════════ */
 function openSettings(){
-  $('#stTheme').value=S.settings.theme;$('#stView').value=S.settings.view;
-  $('#stSort').value=S.settings.sort;$('#stFont').value=S.settings.font;$('#stBox').value=S.settings.box;
+  const sc=curSettings();
+  $('#stTheme').value=sc.theme;$('#stView').value=sc.view;
+  $('#stSort').value=sc.sort;$('#stFont').value=sc.font;$('#stBox').value=sc.box;
+  $('#stVaultOpen').value=String(VLT.settings.unlockMinutes||0);
   $('#stPinBtn').textContent=S.settings.pinHash?'변경 / 초기화':'설정';
   ovOpen($('#setOverlay'));
 }
 function applySettingsFromUI(){
-  S.settings.theme=$('#stTheme').value;
-  ui.view=$('#stView').value;S.settings.view=ui.view;
-  S.settings.sort=$('#stSort').value;
-  S.settings.font=$('#stFont').value;
-  S.settings.box=$('#stBox').value;
-  save();applyPrefs();render();applyViewBtn();
+  const sc=curSettings();                    // (요청6) 현재 화면(일반/보관)의 설정에만 저장
+  sc.theme=$('#stTheme').value;
+  ui.view=$('#stView').value;sc.view=ui.view;
+  sc.sort=$('#stSort').value;
+  sc.font=$('#stFont').value;
+  sc.box=$('#stBox').value;
+  VLT.settings.unlockMinutes=parseInt($('#stVaultOpen').value||'0',10);   // (요청7)
+  if(ui.vault)VLT.persistSettings(); else save();
+  applyPrefs();render();applyViewBtn();
 }
 $('#btnSettings').onclick=openSettings;
 $('#stAccountBtn').onclick=()=>{ovCloseUi($('#setOverlay'));openAccount()};
 /* 미리보기: 선택만 해도 즉시 반영(피드백) */
-['#stTheme','#stView','#stSort','#stFont','#stBox'].forEach(sel=>$(sel).addEventListener('change',applySettingsFromUI));
+['#stTheme','#stView','#stSort','#stFont','#stBox','#stVaultOpen'].forEach(sel=>$(sel).addEventListener('change',applySettingsFromUI));
 $('#setSave').onclick=()=>{ applySettingsFromUI(); toast('설정을 저장했습니다'); ovCloseUi($('#setOverlay')); };
 $('#setClose').onclick=()=>{ applySettingsFromUI(); ovCloseUi($('#setOverlay')); };
 
@@ -1598,31 +1725,41 @@ $('#addCheck').onclick=()=>{addMenu.classList.remove('show');const n=newNote('ch
 function applyViewBtn(){const vb=$('#btnView');if(vb)vb.textContent=ui.view==='grid'?'▦':(ui.view==='list'?'☰':'≡')}
 function toggleView(){
   ui.view=ui.view==='grid'?'list':(ui.view==='list'?'titles':'grid');
-  S.settings.view=ui.view;save();render();
-  applyViewBtn();
+  const sc=curSettings();sc.view=ui.view;
+  if(ui.vault)VLT.persistSettings();else save();
+  render();applyViewBtn();
 }
 $('#btnView').onclick=toggleView;
 $('#btnTrash').onclick=()=>{ui.trash=!ui.trash;exitSel();render()};
 
 /* ═══════════════ 보관 노트 (Vault) — 진입 시마다 비밀번호 (요구11) ═══════════════ */
 const VLT={
-  notes:[], bio:false,
-  load(){try{this.notes=JSON.parse(STORE.getItem('sk.vault'))||[]}catch(e){this.notes=[]}},
+  notes:[], bio:false, settings:{}, openUntil:0,
+  load(){ try{this.notes=JSON.parse(STORE.getItem('sk.vault'))||[]}catch(e){this.notes=[]
+      } try{this.settings=Object.assign({},VAULT_DEF,JSON.parse(STORE.getItem('sk.vault.settings'))||{})}catch(e){this.settings=Object.assign({},VAULT_DEF)} },
   persist(){STORE.setItem('sk.vault',JSON.stringify(this.notes))},
+  persistSettings(){STORE.setItem('sk.vault.settings',JSON.stringify(this.settings))},
   async init(){
     this.load();
     try{ if(window.PublicKeyCredential && await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()) this.bio=true }catch(e){}
     $('#vBioRow').classList.toggle('hidden',!this.bio);
   },
-  /* (요구11) 진입할 때마다 비밀번호 확인 */
-  open(){ $('#vGatePass').value=''; ovOpen($('#vGate')); setTimeout(()=>$('#vGatePass').focus(),80); },
+  /* (요구11) 진입할 때: '암호 없이 열리는 시간(요청7)' 안이라면 바로 들어감, 아니면 비밀번호 창 */
+  open(){
+    // (요청7) 설정한 시간 안에는 비밀번호 없이 바로 재진입
+    if((this.settings.unlockMinutes||0)>0 && Date.now()<this.openUntil){ this.enter(); return; }
+    $('#vGatePass').value=''; ovOpen($('#vGate')); setTimeout(()=>$('#vGatePass').focus(),80);
+  },
   /* (요구10) 별도 화면 없이 일반 화면을 '보관 모드'로 전환 → 디자인/동작 완전 동일 */
   enter(){
     ovCloseUi($('#vGate'));
     ui.vault=true; ui.trash=false; ui.folder=''; ui.nofolder=false; ui.search=''; $('#search').value='';
+    ui.view=this.settings.view||'grid';                       // (요청6) 보관 노트 전용 보기
+    // (요청7) 이번에 성공적으로 들어온 시각 기준으로 '암호 없이 열리는 시간' 시작
+    if((this.settings.unlockMinutes||0)>0) this.openUntil=Date.now()+this.settings.unlockMinutes*60000;
     exitSel(); render();
   },
-  leave(){ ui.vault=false; exitSel(); render(); toast('보관 노트를 잠갔습니다'); },
+  leave(){ ui.vault=false; ui.view=S.settings.view||'grid'; exitSel(); render(); toast('보관 노트를 잠갔습니다'); },
   async unlockPass(){
     if(!S.settings.pinHash){
       const a=await dlg('보관 노트에 사용할 비밀번호를 새로 만드세요:\n(숫자 4자리 권장)',{input:true,password:true,okText:'설정'});
@@ -1687,5 +1824,5 @@ if('serviceWorker' in navigator&&location.protocol.startsWith('http')){
   addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{})});
 }
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a345be744c4d0939',t:'MTc4ODI4MTExMQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>
