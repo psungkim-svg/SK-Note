@@ -120,7 +120,7 @@ html[data-theme="dark"] mark{background:#c8a000;color:#fff}
 
 /* ── 플로팅 + 버튼 ── */
 #fab,#vFab{
-  position:fixed;right:.9em;bottom:calc(3.4em + env(safe-area-inset-bottom));z-index:31;
+  position:fixed;right:.9em;bottom:calc(2.6em + env(safe-area-inset-bottom));z-index:31;
   width:1.7em;height:1.7em;padding:0;line-height:1;
   display:flex;align-items:center;justify-content:center;
   border-radius:50%;border:none;background:var(--accent);
@@ -330,8 +330,11 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
       <input id="edTitle" placeholder="제목" title="누르면 첫째 줄이 제목으로 채워집니다">
       <button class="edtool" id="edSaveBtn" title="저장">✓</button>
       <button class="edtool" id="edPencil" title="편집 모드 (본문 더블탭=그 자리 편집)">✏️</button>
+      <button class="edtool" id="edMicBtn" title="음성으로 받아쓰기">🎤</button>
+      <button class="edtool" id="edImgBtn" title="사진 넣기">📷</button>
       <button class="edtool" id="edColorBtn" title="색상 (5색)"></button>
       <button class="edtool" id="edKebab" title="더보기">⋮</button>
+      <input type="file" id="edImgFile" accept="image/*" style="display:none">
       <!-- 컬러 팝오버 -->
       <div id="edColorPop"></div>
       <!-- 케밥 메뉴 -->
@@ -561,8 +564,9 @@ const SSTORE=(()=>{try{const t='__cn__';sessionStorage.setItem(t,'1');sessionSto
   catch(e){const m={};return{getItem:k=>(k in m?m[k]:null),setItem:(k,v)=>{m[k]=String(v)},removeItem:k=>{delete m[k]}}}})();
 
 /* ═══════════════ 파스텔 5색 (우선순위 순) + 제목줄 진한색 (요구16) ═══════════════ */
-const COLORS =['#ffd6e0','#fff3b0','#d3f0dd','#cde6ff','#e4d6f5'];
-const HEADS_L=['#f7b8ca','#f2dd8a','#abe0c3','#a9d0f2','#cbb5e8'];
+/* (요청3) 노란색(index 1)만 유지, 나머지 4색은 조금 더 다운 */
+const COLORS =['#ffc2d1','#fff3b0','#c0e8cf','#b8dbff','#d8c4f0'];
+const HEADS_L=['#f09fb6','#f2dd8a','#93d4b0','#8fc1ec','#b89fe0'];
 const COLORS_D=['#6b4a56','#665e38','#3f5f4a','#3f586d','#584a6d'];
 const HEADS_D =['#7d5a66','#78704a','#4d7159','#4d6780','#6a5a80'];
 const COLOR_NAMES=['핑크','노랑','민트','하늘','라벤더'];
@@ -616,6 +620,29 @@ function plain(html){
   const d=document.createElement('div');
   d.innerHTML=(html||'').replace(/<br\s*\/?>/gi,'\n').replace(/<\/(div|p|li)>/gi,'\n');
   return (d.textContent||'').replace(/\n{3,}/g,'\n\n');
+}
+/* (요청6) 본문 속 URL을 클릭 가능한 링크로 변환 (보기 모드용) */
+function linkify(html){
+  if(!html)return html;
+  // 이미 <a>로 감싼 부분은 건드리지 않도록 텍스트 노드만 처리
+  const box=document.createElement('div');box.innerHTML=html;
+  const rx=/(https?:\/\/[^\s<]+[^\s<.,;!?)\]}"'])/g;
+  const walk=node=>{
+    for(const child of [...node.childNodes]){
+      if(child.nodeType===3){ // 텍스트
+        const t=child.nodeValue;
+        if(rx.test(t)){
+          rx.lastIndex=0;
+          const frag=document.createElement('span');
+          frag.innerHTML=t.replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]))
+            .replace(rx,u=>`<a href="${u}" target="_blank" rel="noopener">${u}</a>`);
+          child.replaceWith(frag);
+        }
+      }else if(child.nodeType===1 && child.tagName!=='A'){ walk(child); }
+    }
+  };
+  walk(box);
+  return box.innerHTML;
 }
 /* (요구5) 검색어 하이라이트: 이미 escape된 문자열에 <mark> 삽입 */
 function hl(escaped){
@@ -885,17 +912,48 @@ function openEditor(id){
   $('#edBody').classList.toggle('hidden',isCheck);
   $('#edItems').classList.toggle('hidden',!isCheck);
   $('#addItemBtn').classList.toggle('hidden',!isCheck);
-  $('#edBody').innerHTML=n.content||'';
+  $('#edBody').innerHTML=linkify(n.content||'');
+  applyEditorColor(n.color||0);                      // (요청3) 노트 색 적용
   updateColorBtn(n.color||0);
   renderItems(n);
   applyEdMode();
+  ui._edSnap=edSnapshot();                           // (요청1) 원본 스냅샷 저장
   ovOpen($('#edOverlay'));
+}
+/* (요청1) 현재 편집 내용 요약 — 변경 여부 판단용 */
+function edSnapshot(){
+  const n=cur();if(!n)return'';
+  // 편집 중이면 실시간 DOM, 보기 모드면 저장된 content 사용(링크 변환 영향 제거)
+  const body=n.type==='note' ? (ui.edEdit ? $('#edBody').innerHTML : (n.content||'')) : JSON.stringify(n.items||[]);
+  return ($('#edTitle').value||'')+'\u0001'+(body||'')+'\u0001'+(n.color||0)+'\u0001'+(n.pinned?1:0)+'\u0001'+(n.remindAt||0);
+}
+/* (요청3) 에디터 배경 = 선택 색의 아주 연한색 / 제목바 = 진한색 */
+function applyEditorColor(sel){
+  const dark=isDark(); const PAL=dark?COLORS_D:COLORS, HEAD=dark?HEADS_D:HEADS_L;
+  const soft=dark?PAL[sel]:mix(PAL[sel],'#ffffff',0.45);   // 본문: 아주 연하게
+  $('#edOverlay').style.background=soft;
+  $('#edBody').style.background=soft;
+  $('#edItems').style.background=soft;
+  $('.edbar')&&($('.edbar').style.background=HEAD[sel]);    // 제목바: 진한색
+  $('#edTitle').style.background='transparent';
+}
+/* 두 색을 섞기 (t=0 → a, t=1 → b) */
+function mix(a,b,t){
+  const p=x=>[parseInt(x.slice(1,3),16),parseInt(x.slice(3,5),16),parseInt(x.slice(5,7),16)];
+  const [r1,g1,b1]=p(a),[r2,g2,b2]=p(b);
+  const h=v=>Math.round(v).toString(16).padStart(2,'0');
+  return '#'+h(r1+(r2-r1)*t)+h(g1+(g2-g1)*t)+h(b1+(b2-b1)*t);
 }
 function applyEdMode(){
   const n=cur(); const isCheck=n&&n.type==='check';
   $('#edBody').contentEditable=(ui.edEdit&&!isCheck)?'true':'false';
   $('#edBody').classList.toggle('viewmode',!ui.edEdit);
   $('#edPencil').classList.toggle('on',ui.edEdit);
+  // (요청6) 보기 모드=링크 활성 / 편집 모드=순수 편집(링크 표시는 유지)
+  if(n && n.type==='note'){
+    if(ui.edEdit) $('#edBody').innerHTML=n.content||'';
+    else $('#edBody').innerHTML=linkify(n.content||'');
+  }
   if(ui.edEdit&&!isCheck)setTimeout(()=>$('#edBody').focus(),50);
   hideSelBar();
 }
@@ -909,20 +967,27 @@ function updateColorBtn(sel){
     b.style.background=c;b.title=COLOR_NAMES[i];
     b.onclick=()=>{const n=cur();if(!n)return;n.color=i;n.updatedAt=Date.now();n.dirty=true;updateColorBtn(i);pop.classList.remove('show');schedSave()};pop.append(b)});
 }
-function schedSave(){                                  // (요구9) 3초 후 자동 저장
+function schedSave(){                                  // (요구9) 3초 후 자동 저장(조용히)
   clearTimeout(edSaveTimer);
-  edSaveTimer=setTimeout(flushEd,3000);
+  edSaveTimer=setTimeout(()=>flushEd(true),3000);
 }
 function flushEd(silent){
   const n=cur();if(!n)return;
+  // (요청1) 실제로 바뀐 게 없으면 시간·저장 건드리지 않음 (그냥 열었다 닫기)
+  if(!silent){ // 수동 저장(✓)일 땐 무조건 저장
+  } else if(ui._edSnap!==undefined && edSnapshot()===ui._edSnap){
+    return;   // 변경 없음 → 아무 것도 안 함
+  }
   n.title=$('#edTitle').value;
-  if(n.type==='note')n.content=$('#edBody').innerHTML;
+  if(n.type==='note' && ui.edEdit)n.content=$('#edBody').innerHTML;   // (요청6) 편집 중일 때만 본문 저장
   n.updatedAt=Date.now();n.dirty=true;persistActive();if(!ui.vault)syncSoon();
+  ui._edSnap=edSnapshot();
   if(!silent)toast('저장됨');
 }
 function closeEditor(fromBack){
   clearTimeout(edSaveTimer);
-  flushEd(true);                                       // (요구9) Back으로 닫아도 저장
+  if(recActive){try{recog.stop()}catch(e){}}            // (요청4) 받아쓰기 중이면 종료
+  flushEd(true);                                       // (요구9) Back으로 닫아도 저장(변경 시에만)
   const n=cur();
   if(n && !n.title && !plain(n.content).trim() && !(n.items||[]).some(i=>i.text.trim())){
     // 완전히 빈 노트는 자동 제거
@@ -957,6 +1022,54 @@ $('#edTitle').addEventListener('focus',()=>{
 $('#edTitle').addEventListener('input',schedSave);
 $('#edBody').addEventListener('input',schedSave);
 
+/* (요청5) 이미지 붙여넣기: 클립보드 그림을 본문에 삽입 */
+async function insertImageFile(file){
+  if(!file)return;
+  if(file.size>3*1024*1024){toast('이미지가 너무 큽니다(3MB 이하로)');return}
+  if(!ui.edEdit){ui.edEdit=true;applyEdMode();}
+  const dataUrl=await new Promise(res=>{const r=new FileReader();r.onload=()=>res(r.result);r.readAsDataURL(file)});
+  const img=`<img src="${dataUrl}" style="max-width:100%;height:auto;border-radius:8px;margin:.3em 0" alt="이미지">`;
+  $('#edBody').focus();
+  document.execCommand('insertHTML',false,img+'<br>');
+  schedSave();toast('이미지를 넣었습니다');
+}
+/* (요청4 대안) 음성 받아쓰기: 말하면 글자로 입력 (브라우저 내장, 무료) */
+let recog=null, recActive=false;
+function startDictation(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){toast('이 브라우저는 음성 받아쓰기를 지원하지 않습니다(크롬 권장)');return}
+  if(recActive){ try{recog.stop()}catch(e){} return; }
+  if(!ui.edEdit){ui.edEdit=true;applyEdMode();}
+  recog=new SR();
+  recog.lang='ko-KR';recog.continuous=true;recog.interimResults=false;
+  recog.onstart=()=>{recActive=true;$('#edMicBtn').classList.add('on');toast('🎤 듣고 있어요… 말씀하세요 (끄려면 다시 탭)')};
+  recog.onerror=ev=>{toast('음성 인식 오류: '+(ev.error||''));};
+  recog.onend=()=>{recActive=false;$('#edMicBtn').classList.remove('on')};
+  recog.onresult=ev=>{
+    let txt='';
+    for(let i=ev.resultIndex;i<ev.results.length;i++){ if(ev.results[i].isFinal) txt+=ev.results[i][0].transcript; }
+    if(txt){
+      $('#edBody').focus();
+      document.execCommand('insertText',false,txt+' ');
+      schedSave();
+    }
+  };
+  try{recog.start()}catch(e){}
+}
+$('#edMicBtn').onclick=e=>{e.stopPropagation();startDictation()};
+$('#edImgBtn').onclick=e=>{e.stopPropagation();$('#edImgFile').click()};
+$('#edImgFile').addEventListener('change',e=>{const f=e.target.files[0];insertImageFile(f);e.target.value=''});
+$('#edBody').addEventListener('paste',e=>{
+  const items=(e.clipboardData||window.clipboardData)?.items||[];
+  for(const it of items){
+    if(it.type&&it.type.indexOf('image')===0){
+      e.preventDefault();
+      insertImageFile(it.getAsFile());
+      return;
+    }
+  }
+});
+
 /* 본문 더블탭 = 그 자리 편집 (요구6) */
 function enterEditAtPoint(x,y){
   if(!ui.edEdit){ui.edEdit=true;applyEdMode();}
@@ -968,6 +1081,11 @@ function enterEditAtPoint(x,y){
     $('#edBody').focus();
   },60);
 }
+/* (요청6) 보기 모드에서 링크 클릭 → 새 탭으로 열기 */
+$('#edBody').addEventListener('click',e=>{
+  const a=e.target.closest&&e.target.closest('a');
+  if(a && !ui.edEdit){ e.preventDefault(); window.open(a.href,'_blank','noopener'); }
+});
 $('#edBody').addEventListener('dblclick',e=>{ if(cur()&&cur().type!=='check')enterEditAtPoint(e.clientX,e.clientY); });
 let lastTap=0,lastX=0,lastY=0;
 $('#edBody').addEventListener('pointerup',e=>{
