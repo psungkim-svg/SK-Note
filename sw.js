@@ -1,5 +1,5 @@
 /* SK 노트 — Service Worker (오프라인 지원) */
-const CACHE = 'sknote-v10';
+const CACHE = 'sknote-v11';
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'];
 
 self.addEventListener('install', e => {
