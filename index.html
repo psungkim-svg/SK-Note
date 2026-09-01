@@ -305,7 +305,7 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
 <header>
   <div class="hrow">
     <span class="logo" id="logoText">SK 노트</span>
-    <span class="verbadge" id="appVer">v4.0</span>
+    <span class="verbadge" id="appVer">v4.1</span>
     <input id="search" type="search" placeholder="검색...">
     <span class="syncdot" id="syncDot" title="동기화 상태"></span>
     <button class="iconbtn" id="btnView" title="보기 전환">▦</button>
@@ -502,6 +502,8 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
           <option value="5">5분</option>
           <option value="10">10분</option>
           <option value="15">15분</option>
+          <option value="30">30분</option>
+          <option value="60">1시간</option>
         </select>
       </div>
     </div>
@@ -518,7 +520,7 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
 
     <div class="setsec">
       <h4>정보</h4>
-      <div class="hint">SK 노트 v4.0 · Vercel + Supabase 무료 구성</div>
+      <div class="hint">SK 노트 v4.1 · Vercel + Supabase 무료 구성</div>
     </div>
   </div>
 </div>
@@ -1086,21 +1088,19 @@ function selectBodyTextOnly(){
   r.setStart(first,0);r.setEnd(last,last.length);
   s.addRange(r);
 }
-/* (요청1) 전체 선택(Ctrl/Cmd+A)는 노트 안의 '입력한 텍스트'만 선택.
-   · 제목 입력칸/체크리스트 입력칸에 포커스가 있으면 → 브라우저 기본(그 입력칸의 텍스트만) 유지.
-   · 그 외(본문 또는 보기 모드)에는 → 본문 '텍스트만' 선택 (이미지·아이콘·버튼은 제외).
-   capture 단계에서 잡아 브라우저의 '전체 페이지 선택'을 막는다. */
+/* (요청1→최종확정) 전체 선택(Ctrl/Cmd+A, '모든 선택') = '제목 제외, 제목 아래 본문 텍스트만' 선택.
+   · 제목 입력칸에 커서가 있어도(제목이 선택되는 문제) 브라우저 기본을 막고 → 본문 텍스트만 선택.
+   · 아이콘·버튼·제목·안내문 등 크롬은 선택 안 됨.
+   · 체크리스트는 항목 입력칸에 포커스. */
 document.addEventListener('keydown',e=>{
   if(!(e.ctrlKey||e.metaKey)||String(e.key).toLowerCase()!=='a')return;
-  if(!ui.editingId)return;                                     // 에디터 열려 있을 때만
-  const ae=document.activeElement;
-  if(ae&&(ae.tagName==='INPUT'||ae.tagName==='TEXTAREA'))return; // 입력칸: 그 칸 텍스트만(기본)
-  e.preventDefault();
+  if(!ui.editingId)return;                                     // 에디터가 열려 있을 때만
+  e.preventDefault();                                          // 항상 막아 브라우저가 제목·크롬까지 잡지 못하게
   const n=cur();
-  if(n&&n.type==='check'){                                     // 체크리스트: 입력칸 외에는 크롬 선택 방지
+  if(n&&n.type==='check'){                                     // 체크리스트: 항목 텍스트만
     const first=$('#edItems .itxt'); if(first){first.focus();first.select();} return;
   }
-  selectBodyTextOnly();
+  selectBodyTextOnly();                                        // (요청1) 제목·아이콘·버튼 제외, 본문 텍스트만
 },true);
 /* (요청1) 모바일 롱프레스/드래그로 '도구줄·제목줄'이 선택되는 것까지 차단 → 본문/체크 입력칸만 선택 허용 */
 $('#edOverlay').addEventListener('selectstart',e=>{
@@ -1506,6 +1506,9 @@ setInterval(()=>{if(SYNC.session&&!document.hidden)syncNow()},20000);
 window.addEventListener('online',()=>syncNow());
 /* 앱을 다시 볼 때(탭 전환/화면 켜기)마다 즉시 내려받기 */
 document.addEventListener('visibilitychange',()=>{ if(!document.hidden && SYNC.session) syncNow(); });
+/* (요청) 노트 앱을 켜면 자동 동기화: 앱 시작 시점 + 창 포커스 복귀 시 즉시 한 번 실행 */
+window.addEventListener('focus',()=>{ if(SYNC.session&&!document.hidden) syncNow(); });
+setTimeout(()=>{ if(SYNC.session) syncNow(); }, 1500);
 
 /* ═══════════════ 계정 UI ═══════════════ */
 function updateAccountUI(){
