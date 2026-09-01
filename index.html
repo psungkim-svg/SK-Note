@@ -971,7 +971,9 @@ function updateColorBtn(sel){
   const pop=$('#edColorPop');pop.innerHTML='';
   PAL.forEach((c,i)=>{const b=document.createElement('button');b.className='swatch'+(i===sel?' on':'');
     b.style.background=c;b.title=COLOR_NAMES[i];
-    b.onclick=()=>{const n=cur();if(!n)return;n.color=i;n.updatedAt=Date.now();n.dirty=true;updateColorBtn(i);pop.classList.remove('show');schedSave()};pop.append(b)});
+    b.onclick=()=>{const n=cur();if(!n)return;n.color=i;n.updatedAt=Date.now();n.dirty=true;
+      updateColorBtn(i);applyEditorColor(i);                          // (요청1) 색 바꾸면 배경·제목바 즉시 변화
+      pop.classList.remove('show');schedSave()};pop.append(b)});
 }
 function schedSave(){                                  // (요구9) 3초 후 자동 저장(조용히)
   clearTimeout(edSaveTimer);
@@ -1026,13 +1028,37 @@ $('#edTitle').addEventListener('focus',()=>{
 });
 $('#edTitle').addEventListener('input',schedSave);
 $('#edBody').addEventListener('input',schedSave);
-/* (요청5) 전체 선택(Ctrl/Cmd+A)은 노트 본문 텍스트만 선택 */
-$('#edBody').addEventListener('keydown',e=>{
-  if((e.ctrlKey||e.metaKey) && (e.key==='a'||e.key==='A')){
-    e.preventDefault();
-    const r=document.createRange();r.selectNodeContents($('#edBody'));
-    const s=window.getSelection();s.removeAllRanges();s.addRange(r);
+/* (요청5→완전해결) 전체 선택(Ctrl/Cmd+A) = 노트 본문의 '텍스트만' 선택.
+   · 보기 모드에서도 동작(포커스가 본문 밖이어도 됨)
+   · 이미지(<img>)·<br>·빈 텍스트는 선택에서 제외 → '텍스트만' 확실히 선택
+   · 제목 입력창에 포커스가 있으면 입력창 기본 동작(제목 텍스트만)을 그대로 둠 */
+function selectBodyTextOnly(){
+  const body=$('#edBody');if(!body)return;
+  const skipTag=t=>t==='IMG'||t==='BR'||t==='SCRIPT'||t==='STYLE';
+  const walker=document.createTreeWalker(body,NodeFilter.SHOW_TEXT,{acceptNode(n){
+    const p=n.parentElement;if(!p)return NodeFilter.FILTER_REJECT;
+    if(skipTag(p.tagName))return NodeFilter.FILTER_REJECT;
+    if(!n.nodeValue||!n.nodeValue.length)return NodeFilter.FILTER_REJECT;
+    return NodeFilter.FILTER_ACCEPT;
+  }});
+  let first=null,last=null;
+  while(walker.nextNode()){ if(!first)first=walker.currentNode; last=walker.currentNode; }
+  const s=window.getSelection();s.removeAllRanges();
+  if(!first||!last){                       // 텍스트가 전혀 없으면(이미지만 있거나 빈 경우) 전체 선택 폴백
+    const r=document.createRange();r.selectNodeContents(body);s.addRange(r);return;
   }
+  const r=document.createRange();
+  // 첫 텍스트의 앞부분(서식/줄바꿈)까지 자연스럽게 포함하도록 첫 노드 시작부터 선택
+  r.setStart(first,0);r.setEnd(last,last.length);
+  s.addRange(r);
+}
+/* 에디터가 열려 있으면 포커스 위치와 무관하게 동작하도록 document 레벨에서 처리 */
+document.addEventListener('keydown',e=>{
+  if(!(e.ctrlKey||e.metaKey)||String(e.key).toLowerCase()!=='a')return;
+  if(!ui.editingId)return;                                    // 에디터가 열려 있을 때만
+  if(document.activeElement===$('#edTitle'))return;          // 제목 입력창 → 기본(제목만) 선택 유지
+  e.preventDefault();
+  selectBodyTextOnly();
 });
 
 /* (요청5) 이미지 붙여넣기: 클립보드 그림을 본문에 삽입 */
@@ -1257,6 +1283,19 @@ $('#addFolderBtn').onclick=()=>{
 $('#newFolderName').addEventListener('keydown',e=>{if(e.key==='Enter')$('#addFolderBtn').click()});
 
 /* ═══════════════ Supabase 동기화 ═══════════════ */
+/* (요청2 진단) 초보가 겪는 흔한 Supabase 설정 문제를 에러 메시지에 바로 안내 */
+function syncHint(m){
+  m=m||'';const s=String(m).toLowerCase();
+  if(s.includes('row-level security')||s.includes('policy')||s.includes('permission denied'))
+    return m+'\n→ RLS/정책 문제입니다. "설치_따라하기_왕초보"의 schema.sql을 SQL 에디터에서 실행했는지 확인하세요.';
+  if(s.includes('uuid'))
+    return m+'\n→ id 컬럼이 uuid로 만들어진 것 같습니다. notes 테이블을 삭제하고 schema.sql로 다시 만드세요.';
+  if(s.includes('does not exist')||s.includes('relation')||s.includes('table'))
+    return m+'\n→ 테이블이 없습니다. schema.sql을 SQL 에디터에서 실행하세요.';
+  if(s.includes('fetch')||s.includes('network')||s.includes('failed to'))
+    return m+'\n→ 네트워크 연결/URL을 확인하세요. 방금 저장한 URL과 키가 맞는지도 확인하세요.';
+  return m;
+}
 const SYNC={
   client:null, channel:null, uid:null, session:null, busy:false,
   cfg(){return{url:(S.settings.sbUrl||'').trim(),key:(S.settings.sbKey||'').trim()}},
@@ -1280,7 +1319,7 @@ const SYNC={
     if(session&&session.user){
       this.uid=session.user.id;
       this.pushDirty().then(()=>this.pullAll());   // (요청7) 올리고 나서 내려받기
-      this.subscribe();
+      try{this.subscribe()}catch(e){/* Realtime 오류여도 push/pull 동기화는 계속됨 */} // (요청7) 실시간이 막혀도 양방향은 보장
     }else{
       this.uid=null;
       if(this.channel){try{this.channel.unsubscribe()}catch(e){} this.channel=null}
@@ -1313,7 +1352,7 @@ const SYNC={
       }
       S.settings.lastSync=Date.now();save();
       setStatus('ok');
-    }catch(e){ setStatus('err','동기화 실패: '+(e.message||e)) }
+    }catch(e){ setStatus('err','동기화 실패: '+syncHint(e.message||e)) }
     this.busy=false;
   },
   async pullAll(){
@@ -1343,7 +1382,7 @@ const SYNC={
       S.settings.lastSync=Date.now();save();scheduleReminders();
       if(!$('#edOverlay').classList.contains('show'))render();
       setStatus('ok');
-    }catch(e){ setStatus('err','불러오기 실패: '+(e.message||e)) }
+    }catch(e){ setStatus('err','불러오기 실패: '+syncHint(e.message||e)) }
     this.busy=false;
   },
   subscribe(){
@@ -1502,9 +1541,22 @@ $('#acDiag').onclick=async()=>{
   try{
     const email=SYNC.session.user.email;
     const {count,error}=await c.from('notes').select('id',{head:true,count:'exact'});
-    if(error){st.textContent='❌ 테이블 오류: '+error.message+'\n(설치 안내서의 SQL을 실행했는지 확인하세요)';return}
+    if(error){st.textContent='❌ 테이블 오류: '+syncHint(error.message)+'\n(설치 안내서의 SQL을 실행했는지 확인하세요)';return}
     const mine=S.notes.filter(n=>!n.deleted).length;
-    st.textContent=`✅ 로그인: ${email}\n서버 노트 수: ${count}개\n이 기기 노트 수: ${mine}개\n\n→ 다른 기기에서도 "${email}" 로 로그인했는지 확인하세요. 같은 이메일이면 자동으로 합쳐집니다.`;
+    st.textContent=
+`✅ 로그인: ${email}
+서버 노트 수: ${count}개
+이 기기 노트 수: ${mine}개
+
+→ 다른 기기에서도 "${email}" 로 로그인했는지 확인하세요. 같은 이메일이면 자동으로 합쳐집니다.
+
+🗂️ 서버에 노트가 0개인데 나는 노트가 있는 경우:
+   이 기기 노트를 "한 번 더보기(동기화)" 버튼으로 올려보세요.
+   (바로 아래의 "지금 동기화" 버튼을 누르세요.)
+
+⚠️ 여전히 안 되면 색상·제목·id 형식이 문제일 수 있습니다.
+   Supabase의 notes 테이블 id 컬럼이 "text(문자열)"인지 확인하고,
+   아니면 테이블을 삭제한 뒤 schema.sql을 실행하세요.`;
   }catch(e){ st.textContent='❌ 점검 실패: '+(e.message||e); }
 };
 
