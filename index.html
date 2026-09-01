@@ -35,21 +35,27 @@ html,body{margin:0;padding:0;height:100%}
 body{
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR","Malgun Gothic",sans-serif;
   background:var(--bg); color:var(--text); font-size:var(--fs);
-  letter-spacing:0; font-stretch:90%;
+  letter-spacing:0; font-stretch:90%; font-weight:700;   /* (요청2) 한글 볼드체로 가독성 향상 */
   -webkit-text-size-adjust:100%; text-size-adjust:100%;
   display:flex; flex-direction:column; min-height:100vh; min-height:100dvh;
 }
-button,input,textarea,select{font-family:inherit; letter-spacing:0; font-stretch:90%}
+button,input,textarea,select{font-family:inherit; letter-spacing:0; font-stretch:90%; font-weight:700}
 button{cursor:pointer}
 .iconbtn{background:none;border:none;color:var(--text);padding:.4em;border-radius:.4em;font-size:.95em;line-height:1;transition:background .15s,transform .1s}
 .iconbtn:active{background:var(--chip);transform:scale(.9)}
 .iconbtn.on{filter:drop-shadow(0 0 4px var(--ok))}
 
-/* ── (요구6) 하단 바 ── */
+/* ── (요청1) 검색바는 화면 맨 위로 ── */
 header{
-  order:2; position:sticky; bottom:0; z-index:30; background:var(--bar);
-  box-shadow:0 -1px 3px rgba(0,0,0,.12); padding:.4em .5em;
-  padding-bottom:calc(.4em + env(safe-area-inset-bottom));
+  order:0; position:sticky; top:0; z-index:30; background:var(--bar);
+  box-shadow:0 1px 3px rgba(0,0,0,.12); padding:.4em .5em;
+  padding-top:calc(.4em + env(safe-area-inset-top));
+}
+/* ── (요청1) 폴더바(전체/노트…)는 하단에 그대로 ── */
+#folderNav{
+  order:3; position:sticky; bottom:0; z-index:30; background:var(--bar);
+  box-shadow:0 -1px 3px rgba(0,0,0,.12); padding:.3em .5em;
+  padding-bottom:calc(.3em + env(safe-area-inset-bottom));
 }
 .hrow{display:flex;align-items:center;gap:.3em}
 .logo{font-weight:800;font-size:.9em;color:var(--text);margin-right:.2em;white-space:nowrap}
@@ -76,19 +82,18 @@ header{
 .chip.trash.on{background:var(--danger);color:#fff}
 
 /* ── 노트 목록 (각진 박스, 간격 없음, 1px 메쉬 유지) ── */
-main{order:1;flex:1;padding:0;max-width:1000px;width:100%;margin:0 auto;
-  padding-top:env(safe-area-inset-top);overflow-y:auto}
+main{order:1;flex:1;padding:0;max-width:1000px;width:100%;margin:0 auto;overflow-y:auto}
 #grid{
   display:grid;grid-template-columns:repeat(var(--cols,2),1fr);
-  gap:0;border-top:1px solid var(--line);border-left:1px solid var(--line)
+  gap:1mm;padding:1mm             /* (요청3) 박스 사이 1mm 간격 */
 }
-#grid.titles{display:flex;flex-direction:column}
+#grid.titles{display:flex;flex-direction:column;gap:1mm}
 #grid.titles .tinner{display:none}
-#grid.list{display:flex;flex-direction:column}
+#grid.list{display:flex;flex-direction:column;gap:1mm}
 .note{
   background:var(--nc,var(--card));
-  border:none;border-right:1px solid var(--line);border-bottom:1px solid var(--line);
-  border-radius:0;padding:0;display:flex;flex-direction:column;
+  border:1px solid var(--line);
+  border-radius:6px;padding:0;display:flex;flex-direction:column;
   position:relative;overflow:hidden;word-break:break-word;
   transition:transform .12s, box-shadow .15s, opacity .2s
 }
@@ -104,7 +109,7 @@ main{order:1;flex:1;padding:0;max-width:1000px;width:100%;margin:0 auto;
 .note .ttl{font-weight:800;font-size:.8em;line-height:1.15;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .note .badges{font-size:.6em;display:flex;gap:.25em;flex:none}
 .note .tinner{padding:.4em .55em .5em;display:flex;flex-direction:column;gap:.3em;flex:1}
-.note .body{font-size:.68em;color:var(--text);opacity:.85;flex:1;overflow:hidden;line-height:1.45;max-height:6.5em}
+.note .body{font-size:.68em;color:var(--text);opacity:1;font-weight:700;flex:1;overflow:hidden;line-height:1.45;max-height:6.5em}
 .note .meta{font-size:.58em;color:var(--sub);display:flex;gap:.4em;align-items:center}
 .note .prog{font-size:.58em;color:var(--sub)}
 .empty{color:var(--sub);text-align:center;padding:3em 1em;font-size:.8em}
@@ -115,7 +120,7 @@ html[data-theme="dark"] mark{background:#c8a000;color:#fff}
 
 /* ── 플로팅 + 버튼 ── */
 #fab,#vFab{
-  position:fixed;right:.9em;bottom:calc(5.2em + env(safe-area-inset-bottom));z-index:20;
+  position:fixed;right:.9em;bottom:calc(3.4em + env(safe-area-inset-bottom));z-index:31;
   width:1.7em;height:1.7em;padding:0;line-height:1;
   display:flex;align-items:center;justify-content:center;
   border-radius:50%;border:none;background:var(--accent);
@@ -128,7 +133,7 @@ html[data-theme="dark"] mark{background:#c8a000;color:#fff}
 #addMenu{position:fixed;inset:0;z-index:45;background:rgba(0,0,0,.35);
   opacity:0;visibility:hidden;transition:opacity .2s}
 #addMenu.show{opacity:1;visibility:visible}
-#addMenu .menucard{position:absolute;right:1em;bottom:calc(7.9em + env(safe-area-inset-bottom));
+#addMenu .menucard{position:absolute;right:1em;bottom:calc(6.1em + env(safe-area-inset-bottom));
   background:var(--card);border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.28);
   padding:.4em;min-width:12em;transform:translateY(12px) scale(.96);opacity:0;transition:transform .22s,opacity .22s}
 #addMenu.show .menucard{transform:translateY(0) scale(1);opacity:1}
@@ -195,7 +200,7 @@ html[data-theme="dark"] mark{background:#c8a000;color:#fff}
 /* (요구7) 첫째 줄 아래 = 화면 전체 입력영역 */
 .edmain{flex:1;overflow:auto;position:relative}
 #edBody{
-  min-height:100%;padding:.9em 1em 3em;font-size:.9em;line-height:1.7;
+  min-height:100%;padding:.9em 1em 3em;font-size:.9em;line-height:1.7;font-weight:700;
   outline:none;color:var(--text);background:transparent;border:none
 }
 #edBody:empty:before{content:attr(data-ph);color:var(--sub)}
@@ -294,13 +299,16 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
     <button class="iconbtn" id="btnTrash" title="휴지통">🗑️</button>
     <button class="iconbtn" id="btnSettings" title="설정">⚙️</button>
   </div>
-  <div class="folderbar" id="folderBar"></div>
 </header>
 
 <main>
   <div id="grid"></div>
   <div id="emptyMsg" class="empty hidden"></div>
 </main>
+
+<nav id="folderNav">
+  <div class="folderbar" id="folderBar"></div>
+</nav>
 
 <button id="fab" title="추가">+</button>
 
@@ -1161,6 +1169,7 @@ const SYNC={
     this.client=null;this.session=null;this.uid=null; },
   onAuth(ev,session){
     this.session=session||null;
+    if(ev==='PASSWORD_RECOVERY'){ setTimeout(()=>doPasswordRecovery(),200); }
     if(session&&session.user){
       this.uid=session.user.id;
       this.pullAll().then(()=>this.pushDirty());
@@ -1335,10 +1344,26 @@ $('#acReset').onclick=async()=>{
   const email=$('#acEmail').value.trim();
   if(!email){$('#acAuthStat').textContent='재설정 메일을 받을 이메일을 입력하세요';return}
   $('#acAuthStat').textContent='재설정 메일 보내는 중...';
-  const {error}=await c.auth.resetPasswordForEmail(email,{redirectTo:location.origin});
+  // (요청5) 재설정 링크는 반드시 '지금 보고 있는 이 사이트 주소'로 돌아오게 함
+  const {error}=await c.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});
   if(error)$('#acAuthStat').textContent='실패: '+error.message;
-  else $('#acAuthStat').textContent='✅ 재설정 메일을 보냈습니다. 메일함(스팸함 포함)을 확인하세요.';
+  else $('#acAuthStat').textContent='✅ 재설정 메일을 보냈습니다. 메일함(스팸함 포함)을 확인하세요.\n메일의 링크는 반드시 이 앱을 연 그 기기/브라우저에서 누르세요.';
 };
+
+/* (요청5) 재설정 메일 링크로 돌아왔을 때: 새 비밀번호 입력받아 변경 */
+async function doPasswordRecovery(){
+  const c=SYNC.makeClient(); if(!c)return;
+  ovOpen($('#acOverlay'));
+  const a=await dlg('비밀번호 재설정\n\n새 비밀번호를 입력하세요 (6자 이상):',{input:true,password:true,okText:'변경'});
+  if(a===null||a===undefined)return;
+  if(a.length<6){toast('6자 이상 입력하세요');return doPasswordRecovery();}
+  const b=await dlg('한 번 더 입력하세요:',{input:true,password:true,okText:'확인'});
+  if(b===null||b===undefined)return;
+  if(a!==b){toast('두 값이 다릅니다. 다시 시도하세요');return doPasswordRecovery();}
+  const {error}=await c.auth.updateUser({password:a});
+  if(error){toast('변경 실패: '+error.message);}
+  else{toast('✅ 비밀번호가 변경되었습니다. 이제 로그인됩니다.');}
+}
 $('#acSignup').onclick=async()=>{
   const c=SYNC.makeClient();
   if(!c){$('#acAuthStat').textContent='먼저 서버 연결을 저장하세요';return}
