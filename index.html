@@ -9,22 +9,35 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="mask-icon" href="icons/icon-maskable-512.png" color="#FFD400">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
   --bg:#f2f3f5; --bg2:#e9eaee; --card:#ffffff; --text:#212121; --sub:#757575;
   --line:#c9ccd2; --accent:#ffc107; --accent2:#e8910d; --bar:#ffffff; --chip:#ececec;
   --danger:#e53935; --ok:#43a047; --shadow:0 1px 3px rgba(0,0,0,.12);
-  --fs:10pt; --boxmin:165px;
+  /* ── 핵심 분리: 앱 UI 글자(--ui, 절대 고정 17pt)와 본문 글자(--note, 14~22pt 가변) ── */
+  --ui:17pt;          /* SK 노트·아이콘·버튼·설정창·메뉴·입력창 제목·도구. 본문 설정과 무관하게 절대 안 변함 */
+  --note:14pt;        /* 사용자가 입력한 본문(에디터·목록 미리보기·체크리스트). 설정과 노트별 옵션으로만 변함 */
+  --notefw:500;       /* 본문 기본 굵기(보통). 너무 굵지도, 너무 가늘지도 않은 중간값 */
+  --boxmin:165px;
 }
 html[data-theme="dark"]{
   --bg:#15161a; --bg2:#1c1e24; --card:#242629; --text:#ececec; --sub:#9aa0a6;
   --line:#33363c; --bar:#1c1e24; --chip:#2e3138; --accent2:#ffb300;
   --shadow:0 1px 4px rgba(0,0,0,.5);
 }
-/* (요청4) 글자 크기 5단계 = 14pt 기준 2pt씩 → 매주작게14 / 작게16 / 중간18 / 크게20 / 매우크게22 */
-html[data-fontsize="xs"]{--fs:14pt} html[data-fontsize="s"]{--fs:16pt}
-html[data-fontsize="m"]{--fs:18pt}  html[data-fontsize="l"]{--fs:20pt} html[data-fontsize="xl"]{--fs:22pt}
+/* ── 노트 본문 글자 5단계 (14pt 기준 2pt씩). UI(--ui)는 어떤 단계에서도 17pt 고정 ── */
+html[data-fontsize="xs"]{--note:14pt}
+html[data-fontsize="s"] {--note:16pt}
+html[data-fontsize="m"] {--note:18pt}
+html[data-fontsize="l"] {--note:20pt}
+html[data-fontsize="xl"]{--note:22pt}
+/* ── 본문 굵기 4단계. 기본 500(보통). 다른 굵기를 골라도 UI(--ui)에는 영향 없음 ── */
+html[data-notefw="300"]{--notefw:300}
+html[data-notefw="400"]{--notefw:400}
+html[data-notefw="500"]{--notefw:500}
+html[data-notefw="600"]{--notefw:600}
 /* 노트박스: 한 줄에 2/3/4개 */
 html[data-cols="2"]{--cols:2} html[data-cols="3"]{--cols:3} html[data-cols="4"]{--cols:4}
 
@@ -34,12 +47,16 @@ html,body{margin:0;padding:0;height:100%}
 /* (요구1) 한글 자간 0, 글자 폭 90% (font-stretch) */
 body{
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR","Malgun Gothic",sans-serif;
-  background:var(--bg); color:var(--text); font-size:var(--fs);
-  letter-spacing:0; font-stretch:90%; font-weight:700;   /* (요청2) 한글 볼드체로 가독성 향상 */
-  -webkit-text-size-adjust:100%; text-size-adjust:100%;
+  background:var(--bg); color:var(--text); font-size:var(--ui);   /* ← 본문 설정과 완전 분리. 항상 17pt */
+  letter-spacing:0; font-stretch:90%; font-weight:700;
+  -webkit-text-size-adjust:100%; text-size-adjust:100%;            /* (요구1) 브라우저 자동 글자 확대 방지 */
   display:flex; flex-direction:column; min-height:100vh; min-height:100dvh;
 }
 button,input,textarea,select{font-family:inherit; letter-spacing:0; font-stretch:90%; font-weight:700}
+/* (요구1) 본문 입력만 사용자가 선택한 글자 크기·굵기 적용 — UI 전체는 절대 안 변함 */
+input[type=text],input[type=password],input[type=email],input[type=search],textarea{
+  font-size:var(--ui); font-weight:700;
+}
 button{cursor:pointer}
 /* (요청1) 앱 상단/하단 바·선택바(제목줄·아이콘·버튼)는 선택 안 되게 → '텍스트만' 선택 보조 */
 /* (요청1) 앱 상/하단 바·선택바·에디터 도구줄(제목줄)은 선택 안 되게 → '텍스트만' 선택 보조 */
@@ -94,14 +111,18 @@ main{order:1;flex:1;padding:0;max-width:1000px;width:100%;margin:0 auto;overflow
   gap:1mm;padding:1mm             /* (요청3) 박스 사이 1mm 간격 */
 }
 #grid.titles{display:flex;flex-direction:column;gap:1mm}
+#grid.titles .note,.grid .note{aspect-ratio:auto}   /* 목록/제목만 보기에서는 정사각형 해제 */
 #grid.titles .tinner{display:none}
 #grid.list{display:flex;flex-direction:column;gap:1mm}
+#grid.list .note{aspect-ratio:auto}                 /* 목록에서도 정사각형 해제 */
 .note{
   background:var(--nc,var(--card));
   border:1px solid var(--line);
   border-radius:6px;padding:0;display:flex;flex-direction:column;
   position:relative;overflow:hidden;word-break:break-word;
-  transition:transform .12s, box-shadow .15s, opacity .2s
+  transition:transform .12s, box-shadow .15s, opacity .2s;
+  /* ── 정사각형 카드: 그리드 셀 안에서 1:1로 균등 배치 ── */
+  aspect-ratio:1/1;
 }
 .note:active{transform:scale(.97)}
 .note.sel{outline:3px solid var(--accent);outline-offset:-3px}
@@ -114,8 +135,8 @@ main{order:1;flex:1;padding:0;max-width:1000px;width:100%;margin:0 auto;overflow
 }
 .note .ttl{font-weight:800;font-size:.8em;line-height:1.1;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .note .badges{font-size:.6em;display:flex;gap:.25em;flex:none}
-.note .tinner{padding:.22em .5em .28em;display:flex;flex-direction:column;gap:.12em;flex:1}
-.note .body{font-size:.68em;color:var(--text);opacity:1;font-weight:600;flex:1;overflow:hidden;line-height:1.25;max-height:3.4em}
+.note .tinner{padding:.22em .5em .28em;display:flex;flex-direction:column;gap:.12em;flex:1;overflow:hidden;min-height:0}
+.note .body{font-size:calc(var(--note) * .5);color:var(--text);opacity:1;font-weight:var(--notefw);flex:1;overflow:hidden;line-height:1.25;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}
 .note .prog{font-size:.58em;color:var(--sub)}
 .empty{color:var(--sub);text-align:center;padding:3em 1em;font-size:.8em}
 .hidden{display:none!important}
@@ -184,7 +205,7 @@ html[data-theme="dark"] mark{background:#c8a000;color:#fff}
 #edOverlay{
   position:fixed;inset:0;z-index:55;background:var(--bg);
   display:flex;flex-direction:column;
-  font-size:15pt;                       /* (요청4) 제목·버튼 등 '앱 글자'는 15pt 고정 (노트 글자 크기와 무관) */
+  font-size:var(--ui);                  /* ← 본문 설정과 무관, 항상 17pt 고정 */
   transform:translateX(100%);transition:transform .28s ease;visibility:hidden
 }
 #edOverlay.show{transform:translateX(0);visibility:visible}
@@ -212,7 +233,7 @@ html[data-theme="dark"] mark{background:#c8a000;color:#fff}
 /* (요구7) 첫째 줄 아래 = 화면 전체 입력영역 */
 .edmain{flex:1;overflow:auto;position:relative}
 #edBody{
-  min-height:100%;padding:.45em .7em 2em;font-size:var(--edfs,var(--fs));line-height:1.05;font-weight:600;
+  min-height:100%;padding:.45em .7em 2em;font-size:var(--edfs,var(--note));font-weight:var(--notefw);line-height:1.05;
   outline:none;color:var(--text);background:transparent;border:none
 }
 #edBody:empty:before{content:attr(data-ph);color:var(--sub)}
@@ -221,7 +242,7 @@ html[data-theme="dark"] mark{background:#c8a000;color:#fff}
 #edItems{padding:.4em .7em 2em}
 .itemrow{display:flex;align-items:center;gap:.5em;padding:.4em .2em;border-bottom:1px solid var(--line)}
 .itemrow input[type=checkbox]{width:1.2em;height:1.2em;accent-color:var(--accent);flex:none}
-.itemrow .itxt{flex:1;font-size:var(--edfs,var(--fs));font-weight:600;border:none;background:transparent;color:var(--text);outline:none}
+.itemrow .itxt{flex:1;font-size:var(--edfs,var(--note));font-weight:var(--notefw);border:none;background:transparent;color:var(--text);outline:none}
 .itemrow .itxt.done{text-decoration:line-through;color:var(--sub)}
 .itemrow .mv{background:var(--chip);border:none;border-radius:.3em;width:1.5em;height:1.5em;font-size:.65em;color:var(--text)}
 #addItemBtn{margin:.6em 1em;width:calc(100% - 2em)}
@@ -304,7 +325,7 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
 <header>
   <div class="hrow">
     <span class="logo" id="logoText">SK 노트</span>
-    <span class="verbadge" id="appVer">v4.3</span>
+    <span class="verbadge" id="appVer">v5.1</span>
     <input id="search" type="search" placeholder="검색...">
     <span class="syncdot" id="syncDot" title="동기화 상태"></span>
     <button class="iconbtn" id="btnView" title="보기 전환">▦</button>
@@ -473,6 +494,14 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
           <option value="l">크게 (20pt)</option><option value="xl">매우크게 (22pt)</option>
         </select>
       </div>
+      <div class="setrow"><label>노트 글자 굵기 (입력 텍스트만)</label>
+        <select id="stFontWeight">
+          <option value="l">가벼움 (300)</option>
+          <option value="n">보통 (400)</option>
+          <option value="b">굵게 (500) — 권장</option>
+          <option value="x">매우굵게 (600)</option>
+        </select>
+      </div>
       <div class="setrow"><label>노트박스 크기 (한 줄 개수)</label>
         <select id="stBox">
           <option value="2">가로 2개씩</option>
@@ -525,7 +554,7 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
 
     <div class="setsec">
       <h4>정보</h4>
-      <div class="hint">SK 노트 v4.3 · Vercel + Supabase 무료 구성</div>
+      <div class="hint">SK 노트 v5.1 · 본문 굵기 4단계 정상화(키 통일) + 노트별 굵기 완전 복원 + UI 17pt 고정</div>
     </div>
   </div>
 </div>
@@ -628,9 +657,13 @@ function noteFontPt(n){ n=n||cur(); const sc=curSettings(); const lvl=(n&&n.font
 /* (요청5) 노트 글자 크기(현재 노트 전용)를 에디터 본문에 적용 */
 function applyEditorFont(n){ n=n||cur(); const pt=noteFontPt(n); const ov=$('#edOverlay'); if(ov){ov.style.setProperty('--edfs',pt+'pt');} }
 
-const DEF={theme:'auto',view:'grid',sort:'color',font:'xs',box:'2',rule:'none',sbUrl:'',sbKey:'',lastSync:0,pinHash:null};
+/* (요구3) 본문 굵기 4단계 — 너무 굵지도, 너무 가늘지도 않게.
+   FONT_WEIGHTS 맵이 '글자 키(l/n/b/x) ↔ 숫자 값(300~600)' 변환의 유일한 기준.
+   모든 저장·로드·적용은 반드시 이 맵을 거쳐야 함 (기본값도 키 'b'로 통일 — v5.1) */
+const FONT_WEIGHTS={l:'300',n:'400',b:'500',x:'600'};   /* 가벼움·보통·굵게·매우굵게 */
+const DEF={theme:'auto',view:'grid',sort:'color',font:'xs',fontWeight:'b',box:'2',rule:'none',sbUrl:'',sbKey:'',lastSync:0,pinHash:null};
 /* (요청6) 보관 노트 전용 설정 기본값 — 일반 노트 설정과 별도로 저장됨 */
-const VAULT_DEF={theme:'auto',view:'grid',sort:'color',font:'xs',box:'2',rule:'none',unlockMinutes:0};
+const VAULT_DEF={theme:'auto',view:'grid',sort:'color',font:'xs',fontWeight:'b',box:'2',rule:'none',unlockMinutes:0};
 function load(){
   /* v2.x → v3 자동 마이그레이션 */
   try{
@@ -651,6 +684,9 @@ function load(){
   try{Object.assign(S.settings,DEF,JSON.parse(STORE.getItem(LS.settings))||{})}catch(e){Object.assign(S.settings,DEF)}
   S.notes.forEach(n=>{ if(n.color==null)n.color=0; if(n.color>4)n.color=n.color%5; });
   if(!['xs','s','m','l','xl'].includes(S.settings.font))S.settings.font='xs';
+  // (요구3) 본문 굵기 4단계, 기본 'b'(보통=500). 옛 숫자값(300~600)은 맵 키로 변환 —
+  //  기존 기본값 '500'이 키와 어긋나 '선택이 무시되던' 반복 버그의 근원. (v5.1 수정)
+  if(!['l','n','b','x'].includes(S.settings.fontWeight))S.settings.fontWeight=({'300':'l','400':'n','500':'b','600':'x'}[S.settings.fontWeight])||'b';
   if(!['2','3','4'].includes(S.settings.box))S.settings.box='2';
   // (요청4) 정렬은 색상 우선을 기본으로 강제 (기존 기기의 '최근수정' 설정 1회 교정)
   if(!S.settings._sortFixed){ S.settings.sort='color'; S.settings._sortFixed=true; }
@@ -748,6 +784,7 @@ function applyPrefs(){
   document.documentElement.dataset.theme=isDark()?'dark':'light';
   document.documentElement.dataset.fontsize=sc.font||'xs';
   document.documentElement.dataset.cols=sc.box||'2';
+  document.documentElement.dataset.notefw=FONT_WEIGHTS[sc.fontWeight]||'500';   /* (요구3) 본문 굵기: 키→숫자 값 변환으로 CSS[data-notefw]와 정합 (v5.1) */
 }
 function visibleNotes(){
   let arr=NOTES().filter(n=>ui.trash?!!n.deleted:!n.deleted);
@@ -821,6 +858,9 @@ function render(){
         if(p>60){const s=Math.max(0,p-30);snip=(s>0?'…':'')+full.slice(s,s+160);}}
       body=`<div class="body">${hl(esc(snip))}</div>`;
     }
+    /* (요구3) 노트별 본문 굵기 → 이 노트의 카드 미리보기 본문에도 적용 (UI 요소에는 영향 없음, v5.1) */
+    if(n.fontWeight&&FONT_WEIGHTS[n.fontWeight])body=body.replace('<div class="body">',
+      `<div class="body" style="font-weight:${FONT_WEIGHTS[n.fontWeight]}">`);
     const hasRemind=n.remindAt&&n.remindAt>Date.now();
     el.innerHTML=`
       ${ui.selMode&&ui.selected.has(n.id)?'<span class="selmark">✓</span>':''}
@@ -960,6 +1000,7 @@ function openEditor(id){
   $('#edBody').innerHTML=linkify(n.content||'');
   applyEditorColor(n.color||0);                      // (요청3) 노트 색 적용
   applyEditorFont(n);                                // (요청5) 노트 전용 글자 크기 적용
+  applyEditorWeight(n);                              // (요구3) 노트 전용 본문 굵기 적용 (미지정이면 전역값) — v5.1 데드코드 활성화
   updateColorBtn(n.color||0);
   renderItems(n);
   applyEdMode();
@@ -1238,6 +1279,31 @@ function buildKebab(){
     frow.append(b);
   });
   m.append(frow);
+  /* v5.0 노트별 본문 굵기 — 가벼움·보통·굵게·매우굵게 (기본값 표시) */
+  const fwh=document.createElement('div');fwh.className='menuhead';fwh.textContent='✒ 글자 굵기 (이 노트만)';m.append(fwh);
+  const fwrow=document.createElement('div');fwrow.className='fontpick';
+  const curFw=(n.fontWeight||'__default__');
+  const wpicks=[['__default__','기본'],['l','가벼움'],['n','보통'],['b','굵게'],['x','매우굵게']];
+  wpicks.forEach(([v,lab])=>{
+    const b=document.createElement('button');b.className='fpbtn'+(v===curFw?' on':'');b.textContent=lab;
+    b.onclick=()=>{
+      if(v==='__default__')delete n.fontWeight; else n.fontWeight=v;
+      n.updatedAt=Date.now();n.dirty=true;schedSave();
+      // 노트별 본문 굵기 즉시 반영. 본문 외 UI는 절대 영향 없음 (--notefw 분리로 안전).
+      applyEditorWeight(n);
+      buildKebab();m.classList.add('show');
+    };
+    fwrow.append(b);
+  });
+  m.append(fwrow);
+}
+
+/** v5.0 노트별 본문 굵기 적용: --edfs처럼 에디터 본문에 굵기 변수 사용.
+    폰트가 통일되도록 --notefw를 현재 노트 값으로 덮어쓰는 헬퍼. */
+function applyEditorWeight(n){
+  const sc=curSettings();
+  const fw=FONT_WEIGHTS[(n&&n.fontWeight)||sc.fontWeight]||'500';
+  document.documentElement.dataset.notefw=fw;
 }
 function moveFromVault(n){
   const copy={id:uid(),folder:'',color:n.color||0,type:n.type,title:n.title,content:n.content,items:n.items||[],pinned:false,
@@ -1652,6 +1718,7 @@ function openSettings(){
   const sc=curSettings();
   $('#stTheme').value=sc.theme;$('#stView').value=sc.view;
   $('#stSort').value=sc.sort;$('#stFont').value=sc.font;$('#stBox').value=sc.box;
+  $('#stFontWeight').value=sc.fontWeight||'b';   /* (요구3) 본문 굵기 4단계 — 키 기본 'b'(보통), 드롭다운 선택 표시 정상화 (v5.1) */
   $('#stRule').value=sc.rule||'none';
   $('#stVaultOpen').value=String(VLT.settings.unlockMinutes||0);
   $('#stPinBtn').textContent=S.settings.pinHash?'변경 / 초기화':'설정';
@@ -1663,6 +1730,7 @@ function applySettingsFromUI(){
   ui.view=$('#stView').value;sc.view=ui.view;
   sc.sort=$('#stSort').value;
   sc.font=$('#stFont').value;
+  sc.fontWeight=$('#stFontWeight').value||'b';   /* (요구3) 본문 굵기 — 드롭다운 글자 키 그대로 저장 (v5.1) */
   sc.box=$('#stBox').value;
   sc.rule=$('#stRule').value;                          // (요청3) 줄 없음 / 줄쳐진 노트
   VLT.settings.unlockMinutes=parseInt($('#stVaultOpen').value||'0',10);   // (요청7)
@@ -1672,7 +1740,7 @@ function applySettingsFromUI(){
 $('#btnSettings').onclick=openSettings;
 $('#stAccountBtn').onclick=()=>{ovCloseUi($('#setOverlay'));openAccount()};
 /* 미리보기: 선택만 해도 즉시 반영(피드백) */
-['#stTheme','#stView','#stSort','#stFont','#stBox','#stRule','#stVaultOpen'].forEach(sel=>$(sel).addEventListener('change',applySettingsFromUI));
+['#stTheme','#stView','#stSort','#stFont','#stFontWeight','#stBox','#stRule','#stVaultOpen'].forEach(sel=>$(sel).addEventListener('change',applySettingsFromUI));
 $('#setSave').onclick=()=>{ applySettingsFromUI(); toast('설정을 저장했습니다'); ovCloseUi($('#setOverlay')); };
 $('#setClose').onclick=()=>{ applySettingsFromUI(); ovCloseUi($('#setOverlay')); };
 
@@ -1736,7 +1804,15 @@ $('#stWipe').onclick=async()=>{
 /* ═══════════════ 헤더/플로팅 버튼 (요구4) ═══════════════ */
 $('#search').addEventListener('input',e=>{ui.search=e.target.value;render()});
 const addMenu=$('#addMenu');
-$('#fab').onclick=e=>{e.stopPropagation();addMenu.classList.toggle('show')};
+/** v5.0 빠른 메모: 한 번 탭 = 새 메모 즉시. 길게 누름 = 메뉴 선택. */
+let fabLongPressT=null, fabLongPressed=false;
+function fabLongPressStart(){fabLongPressed=false;fabLongPressT=setTimeout(()=>{fabLongPressed=true;addMenu.classList.toggle('show');if(navigator.vibrate)try{navigator.vibrate(30)}catch(e){}},500)}
+function fabLongPressEnd(){clearTimeout(fabLongPressT)}
+$('#fab').onpointerdown=fabLongPressStart;
+$('#fab').onpointerup=fabLongPressEnd;
+$('#fab').onpointermove=fabLongPressEnd;
+$('#fab').onpointercancel=fabLongPressEnd;
+$('#fab').onclick=e=>{e.stopPropagation(); if(!fabLongPressed){const n=newNote('note');openEditor(n.id);}};
 addMenu.onclick=()=>addMenu.classList.remove('show');
 $('#addNote').onclick=()=>{addMenu.classList.remove('show');const n=newNote('note');openEditor(n.id)};
 $('#addCheck').onclick=()=>{addMenu.classList.remove('show');const n=newNote('check');n.items=[{text:'',done:false}];touch();openEditor(n.id)};
@@ -1760,6 +1836,7 @@ const VLT={
   persistSettings(){STORE.setItem('sk.vault.settings',JSON.stringify(this.settings))},
   async init(){
     this.load();
+    if(!['l','n','b','x'].includes(this.settings.fontWeight))this.settings.fontWeight=({'300':'l','400':'n','500':'b','600':'x'}[this.settings.fontWeight])||'b';   /* (요구3) v5.1: 옛 숫자값→키 변환 */
     try{ if(window.PublicKeyCredential && await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()) this.bio=true }catch(e){}
     $('#vBioRow').classList.toggle('hidden',!this.bio);
   },
