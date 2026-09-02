@@ -110,13 +110,12 @@ main{order:1;flex:1;padding:0;max-width:1000px;width:100%;margin:0 auto;overflow
   font-size:.7em;font-weight:900;z-index:2}
 .note .thead{
   background:var(--tc,var(--chip));   /* (요구16) 제목줄 진한 2톤 */
-  padding:.2em .5em;display:flex;align-items:center;gap:.3em;min-height:0
+  padding:.14em .5em;display:flex;align-items:center;gap:.3em;min-height:0
 }
-.note .ttl{font-weight:800;font-size:.8em;line-height:1.15;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.note .ttl{font-weight:800;font-size:.8em;line-height:1.1;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .note .badges{font-size:.6em;display:flex;gap:.25em;flex:none}
-.note .tinner{padding:.4em .55em .5em;display:flex;flex-direction:column;gap:.3em;flex:1}
-.note .body{font-size:.68em;color:var(--text);opacity:1;font-weight:700;flex:1;overflow:hidden;line-height:1.45;max-height:6.5em}
-.note .meta{font-size:.58em;color:var(--sub);display:flex;gap:.4em;align-items:center}
+.note .tinner{padding:.22em .5em .28em;display:flex;flex-direction:column;gap:.12em;flex:1}
+.note .body{font-size:.68em;color:var(--text);opacity:1;font-weight:600;flex:1;overflow:hidden;line-height:1.25;max-height:3.4em}
 .note .prog{font-size:.58em;color:var(--sub)}
 .empty{color:var(--sub);text-align:center;padding:3em 1em;font-size:.8em}
 .hidden{display:none!important}
@@ -185,7 +184,7 @@ html[data-theme="dark"] mark{background:#c8a000;color:#fff}
 #edOverlay{
   position:fixed;inset:0;z-index:55;background:var(--bg);
   display:flex;flex-direction:column;
-  font-size:17pt;                       /* (요청3) 제목·버튼 등 '앱 글자'는 17pt 고정 (노트 글자 크기와 무관) */
+  font-size:15pt;                       /* (요청4) 제목·버튼 등 '앱 글자'는 15pt 고정 (노트 글자 크기와 무관) */
   transform:translateX(100%);transition:transform .28s ease;visibility:hidden
 }
 #edOverlay.show{transform:translateX(0);visibility:visible}
@@ -197,8 +196,8 @@ html[data-theme="dark"] mark{background:#c8a000;color:#fff}
   background:var(--bar);box-shadow:var(--shadow);flex:none
 }
 #edTitle{
-  flex:1;min-width:0;background:transparent;border:none;outline:none;
-  font-size:1em;font-weight:800;color:var(--text);padding:.2em .2em      /* (요구8) 높이 축소 */
+  flex:1;min-width:0;background:#fff;border:1px solid var(--line);outline:none;
+  font-size:1em;font-weight:800;color:#212121;padding:.35em .6em;border-radius:.5em;margin-right:.3em  /* (요청2) 흰색 박스에 제목 입력 */
 }
 #edTitle::placeholder{color:var(--sub);font-weight:600}
 .edtool{
@@ -213,16 +212,16 @@ html[data-theme="dark"] mark{background:#c8a000;color:#fff}
 /* (요구7) 첫째 줄 아래 = 화면 전체 입력영역 */
 .edmain{flex:1;overflow:auto;position:relative}
 #edBody{
-  min-height:100%;padding:.9em 1em 3em;font-size:var(--edfs,var(--fs));line-height:1.7;font-weight:700;
+  min-height:100%;padding:.45em .7em 2em;font-size:var(--edfs,var(--fs));line-height:1.05;font-weight:600;
   outline:none;color:var(--text);background:transparent;border:none
 }
 #edBody:empty:before{content:attr(data-ph);color:var(--sub)}
 #edBody b,#edBody strong{font-weight:800}
 #edBody.viewmode{cursor:default}
-#edItems{padding:.6em 1em 3em}
+#edItems{padding:.4em .7em 2em}
 .itemrow{display:flex;align-items:center;gap:.5em;padding:.4em .2em;border-bottom:1px solid var(--line)}
 .itemrow input[type=checkbox]{width:1.2em;height:1.2em;accent-color:var(--accent);flex:none}
-.itemrow .itxt{flex:1;font-size:var(--edfs,var(--fs));border:none;background:transparent;color:var(--text);outline:none}
+.itemrow .itxt{flex:1;font-size:var(--edfs,var(--fs));font-weight:600;border:none;background:transparent;color:var(--text);outline:none}
 .itemrow .itxt.done{text-decoration:line-through;color:var(--sub)}
 .itemrow .mv{background:var(--chip);border:none;border-radius:.3em;width:1.5em;height:1.5em;font-size:.65em;color:var(--text)}
 #addItemBtn{margin:.6em 1em;width:calc(100% - 2em)}
@@ -305,7 +304,7 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
 <header>
   <div class="hrow">
     <span class="logo" id="logoText">SK 노트</span>
-    <span class="verbadge" id="appVer">v4.1</span>
+    <span class="verbadge" id="appVer">v4.3</span>
     <input id="search" type="search" placeholder="검색...">
     <span class="syncdot" id="syncDot" title="동기화 상태"></span>
     <button class="iconbtn" id="btnView" title="보기 전환">▦</button>
@@ -481,6 +480,12 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
           <option value="4">가로 4개씩</option>
         </select>
       </div>
+      <div class="setrow"><label>입력 노트 모양</label>
+        <select id="stRule">
+          <option value="none">줄 없음 (일반)</option>
+          <option value="line">줄쳐진 노트</option>
+        </select>
+      </div>
     </div>
 
     <div class="setsec">
@@ -520,7 +525,7 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
 
     <div class="setsec">
       <h4>정보</h4>
-      <div class="hint">SK 노트 v4.1 · Vercel + Supabase 무료 구성</div>
+      <div class="hint">SK 노트 v4.3 · Vercel + Supabase 무료 구성</div>
     </div>
   </div>
 </div>
@@ -623,9 +628,9 @@ function noteFontPt(n){ n=n||cur(); const sc=curSettings(); const lvl=(n&&n.font
 /* (요청5) 노트 글자 크기(현재 노트 전용)를 에디터 본문에 적용 */
 function applyEditorFont(n){ n=n||cur(); const pt=noteFontPt(n); const ov=$('#edOverlay'); if(ov){ov.style.setProperty('--edfs',pt+'pt');} }
 
-const DEF={theme:'auto',view:'grid',sort:'color',font:'xs',box:'2',sbUrl:'',sbKey:'',lastSync:0,pinHash:null};
+const DEF={theme:'auto',view:'grid',sort:'color',font:'xs',box:'2',rule:'none',sbUrl:'',sbKey:'',lastSync:0,pinHash:null};
 /* (요청6) 보관 노트 전용 설정 기본값 — 일반 노트 설정과 별도로 저장됨 */
-const VAULT_DEF={theme:'auto',view:'grid',sort:'color',font:'xs',box:'2',unlockMinutes:0};
+const VAULT_DEF={theme:'auto',view:'grid',sort:'color',font:'xs',box:'2',rule:'none',unlockMinutes:0};
 function load(){
   /* v2.x → v3 자동 마이그레이션 */
   try{
@@ -825,7 +830,6 @@ function render(){
       </div>
       <div class="tinner">
         ${body}
-        <div class="meta"><span>${fmtDate(n.updatedAt)}</span>${folder?`<span>·</span><span>${esc(folder.name)}</span>`:''}</div>
       </div>`;
     attachNoteHandlers(el,n);
     g.append(el);
@@ -974,10 +978,20 @@ function applyEditorColor(sel){
   const dark=isDark(); const PAL=dark?COLORS_D:COLORS, HEAD=dark?HEADS_D:HEADS_L;
   const soft=dark?PAL[sel]:mix(PAL[sel],'#ffffff',0.55);   // 본문: 아주 연하게
   $('#edOverlay').style.background=soft;
-  $('#edBody').style.background=soft;
-  $('#edItems').style.background=soft;
+  setBodyBg($('#edBody'),soft,dark);                       // (요청3) 줄 없음/줄쳐진 노트
+  setBodyBg($('#edItems'),soft,dark);
   $('.edbar')&&($('.edbar').style.background=HEAD[sel]);    // 제목바: 진한색
-  $('#edTitle').style.background='transparent';
+  $('#edTitle').style.background='#fff';
+}
+/* (요청3) 설정>입력 노트 모양: '줄쳐진 노트'면 가로줄 배경, 아니면 그냥 연한 색 */
+function setBodyBg(el,soft,dark){
+  if(!el)return;
+  if((curSettings().rule||'none')==='line'){
+    const line=dark?'rgba(255,255,255,.16)':'rgba(0,0,0,.09)';
+    el.style.background=`repeating-linear-gradient(180deg, transparent 0, transparent 1.05em, ${line} 1.05em, ${line} calc(1.05em + 1px))`;
+  }else{
+    el.style.background=soft;
+  }
 }
 /* 두 색을 섞기 (t=0 → a, t=1 → b) */
 function mix(a,b,t){
@@ -1638,6 +1652,7 @@ function openSettings(){
   const sc=curSettings();
   $('#stTheme').value=sc.theme;$('#stView').value=sc.view;
   $('#stSort').value=sc.sort;$('#stFont').value=sc.font;$('#stBox').value=sc.box;
+  $('#stRule').value=sc.rule||'none';
   $('#stVaultOpen').value=String(VLT.settings.unlockMinutes||0);
   $('#stPinBtn').textContent=S.settings.pinHash?'변경 / 초기화':'설정';
   ovOpen($('#setOverlay'));
@@ -1649,6 +1664,7 @@ function applySettingsFromUI(){
   sc.sort=$('#stSort').value;
   sc.font=$('#stFont').value;
   sc.box=$('#stBox').value;
+  sc.rule=$('#stRule').value;                          // (요청3) 줄 없음 / 줄쳐진 노트
   VLT.settings.unlockMinutes=parseInt($('#stVaultOpen').value||'0',10);   // (요청7)
   if(ui.vault)VLT.persistSettings(); else save();
   applyPrefs();render();applyViewBtn();
@@ -1656,7 +1672,7 @@ function applySettingsFromUI(){
 $('#btnSettings').onclick=openSettings;
 $('#stAccountBtn').onclick=()=>{ovCloseUi($('#setOverlay'));openAccount()};
 /* 미리보기: 선택만 해도 즉시 반영(피드백) */
-['#stTheme','#stView','#stSort','#stFont','#stBox','#stVaultOpen'].forEach(sel=>$(sel).addEventListener('change',applySettingsFromUI));
+['#stTheme','#stView','#stSort','#stFont','#stBox','#stRule','#stVaultOpen'].forEach(sel=>$(sel).addEventListener('change',applySettingsFromUI));
 $('#setSave').onclick=()=>{ applySettingsFromUI(); toast('설정을 저장했습니다'); ovCloseUi($('#setOverlay')); };
 $('#setClose').onclick=()=>{ applySettingsFromUI(); ovCloseUi($('#setOverlay')); };
 
