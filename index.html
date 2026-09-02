@@ -27,12 +27,8 @@ html[data-theme="dark"]{
   --line:#33363c; --bar:#1c1e24; --chip:#2e3138; --accent2:#ffb300;
   --shadow:0 1px 4px rgba(0,0,0,.5);
 }
-/* ── 노트 본문 글자 5단계 (14pt 기준 2pt씩). UI(--ui)는 어떤 단계에서도 17pt 고정 ── */
-html[data-fontsize="xs"]{--note:14pt}
-html[data-fontsize="s"] {--note:16pt}
-html[data-fontsize="m"] {--note:18pt}
-html[data-fontsize="l"] {--note:20pt}
-html[data-fontsize="xl"]{--note:22pt}
+/* ── 노트 본문 글자 크기: 10~25pt 중 사용자가 1pt씩 선택 (설정창 스테퍼) ──
+   --note는 applyPrefs()에서 인라인으로 '12pt' 등 실제 값이 들어감 (v5.3) */
 /* ── 본문 굵기 4단계. 기본 500(보통). 다른 굵기를 골라도 UI(--ui)에는 영향 없음 ── */
 html[data-notefw="300"]{--notefw:300}
 html[data-notefw="400"]{--notefw:400}   /* 이전 버전 값(하위 호환) */
@@ -45,6 +41,7 @@ html[data-cols="2"]{--cols:2} html[data-cols="3"]{--cols:3} html[data-cols="4"]{
 
 *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
 html{touch-action:manipulation}          /* (요구3) 더블탭 확대 방지 */
+html{height:100%;overflow:hidden}          /* (요청5) 어떤 화면도 뷰포트 밖으로 커지지 않게 html까지 고정 */
 html,body{margin:0;padding:0;height:100%}
 /* (요구1) 한글 자간 0, 글자 폭 90% (font-stretch) */
 body{
@@ -64,7 +61,7 @@ button{cursor:pointer}
 /* (요청1) 앱 상단/하단 바·선택바(제목줄·아이콘·버튼)는 선택 안 되게 → '텍스트만' 선택 보조 */
 /* (요청1) 앱 상/하단 바·선택바·에디터 도구줄(제목줄)은 선택 안 되게 → '텍스트만' 선택 보조 */
 header,#folderNav,#selMode,.edbar,.edmain #addItemBtn,.edbar *:not(#edTitle),.edbar button{user-select:none;-webkit-user-select:none}
-.iconbtn{background:none;border:none;color:var(--text);padding:.4em;border-radius:.4em;font-size:.95em;line-height:1;transition:background .15s,transform .1s}
+.iconbtn{background:none;border:none;color:var(--text);padding:.4em;border-radius:.4em;font-size:.95em;line-height:1;transition:background .15s,transform .1s;flex:none}
 .iconbtn:active{background:var(--chip);transform:translateY(1px) scale(.92);box-shadow:inset 0 2px 4px rgba(0,0,0,.2)}   /* (요청3) 눌리는 모양이 확실히 보이게 */
 .iconbtn.on{filter:drop-shadow(0 0 4px var(--ok))}
 
@@ -73,16 +70,17 @@ header{
   order:0; position:sticky; top:0; z-index:30; background:var(--bar);
   box-shadow:0 1px 3px rgba(0,0,0,.12); padding:.4em .5em;
   padding-top:calc(.4em + env(safe-area-inset-top));
+  flex:none; overflow:hidden;          /* (요청5) 헤더는 화면 상단에 항상 고정 — 버튼이 잘리지 않음 */
 }
 /* ── (요청1) 폴더바(전체/노트…)는 하단에 그대로 ── */
 #folderNav{
-  order:3; position:sticky; bottom:0; z-index:30; background:var(--bar);
+  order:3; bottom:0; z-index:30; background:var(--bar);
   box-shadow:0 -1px 3px rgba(0,0,0,.12); padding:.3em .5em;
   padding-bottom:calc(.3em + env(safe-area-inset-bottom));
-  position:sticky;
+  flex:none;                          /* (요청5) 하단 바 고정 — 화면 밖으로 밀리지 않음 */
 }
-.hrow{display:flex;align-items:center;gap:.3em}
-.logo{font-weight:800;font-size:.9em;color:var(--text);margin-right:.2em;white-space:nowrap}
+.hrow{display:flex;align-items:center;gap:.3em;min-width:0}
+.logo{font-weight:800;font-size:.9em;color:var(--text);margin-right:.2em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:38%;min-width:0;flex:none}
 /* (요청10) 항상 보이는 버전 배지 → 새 버전이 떴는지 눈으로 확인 */
 .verbadge{font-size:.5em;color:var(--sub);font-weight:700;background:var(--chip);border-radius:.5em;padding:.15em .5em;vertical-align:middle;white-space:nowrap}
 
@@ -118,7 +116,7 @@ main{order:1;flex:1;padding:0;max-width:1000px;width:100%;margin:0 auto;overflow
 #grid.titles .tinner{display:block;padding:.22em .6em .3em}   /* (요청7) 제목만 보기에서도 내용 첫 부분을 함께 보여줌 */
 #grid.titles .note .body{font-size:11pt;-webkit-line-clamp:1;line-height:1.35;flex:none}
 #grid.titles .note .prog{display:none}
-#grid.titles .ttl{font-size:1em;font-weight:900}   /* (요청7) 제목만 보기: 제목 15% 굵게 (800→900) */
+#grid.titles .ttl{font-size:.8em;font-weight:800}   /* (요청4) 제목 굵기 이전값(800)으로 복원 */
 #grid.list{display:flex;flex-direction:column;gap:1mm}
 #grid.list .note{aspect-ratio:auto}                 /* 목록에서도 정사각형 해제 */
 .note{
@@ -142,9 +140,9 @@ main{order:1;flex:1;padding:0;max-width:1000px;width:100%;margin:0 auto;overflow
 .note .ttl{font-weight:800;font-size:.8em;line-height:1.1;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .note .badges{font-size:.6em;display:flex;gap:.25em;flex:none}
 .note .tinner{padding:.22em .5em .28em;display:flex;flex-direction:column;gap:.12em;flex:1;overflow:hidden;min-height:0}
-.note .body{font-size:12pt;color:var(--text);opacity:1;font-weight:var(--notefw);flex:1;overflow:hidden;line-height:1.25;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}
-/* (요청2) 첫 화면 미리보기 글자는 '매우 크게(22pt)일 때 보이는 크기보다 살짝 크게'로 고정.
-   노트를 열어 글자 크기(14~22pt/노트별)를 바꿔도 카드 미리보기는 절대 변하지 않음 */
+.note .body{font-size:12pt;color:var(--text);opacity:1;font-weight:400;flex:1;overflow:hidden;line-height:1.25;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}
+/* (요청6) 카드 미리보기 글자 크기(12pt)·굵기(400)는 완전 고정.
+   설정에서 크기/굵기를 바꾸거나 노트 내부가 달라도 모든 노트박스 미리보기는 동일하게 보임 */
 .note .prog{font-size:.58em;color:var(--sub)}
 .empty{color:var(--sub);text-align:center;padding:3em 1em;font-size:.8em}
 .hidden{display:none!important}
@@ -153,7 +151,7 @@ mark{background:#ffe14d;color:#212121;border-radius:2px;padding:0 1px}
 html[data-theme="dark"] mark{background:#c8a000;color:#fff}
 
 /* ── 플로팅 + 버튼 (하단 바 바로 위에 붙음) ── */
-#folderNav{position:relative}
+#folderNav{position:relative;flex:none}
 #fab,#vFab{
   position:absolute;right:.7em;bottom:100%;margin-bottom:.5em;z-index:31;
   width:1.7em;height:1.7em;padding:0;line-height:1;
@@ -246,7 +244,7 @@ html[data-theme="dark"] mark{background:#c8a000;color:#fff}
 /* (요구7) 첫째 줄 아래 = 화면 전체 입력영역 */
 .edmain{flex:1;overflow:auto;position:relative;min-height:0}   /* (요청1) 긴 노트도 에디터 안에서만 스크롤 — 아래 도구/항목은 항상 화면 안에 보임 */
 #edBody{
-  min-height:100%;padding:.45em .7em 2em;font-size:var(--edfs,var(--note));font-weight:var(--notefw);line-height:1.05;
+  min-height:100%;padding:.45em .7em 2em;font-size:var(--note);font-weight:var(--notefw);line-height:1.05;
   outline:none;color:var(--text);background:transparent;border:none
 }
 #edBody:empty:before{content:attr(data-ph);color:var(--sub)}
@@ -255,7 +253,7 @@ html[data-theme="dark"] mark{background:#c8a000;color:#fff}
 #edItems{padding:.4em .7em 2em}
 .itemrow{display:flex;align-items:center;gap:.5em;padding:.4em .2em;border-bottom:1px solid var(--line)}
 .itemrow input[type=checkbox]{width:1.2em;height:1.2em;accent-color:var(--accent);flex:none}
-.itemrow .itxt{flex:1;font-size:var(--edfs,var(--note));font-weight:var(--notefw);border:none;background:transparent;color:var(--text);outline:none}
+.itemrow .itxt{flex:1;font-size:var(--note);font-weight:var(--notefw);border:none;background:transparent;color:var(--text);outline:none}
 .itemrow .itxt.done{text-decoration:line-through;color:var(--sub)}
 .itemrow .mv{background:var(--chip);border:none;border-radius:.3em;width:1.5em;height:1.5em;font-size:.65em;color:var(--text)}
 #addItemBtn{margin:.6em 1em;width:calc(100% - 2em)}
@@ -274,6 +272,46 @@ html[data-theme="dark"] mark{background:#c8a000;color:#fff}
 .palpop button{width:1.4em;height:1.4em;border-radius:50%;border:1px solid rgba(0,0,0,.15)}
 
 /* 컬러 선택 팝오버(사각 컬러박스용) */
+/* (요청1) Type(서식) 팝오버 — 글자크기·볼드·이탤릭·밑줄·이모티콘·줄간격 */
+#edTypePop{position:absolute;z-index:70;top:2.6em;right:.4em;background:var(--card);
+  border:1px solid var(--line);border-radius:.6em;box-shadow:0 6px 20px rgba(0,0,0,.25);
+  padding:.5em .6em;width:min(92vw,280px);
+  opacity:0;visibility:hidden;transform:translateY(-6px);transition:opacity .16s,transform .16s}
+#edTypePop.show{opacity:1;visibility:visible;transform:translateY(0)}
+.tprow{display:flex;align-items:center;gap:.4em;margin:.28em 0;flex-wrap:wrap}
+.tplab{font-size:.6em;color:var(--sub);font-weight:700;width:3.1em;flex:none}
+.tpbtn{background:var(--chip);border:none;color:var(--text);border-radius:.4em;padding:.32em .7em;font-size:.78em;font-weight:700}
+.tpval{min-width:2.6em;text-align:center;font-size:.78em;font-weight:800}
+.tpbiu{background:var(--chip);border:none;color:var(--text);border-radius:.4em;min-width:2.2em;height:2.2em;font-size:.8em;font-weight:800;font-style:normal}
+.tpbiu.on{background:var(--accent);color:#3d2c00}
+.tpemo{display:flex;flex-wrap:wrap;gap:.1em;margin:.15em 0}
+.tpemo button{background:none;border:none;font-size:1.15em;padding:.08em .18em;border-radius:.3em}
+.tpemo button:active{background:var(--chip)}
+
+/* (요청7) 설정 - 글자크기 스테퍼 + 실시간 샘플 */
+.fontstep{display:flex;align-items:center;gap:.35em}
+.fsbtn{background:var(--chip);border:none;color:var(--text);border-radius:.4em;width:2.1em;height:2.1em;font-size:.85em;font-weight:800}
+.fsbtn:active{background:var(--accent);color:#3d2c00}
+.fsval{min-width:2em;text-align:center;font-size:1em;font-weight:800}
+.fsunit{font-size:.6em;color:var(--sub)}
+.fontsample{margin:.4em 0 .6em;padding:.45em .7em;background:var(--card);border:1px dashed var(--line);
+  border-radius:.5em;color:var(--text);line-height:1.4;text-align:center}
+
+/* (요청2) 이미지 리사이즈: 에디터 안 이미지 + 선택 시 컨트롤 바 + 전체화면 미리보기 */
+#edBody img.edimg{max-width:100%;height:auto;border-radius:8px;margin:.3em 0;display:block}
+#edBody img.edimg.sel{outline:3px solid var(--accent);outline-offset:2px}
+#imgBar{position:absolute;left:0;right:0;bottom:0;z-index:72;display:flex;align-items:center;gap:.35em;
+  background:var(--bar);border-top:1px solid var(--line);padding:.4em .6em;
+  box-shadow:0 -2px 8px rgba(0,0,0,.15);flex-wrap:wrap}
+#imgBar .ib{background:var(--chip);border:none;border-radius:.4em;color:var(--text);font-size:.75em;font-weight:700;padding:.35em .7em}
+#imgBar .ib.danger{background:var(--danger);color:#fff}
+#imgBar .stat{font-size:.72em;color:var(--sub);flex:1;min-width:3em;text-align:center}
+#imgPrev{position:fixed;inset:0;z-index:130;background:rgba(0,0,0,.94);display:flex;align-items:center;justify-content:center;padding:1em}
+#imgPrev.hidden{display:none}
+#imgPrev img{max-width:100%;max-height:100%;border-radius:8px}
+#imgPrev span{position:absolute;top:.8em;right:.9em;color:#fff;font-size:1.3em;background:rgba(0,0,0,.5);
+  border-radius:50%;width:1.6em;height:1.6em;display:flex;align-items:center;justify-content:center}
+
 #edColorPop{position:absolute;z-index:70;top:2.6em;right:.4em;background:var(--card);
   border:1px solid var(--line);border-radius:.7em;box-shadow:0 8px 26px rgba(0,0,0,.25);
   padding:.5em;display:flex;gap:.4em;opacity:0;visibility:hidden;transform:translateY(-6px);transition:.18s}
@@ -338,7 +376,7 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
 <header>
   <div class="hrow">
     <span class="logo" id="logoText">SK 노트</span>
-    <span class="verbadge" id="appVer">v5.2</span>
+    <span class="verbadge" id="appVer">v5.3</span>
     <input id="search" type="search" placeholder="검색...">
     <span class="syncdot" id="syncDot" title="동기화 상태"></span>
     <button class="iconbtn" id="btnView" title="보기 전환">▦</button>
@@ -378,12 +416,16 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
       <button class="edtool" id="edPencil" title="편집 모드 — 누르면 본문 맨 아래로 커서 이동">
         <svg viewBox="0 0 512 512" width="1.15em" height="1.15em" aria-hidden="true"><path fill="currentColor" d="M290.74 93.24l128.02 128.02-277.99 277.99-114.14 12.6C11.35 513.54-1.56 500.62.14 485.34l12.7-114.22 277.9-277.88zm207.2-19.06l-60.11-60.11c-18.75-18.75-49.16-18.75-67.91 0l-56.55 56.55 128.02 128.02 56.55-56.55c18.75-18.76 18.75-49.15 0-67.91z"/></svg>
       </button>
-      <button class="edtool" id="edImgBtn" title="사진 넣기">📷</button>
+      <button class="edtool" id="edTypeBtn" title="서식 — 글자 크기·굵기·기울임·밑줄·이모티콘·줄간격 (선택 텍스트)">T</button>
+      <button class="edtool" id="edImgBtn" title="탭=갤러리 · 길게=카메라 촬영">📷</button>
       <button class="edtool" id="edColorBtn" title="색상 (5색)"></button>
       <button class="edtool" id="edKebab" title="더보기">⋮</button>
       <input type="file" id="edImgFile" accept="image/*" style="display:none">
+      <input type="file" id="edImgCam" accept="image/*" capture="environment" style="display:none">
       <!-- 컬러 팝오버 -->
       <div id="edColorPop"></div>
+      <!-- 서식(Type) 팝오버 -->
+      <div id="edTypePop"></div>
       <!-- 케밥 메뉴 -->
       <div id="edMenu"></div>
     </div>
@@ -391,9 +433,19 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
       <div id="edBody" class="viewmode" data-ph="내용을 입력하세요..."></div>
       <div id="edItems" class="hidden"></div>
       <button class="btn" id="addItemBtn">+ 항목 추가</button>
+      <!-- (요청2) 이미지 리사이즈 바 -->
+      <div id="imgBar" class="hidden">
+        <button class="ib" id="imgSmaller">− 작게</button>
+        <span class="stat" id="imgBarPct">100%</span>
+        <button class="ib" id="imgBigger">크게 ＋</button>
+        <button class="ib danger" id="imgDelete">🗑 삭제</button>
+        <button class="ib" id="imgClose">✕ 닫기</button>
+      </div>
     </div>
   </div>
 </div>
+<!-- (요청2) 이미지 전체화면 미리보기 -->
+<div id="imgPrev" class="hidden"></div>
 
 <!-- 선택 서식 툴바(볼드 등) -->
 <div id="selBar">
@@ -503,12 +555,14 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
           <option value="manual">직접 순서</option>
         </select>
       </div>
-      <div class="setrow"><label>노트 글자 크기 (14~22pt)</label>
-        <select id="stFont">
-          <option value="xs">매우작게 (14pt)</option><option value="s">작게 (16pt)</option><option value="m">중간 (18pt)</option>
-          <option value="l">크게 (20pt)</option><option value="xl">매우크게 (22pt)</option>
-        </select>
+      <div class="setrow"><label>노트 글자 크기 (10~25pt)</label>
+        <div class="fontstep">
+          <button type="button" class="fsbtn" id="stFontMinus" title="1pt 줄임">−</button>
+          <span class="fsval" id="stFontVal">12</span><span class="fsunit">pt</span>
+          <button type="button" class="fsbtn" id="stFontPlus" title="1pt 늘림">＋</button>
+        </div>
       </div>
+      <div class="fontsample" id="stFontSample">가나다 Abc 123 — 지금 크기 미리보기</div>
       <div class="setrow"><label>노트 글자 굵기 (입력 텍스트만)</label>
         <select id="stFontWeight">
           <option value="l">가벼움 (300)</option>
@@ -569,7 +623,7 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
 
     <div class="setsec">
       <h4>정보</h4>
-      <div class="hint">SK 노트 v5.2 · 화면 고정(안 넘침) + 카드 미리보기 고정 + 굵기 4단계 확대(300/500/700/900) + 뒤로가기=노트 복귀 + 연필 개선</div>
+      <div class="hint">SK 노트 v5.3 · Type(T) 서식(크기·굵기·밑줄·이모티콘·줄간격) + 글자크기 스테퍼(10~25pt·샘플) + 이미지 크기조절/카메라 + 보관노트 폴더 + 미리보기 완전 고정</div>
     </div>
   </div>
 </div>
@@ -668,17 +722,19 @@ function curSettings(){ return ui.vault ? VLT.settings : S.settings; }
 
 /* (요청4) 글자 크기 5단계 → pt */
 const FONTS_PT={xs:14,s:16,m:18,l:20,xl:22};
-function noteFontPt(n){ n=n||cur(); const sc=curSettings(); const lvl=(n&&n.font)||sc.font||'m'; return FONTS_PT[lvl]||18; }
-/* (요청5) 노트 글자 크기(현재 노트 전용)를 에디터 본문에 적용 */
-function applyEditorFont(n){ n=n||cur(); const pt=noteFontPt(n); const ov=$('#edOverlay'); if(ov){ov.style.setProperty('--edfs',pt+'pt');} }
+/* (요청7/요청1) 글자 크기: 'pt 숫자(10~25)' 하나로 통일 — 노트별 크기 기능은 폐지, 크기는 설정에서만.
+   모든 크기는 --note 인라인으로만 적용되어 UI(17pt)와 완전 분리됨 */
+function ptClamp(v){ v=parseInt(v)||12; return Math.max(10,Math.min(25,v)); }
+const FONT_KEYS_PT={'xs':12,'s':14,'m':16,'l':18,'xl':20};   /* (v5.3 이전) 구버전 5단계 → pt 마이그레이션 */
+function migFont(f){ if(f==null)return '12'; if(FONT_KEYS_PT[f]!=null)return String(FONT_KEYS_PT[f]); return String(ptClamp(f)); }
 
 /* (요구3) 본문 굵기 4단계 — 단계 간 차이가 확실하게 구분되도록 (v5.2):
    가벼움 300(Light) · 보통 500(Medium) · 굵게 700(Bold) · 매우굵게 900(Black).
    FONT_WEIGHTS 맵이 '글자 키(l/n/b/x) ↔ 숫자 값' 변환의 유일한 기준. 모든 저장·로드·적용은 이 맵을 거침 */
 const FONT_WEIGHTS={l:'300',n:'500',b:'700',x:'900'};   /* 가벼움·보통·굵게·매우굵게 — 간격이 확실하게 나뉜 새 굵기 */
-const DEF={theme:'auto',view:'grid',sort:'color',font:'xs',fontWeight:'n',box:'2',rule:'none',sbUrl:'',sbKey:'',lastSync:0,pinHash:null};
+const DEF={theme:'auto',view:'grid',sort:'color',font:'12',fontWeight:'n',box:'2',rule:'none',sbUrl:'',sbKey:'',lastSync:0,pinHash:null};
 /* (요청6) 보관 노트 전용 설정 기본값 — 일반 노트 설정과 별도로 저장됨 */
-const VAULT_DEF={theme:'auto',view:'grid',sort:'color',font:'xs',fontWeight:'n',box:'2',rule:'none',unlockMinutes:0};
+const VAULT_DEF={theme:'auto',view:'grid',sort:'color',font:'12',fontWeight:'n',box:'2',rule:'none',unlockMinutes:0};
 function load(){
   /* v2.x → v3 자동 마이그레이션 */
   try{
@@ -698,7 +754,7 @@ function load(){
   try{S.folders=JSON.parse(STORE.getItem(LS.folders))||[]}catch(e){S.folders=[]}
   try{Object.assign(S.settings,DEF,JSON.parse(STORE.getItem(LS.settings))||{})}catch(e){Object.assign(S.settings,DEF)}
   S.notes.forEach(n=>{ if(n.color==null)n.color=0; if(n.color>4)n.color=n.color%5; });
-  if(!['xs','s','m','l','xl'].includes(S.settings.font))S.settings.font='xs';
+  S.settings.font=migFont(S.settings.font);   /* (요청7) 구버전 5단계 → pt, 10~25 클램프 (v5.3) */
   // (요구3) 본문 굵기 4단계, 기본 'n'(보통=500). v5.2: 기본값 'b'로 저장됐던 기기·옛 숫자값을
   //  새 키 체계로 1회 변환 (fwVer=2 마커) — 'b' 저장분은 새 기본 'n'(보통)으로 안전 이관.
   if(!S.settings.fwVer){
@@ -815,16 +871,15 @@ async function sha256(str){
 function applyPrefs(){
   const sc=curSettings();
   document.documentElement.dataset.theme=isDark()?'dark':'light';
-  document.documentElement.dataset.fontsize=sc.font||'xs';
+  document.documentElement.style.setProperty('--note', ptClamp(sc.font)+'pt');   /* (요청7) 본문 글자 크기 10~25pt — UI(17pt)와 분리 */
   document.documentElement.dataset.cols=sc.box||'2';
   document.documentElement.dataset.notefw=FONT_WEIGHTS[sc.fontWeight]||'500';   /* (요구3) 본문 굵기: 키→숫자 값 변환으로 CSS[data-notefw]와 정합 (v5.1) */
 }
 function visibleNotes(){
   let arr=NOTES().filter(n=>ui.trash?!!n.deleted:!n.deleted);
-  if(!ui.vault){
-    if(!ui.trash&&ui.nofolder)arr=arr.filter(n=>!n.folder);
-    else if(!ui.trash&&ui.folder)arr=arr.filter(n=>n.folder===ui.folder);
-  }
+  /* (요청3) 보관 노트에서도 폴더 필터 동일 적용 (폴더명은 일반/보관 공용) */
+  if(!ui.trash&&ui.nofolder)arr=arr.filter(n=>!n.folder);
+  else if(!ui.trash&&ui.folder)arr=arr.filter(n=>n.folder===ui.folder);
   const q=ui.search.trim().toLowerCase();
   if(q)arr=arr.filter(n=>(n.title||'').toLowerCase().includes(q)||plain(n.content).toLowerCase().includes(q)||(n.items||[]).some(i=>(i.text||'').toLowerCase().includes(q)));
   const sort=curSettings().sort;
@@ -847,8 +902,20 @@ function render(){
     // (요구10) 보관 모드: 일반 화면과 동일 UI, 폴더바만 '보관' 표시 + 나가기
     const back=document.createElement('button');back.className='chip';back.textContent='← 일반 노트';
     back.onclick=()=>{VLT.leave()};bar.append(back);
-    const vlabel=document.createElement('button');vlabel.className='chip on';vlabel.textContent='🔐 보관 노트';
-    bar.append(vlabel);
+    /* (요청3) 보관 노트에도 폴더 바(전체/노트/폴더/추가) — 일반 화면과 동일 */
+    const all=document.createElement('button');all.className='chip'+(ui.folder===''&&!ui.nofolder&&!ui.trash?' on':'');
+    all.textContent='전체';all.onclick=()=>{ui.folder='';ui.nofolder=false;ui.trash=false;exitSel();render()};bar.append(all);
+    const nfc=document.createElement('button');nfc.className='chip'+(ui.nofolder&&!ui.trash?' on':'');
+    nfc.textContent='노트';nfc.title='폴더에 없는 보관 노트만';
+    nfc.onclick=()=>{ui.folder='';ui.nofolder=true;ui.trash=false;exitSel();render()};bar.append(nfc);
+    S.folders.forEach(f=>{
+      const b=document.createElement('button');b.className='chip'+(ui.folder===f.id&&!ui.nofolder&&!ui.trash?' on':'');
+      const cnt=VLT.notes.filter(n=>n.folder===f.id).length;
+      b.textContent=`${f.name} (${cnt})`;b.onclick=()=>{ui.folder=f.id;ui.nofolder=false;ui.trash=false;exitSel();render()};
+      b.oncontextmenu=e=>{e.preventDefault();openFolderMgr()};
+      bar.append(b);
+    });
+    const add=document.createElement('button');add.className='chip';add.textContent='+ 폴더';add.onclick=openFolderMgr;bar.append(add);
     $('#logoText').textContent='🔐 보관 노트';
   }else{
     $('#logoText').textContent='SK 노트';
@@ -891,9 +958,7 @@ function render(){
         if(p>60){const s=Math.max(0,p-30);snip=(s>0?'…':'')+full.slice(s,s+160);}}
       body=`<div class="body">${hl(esc(snip))}</div>`;
     }
-    /* (요구3) 노트별 본문 굵기 → 이 노트의 카드 미리보기 본문에도 적용 (UI 요소에는 영향 없음, v5.1) */
-    if(n.fontWeight&&FONT_WEIGHTS[n.fontWeight])body=body.replace('<div class="body">',
-      `<div class="body" style="font-weight:${FONT_WEIGHTS[n.fontWeight]}">`);
+    /* (요청6) 카드 미리보기는 모든 노트 동일하게 고정 — 노트별 굵기/크기를 미리보기에 반영하지 않음 */
     const hasRemind=n.remindAt&&n.remindAt>Date.now();
     el.innerHTML=`
       ${ui.selMode&&ui.selected.has(n.id)?'<span class="selmark">✓</span>':''}
@@ -1016,7 +1081,7 @@ let edSaveTimer=null;
 function newNote(type){
   const coll=NOTES();
   const minSi=coll.length?Math.min(...coll.map(n=>n.sortIndex??0)):0;
-  const n={id:uid(),folder:ui.vault?'':(ui.nofolder?'':ui.folder),color:0,type:type||'note',title:'',content:'',items:[],pinned:false,
+  const n={id:uid(),folder:(ui.nofolder?'':ui.folder),color:0,type:type||'note',title:'',content:'',items:[],pinned:false,   /* (요청3) 보관 노트에서도 현재 폴더 유지 */
     remindAt:0,sortIndex:minSi-1,createdAt:Date.now(),updatedAt:Date.now(),deleted:false,dirty:true};
   coll.unshift(n);persistActive();return n;
 }
@@ -1032,7 +1097,7 @@ function openEditor(id){
   $('#addItemBtn').classList.toggle('hidden',!isCheck);
   $('#edBody').innerHTML=linkify(n.content||'');
   applyEditorColor(n.color||0);                      // (요청3) 노트 색 적용
-  applyEditorFont(n);                                // (요청5) 노트 전용 글자 크기 적용
+  /* (요청1) 노트별 글자 크기 기능 폐지 — 크기는 설정(--note)에서만, 서식은 Type(T) 버튼 */
   applyEditorWeight(n);                              // (요구3) 노트 전용 본문 굵기 적용 (미지정이면 전역값) — v5.1 데드코드 활성화
   updateColorBtn(n.color||0);
   renderItems(n);
@@ -1130,7 +1195,8 @@ function closeEditor(fromBack){
   // fromBack: popstate가 이미 OVS.pop() + history 이동을 처리 → 화면만 숨김
   if(fromBack) $('#edOverlay').classList.remove('show');
   else ovCloseUi($('#edOverlay'));
-  hideSelBar();$('#edMenu').classList.remove('show');$('#edColorPop').classList.remove('show');
+  hideSelBar();$('#edMenu').classList.remove('show');$('#edColorPop').classList.remove('show');$('#edTypePop').classList.remove('show');
+  selImg=null;$('#imgBar').classList.add('hidden');$('#imgPrev').classList.add('hidden');
   scheduleReminders();render();
 }
 $('#edSaveBtn').onclick=()=>{ flushEd(); closeEditor(); };   // ✓ = 저장 후 목록으로
@@ -1147,7 +1213,7 @@ $('#edPencil').onclick=()=>{
 };
 $('#edColorBtn').onclick=e=>{e.stopPropagation();$('#edMenu').classList.remove('show');$('#edColorPop').classList.toggle('show')};
 $('#edKebab').onclick=e=>{e.stopPropagation();$('#edColorPop').classList.remove('show');buildKebab();$('#edMenu').classList.toggle('show')};
-document.addEventListener('click',()=>{$('#edColorPop').classList.remove('show');$('#edMenu').classList.remove('show')});
+document.addEventListener('click',()=>{$('#edColorPop').classList.remove('show');$('#edMenu').classList.remove('show');$('#edTypePop').classList.remove('show')});
 $('#edColorPop').onclick=e=>e.stopPropagation();
 $('#edMenu').onclick=e=>e.stopPropagation();
 
@@ -1215,13 +1281,41 @@ async function insertImageFile(file){
   if(file.size>3*1024*1024){toast('이미지가 너무 큽니다(3MB 이하로)');return}
   if(!ui.edEdit){ui.edEdit=true;applyEdMode();}
   const dataUrl=await new Promise(res=>{const r=new FileReader();r.onload=()=>res(r.result);r.readAsDataURL(file)});
-  const img=`<img src="${dataUrl}" style="max-width:100%;height:auto;border-radius:8px;margin:.3em 0" alt="이미지">`;
+  const img=document.createElement('img'); img.className='edimg'; img.src=dataUrl; img.alt='이미지';
+  img.style.width='100%';
   $('#edBody').focus();
-  document.execCommand('insertHTML',false,img+'<br>');
+  const s=window.getSelection(); const r=s.rangeCount?s.getRangeAt(0):document.createRange();
+  if(s.rangeCount){ r.deleteContents(); r.insertNode(img); }
+  else $('#edBody').appendChild(img);
   schedSave();toast('이미지를 넣었습니다');
+  selectImg(img);
 }
-$('#edImgBtn').onclick=e=>{e.stopPropagation();$('#edImgFile').click()};
-$('#edImgFile').addEventListener('change',e=>{const f=e.target.files[0];insertImageFile(f);e.target.value=''});
+/* (요청2) 이미지 선택 → 크기 조절 바 / 전체화면 미리보기 */
+let selImg=null,imgPct=100;
+function selectImg(img){ selImg=img; imgPct=100;
+  $$('#edBody img.edimg').forEach(im=>im.classList.remove('sel'));
+  img.classList.add('sel'); updateImgBar();
+  $('#imgBar').classList.remove('hidden'); }
+function updateImgBar(){ const v=$('#imgBarPct'); if(v)v.textContent=imgPct+'%'; }
+function imgScale(d){ if(!selImg)return; imgPct=Math.max(30,Math.min(100,imgPct+d)); selImg.style.width=imgPct+'%'; selImg.style.height='auto'; updateImgBar(); schedSave(); }
+function delImg(){ if(!selImg)return; selImg.remove(); selImg=null; $('#imgBar').classList.add('hidden'); schedSave(); }
+function previewImg(img){ const ov=$('#imgPrev'); if(ov){ov.innerHTML='<span>✕</span>';const im=document.createElement('img');im.src=img.src;ov.appendChild(im);ov.classList.remove('hidden')} }
+$('#imgSmaller').onclick=()=>imgScale(-10);
+$('#imgBigger').onclick=()=>imgScale(10);
+$('#imgDelete').onclick=delImg;
+$('#imgClose').onclick=()=>{selImg&&selImg.classList.remove('sel');selImg=null;$('#imgBar').classList.add('hidden')};
+$('#imgPrev').onclick=e=>{if(e.target.id==='imgPrev')$('#imgPrev').classList.add('hidden')};
+$('#edBody').addEventListener('click',e=>{ const im=e.target.closest?e.target.closest('img.edimg'):null;
+  if(im){ e.preventDefault(); if(ui.edEdit)selectImg(im); else previewImg(im); } });
+/* (요청2) 카메라: 탭 = 갤러리 / 길게 = 직접 촬영(capture) */
+let imgBtnT=null;
+$('#edImgBtn').onpointerdown=()=>{imgBtnT=setTimeout(()=>{imgBtnT=null;$('#edImgCam').click()},450)};
+$('#edImgBtn').onpointerup=()=>{clearTimeout(imgBtnT)};
+$('#edImgBtn').onpointercancel=()=>{clearTimeout(imgBtnT)};
+/* (요청2) edImgBtn: pointerdown 로직(위)에서 길게=카메라 처리, 여기서는 탭=갤러리만 개시 */
+$('#edImgBtn').onclick=e=>{e.stopPropagation();if(!imgBtnT)return;$('#edImgFile').click()};
+$('#edImgFile').addEventListener('change',e=>{[...e.target.files].forEach(f=>insertImageFile(f));e.target.value=''});
+$('#edImgCam').addEventListener('change',e=>{[...e.target.files].forEach(f=>insertImageFile(f));e.target.value=''});
 $('#edBody').addEventListener('paste',e=>{
   const items=(e.clipboardData||window.clipboardData)?.items||[];
   for(const it of items){
@@ -1258,6 +1352,67 @@ $('#edBody').addEventListener('pointerup',e=>{
   }
   lastTap=now;lastX=e.clientX;lastY=e.clientY;
 });
+
+/* ═══════════════ (요청1) Type(T) 버튼 — 선택 텍스트 서식: 크기·볼드·기울임·밑줄·이모티콘·줄간격 ═══════════════ */
+const EMOJIS=['😀','😂','😍','😊','🤔','👍','🙏','🔥','❤️','🎉','✅','⭐','🤷','💡','🎯','📌','🍀','🥳'];
+let typeFs=12, typeLh=1.5;
+function buildTypePop(){
+  const p=$('#edTypePop'); if(p._built)return; p._built=true;
+  /* 글자 크기 */
+  const r1=document.createElement('div');r1.className='tprow';
+  r1.innerHTML='<span class="tplab">글자 크기</span>';
+  const bm=document.createElement('button');bm.className='tpbtn';bm.textContent='−';
+  const val=document.createElement('span');val.className='tpval';val.id='tpFsVal';
+  const bp=document.createElement('button');bp.className='tpbtn';bp.textContent='＋';
+  r1.append(bm,val,bp);
+  bm.onclick=e=>{e.preventDefault();e.stopPropagation();typeFs=Math.max(8,typeFs-1);applyTypeFontSize()};
+  bp.onclick=e=>{e.preventDefault();e.stopPropagation();typeFs=Math.min(48,typeFs+1);applyTypeFontSize()};
+  p.append(r1);
+  /* B / I / U */
+  const r2=document.createElement('div');r2.className='tprow';r2.innerHTML='<span class="tplab">서식</span>';
+  [['bold','B','b'],['italic','I','i'],['underline','U','u']].forEach(([cmd,lab,cls])=>{
+    const b=document.createElement('button');b.className='tpbiu '+cls;b.textContent=lab;
+    b.onclick=e=>{e.preventDefault();e.stopPropagation();execTypeCmd(cmd);b.classList.toggle('on')};
+    r2.append(b);
+  });
+  p.append(r2);
+  /* 이모티콘 */
+  const r3=document.createElement('div');r3.className='tpemo';
+  EMOJIS.forEach(em=>{const b=document.createElement('button');b.textContent=em;
+    b.onclick=e=>{e.preventDefault();e.stopPropagation();$('#edBody').focus();document.execCommand('insertText',false,em);schedSave()};
+    r3.append(b)});
+  p.append(r3);
+  /* 줄간격 */
+  const r4=document.createElement('div');r4.className='tprow';
+  r4.innerHTML='<span class="tplab">줄간격</span>';
+  const lm=document.createElement('button');lm.className='tpbtn';lm.textContent='−';
+  const lv=document.createElement('span');lv.className='tpval';lv.id='tpLhVal';
+  const lp=document.createElement('button');lp.className='tpbtn';lp.textContent='＋';
+  r4.append(lm,lv,lp);
+  lm.onclick=e=>{e.preventDefault();e.stopPropagation();typeLh=Math.max(1,Math.round((typeLh-0.1)*10)/10);applyTypeLh()};
+  lp.onclick=e=>{e.preventDefault();e.stopPropagation();typeLh=Math.min(3,Math.round((typeLh+0.1)*10)/10);applyTypeLh()};
+  p.append(r4);
+}
+function typeSelRange(){ const s=window.getSelection(); if(!s.rangeCount)return null;
+  const r=s.getRangeAt(0); if(!$('#edBody').contains(r.commonAncestorContainer))return null; return r; }
+function applyTypeFontSize(){ const r=typeSelRange(); if(!r||r.collapsed){toast('크기를 바꿀 텍스트를 먼저 선택하세요');updateTpVals();return}
+  $('#edBody').focus(); document.execCommand('styleWithCSS',false,true);
+  // execCommand fontSize를 쓰면 1~7 제한이므로, 선택을 span으로 감싸 실제 pt 적용
+  const frag=r.extractContents(); const sp=document.createElement('span'); sp.style.fontSize=typeFs+'pt';
+  sp.appendChild(frag); r.insertNode(sp);
+  const ns=window.getSelection(); ns.removeAllRanges(); const nr=document.createRange(); nr.selectNodeContents(sp); ns.addRange(nr);
+  $('#tpFsVal').textContent=typeFs+'pt'; schedSave(); }
+function applyTypeLh(){ const r=typeSelRange(); if(!r||r.collapsed){toast('줄간격을 바꿀 텍스트를 먼저 선택하세요');updateTpVals();return}
+  $('#edBody').focus();
+  const frag=r.extractContents(); const sp=document.createElement('span'); sp.style.lineHeight=typeLh;
+  sp.appendChild(frag); r.insertNode(sp);
+  const ns=window.getSelection(); ns.removeAllRanges(); const nr=document.createRange(); nr.selectNodeContents(sp); ns.addRange(nr);
+  $('#tpLhVal').textContent=typeLh; schedSave(); }
+function execTypeCmd(cmd){ $('#edBody').focus(); document.execCommand(cmd,false,null); schedSave(); }
+function updateTpVals(){ $('#tpFsVal').textContent=typeFs+'pt'; $('#tpLhVal').textContent=typeLh; }
+$('#edTypeBtn').onclick=e=>{e.stopPropagation();buildTypePop();updateTpVals();
+  $('#edColorPop').classList.remove('show');$('#edMenu').classList.remove('show');$('#edTypePop').classList.toggle('show')};
+$('#edTypePop').onclick=e=>e.stopPropagation();
 
 /* ── (요구8) 특정 단어 선택 → 볼드 등 서식 툴바 ── */
 const selBar=$('#selBar');
@@ -1301,27 +1456,12 @@ function buildKebab(){
     if(n.type==='check'){const f=$('#edItems .itxt');if(f){f.focus();f.select()}return;}
     selectBodyTextOnly();
   });
-  if(!ui.vault)item('📁','폴더로 이동',()=>moveNoteFolder(n));
+  item('📁','폴더로 이동',()=>moveNoteFolder(n));   /* (요청3) 보관 노트도 폴더 이동 가능 */
   item(n.type==='check'?'📝':'☑️', n.type==='check'?'메모로 전환':'체크리스트로 전환',()=>switchType(n.type==='check'?'note':'check'));
   if(ui.vault)item('📤','일반 노트로 이동',()=>moveFromVault(n));
   else item('📦','보관 노트로 이동',()=>moveToVault(n));
   item('🗑️','삭제',()=>deleteFromEditor(),'danger');
-  /* (요청5) 노트별 글자 크기 — 이 노트에만 적용 (일반/보관 각자 별도 설정도 반영) */
-  const fh=document.createElement('div');fh.className='menuhead';fh.textContent='📐 글자 크기 (이 노트만)';m.append(fh);
-  const frow=document.createElement('div');frow.className='fontpick';
-  const selLvl=n.font||'__default__';
-  const picks=[['__default__','기본'],['xs','14'],['s','16'],['m','18'],['l','20'],['xl','22']];
-  picks.forEach(([v,lab])=>{
-    const b=document.createElement('button');b.className='fpbtn'+(v===selLvl?' on':'');b.textContent=lab;
-    b.onclick=()=>{
-      if(v==='__default__')delete n.font; else n.font=v;
-      n.updatedAt=Date.now();n.dirty=true;schedSave();
-      applyEditorFont(n);
-      buildKebab();m.classList.add('show');           // 메뉴를 열어두고 강조 갱신
-    };
-    frow.append(b);
-  });
-  m.append(frow);
+  /* (요청1) '글자 크기(이 노트만)'는 폐지 — 크기는 설정(10~25pt)에서만 변경, 서식은 Type(T) 버튼에서 */
   /* v5.0 노트별 본문 굵기 — 가벼움·보통·굵게·매우굵게 (기본값 표시) */
   const fwh=document.createElement('div');fwh.className='menuhead';fwh.textContent='✒ 글자 굵기 (이 노트만)';m.append(fwh);
   const fwrow=document.createElement('div');fwrow.className='fontpick';
@@ -1367,7 +1507,9 @@ async function moveNoteFolder(n){
   if(v===null||v===undefined||v==='')return;
   const idx=parseInt(v);
   if(idx===0)n.folder=''; else if(S.folders[idx-1])n.folder=S.folders[idx-1].id; else{toast('잘못된 번호');return}
-  n.updatedAt=Date.now();n.dirty=true;schedSave();toast('폴더를 이동했습니다');
+  n.updatedAt=Date.now();n.dirty=true;schedSave();
+  if(ui.vault)VLT.persist();   /* (요청3) 보관 노트는 즉시 저장(서버 동기화 없음) */
+  toast('폴더를 이동했습니다');
 }
 async function moveToVault(n){
   if(!await dlg('이 노트를 보관 노트로 옮길까요?\n(서버 동기화에서 제외되고 이 기기에만 저장됩니다)',{okText:'이동'}))return;
@@ -1461,6 +1603,7 @@ function openFolderMgr(){
     del.onclick=async()=>{
       if(!await dlg(`'${f.name}' 폴더를 삭제할까요?\n노트는 '전체'로 이동합니다.`,{danger:true,okText:'삭제'}))return;
       S.notes.forEach(n=>{if(n.folder===f.id){n.folder='';n.dirty=true;n.updatedAt=Date.now()}});
+      VLT.notes.forEach(n=>{if(n.folder===f.id)n.folder=''});VLT.persist();   /* (요청3) 보관 노트 폴더도 정리 */
       S.folders=S.folders.filter(x=>x!==f);if(ui.folder===f.id)ui.folder='';
       SYNC.deleteFolder(f.id);touch();openFolderMgr();render();syncSoon()};
     wrap.append(re,del);row.append(nm,wrap);list.append(row);
@@ -1760,7 +1903,8 @@ $('#acDiag').onclick=async()=>{
 function openSettings(){
   const sc=curSettings();
   $('#stTheme').value=sc.theme;$('#stView').value=sc.view;
-  $('#stSort').value=sc.sort;$('#stFont').value=sc.font;$('#stBox').value=sc.box;
+  $('#stSort').value=sc.sort;$('#stBox').value=sc.box;
+  updateFontStepUI();   /* (요청7) 글자크기 스테퍼 + 샘플 */
   $('#stFontWeight').value=sc.fontWeight||'b';   /* (요구3) 본문 굵기 4단계 — 키 기본 'b'(보통), 드롭다운 선택 표시 정상화 (v5.1) */
   $('#stRule').value=sc.rule||'none';
   $('#stVaultOpen').value=String(VLT.settings.unlockMinutes||0);
@@ -1772,7 +1916,7 @@ function applySettingsFromUI(){
   sc.theme=$('#stTheme').value;
   ui.view=$('#stView').value;sc.view=ui.view;
   sc.sort=$('#stSort').value;
-  sc.font=$('#stFont').value;
+  sc.font=String(ptClamp($('#stFontVal').textContent));   /* (요청7) 스테퍼 값 그대로 저장 (10~25) */
   sc.fontWeight=$('#stFontWeight').value||'b';   /* (요구3) 본문 굵기 — 드롭다운 글자 키 그대로 저장 (v5.1) */
   sc.box=$('#stBox').value;
   sc.rule=$('#stRule').value;                          // (요청3) 줄 없음 / 줄쳐진 노트
@@ -1783,7 +1927,18 @@ function applySettingsFromUI(){
 $('#btnSettings').onclick=openSettings;
 $('#stAccountBtn').onclick=()=>{ovCloseUi($('#setOverlay'));openAccount()};
 /* 미리보기: 선택만 해도 즉시 반영(피드백) */
-['#stTheme','#stView','#stSort','#stFont','#stFontWeight','#stBox','#stRule','#stVaultOpen'].forEach(sel=>$(sel).addEventListener('change',applySettingsFromUI));
+['#stTheme','#stView','#stSort','#stFontWeight','#stBox','#stRule','#stVaultOpen'].forEach(sel=>$(sel).addEventListener('change',applySettingsFromUI));   /* (v5.3) stFont는 select→스테퍼로 대체 */
+/* (요청7) 글자크기 스테퍼: − / ＋ 1pt씩, 10~25, 미리보기 샘플 동시 갱신 */
+function updateFontStepUI(){
+  const pt=ptClamp(curSettings().font);
+  $('#stFontVal').textContent=pt;
+  $('#stFontSample').style.fontSize=pt+'pt';
+}
+function fontStep(d){ const sc=curSettings(); sc.font=String(ptClamp((parseInt($('#stFontVal').textContent)||12)+d));
+  if(ui.vault)VLT.persistSettings(); else save();
+  applyPrefs();render();updateFontStepUI(); }
+$('#stFontMinus').onclick=()=>fontStep(-1);
+$('#stFontPlus').onclick=()=>fontStep(+1);
 $('#setSave').onclick=()=>{ applySettingsFromUI(); toast('설정을 저장했습니다'); ovCloseUi($('#setOverlay')); };
 $('#setClose').onclick=()=>{ applySettingsFromUI(); ovCloseUi($('#setOverlay')); };
 
@@ -1884,6 +2039,7 @@ const VLT={
       else if(this.settings.fontWeight==='b')this.settings.fontWeight='n';
       this.settings.fwVer=2;
     }else if(!['l','n','b','x'].includes(this.settings.fontWeight))this.settings.fontWeight='n';   /* (요구3) v5.2: 새 굵기 키체계 1회 이관 */
+    this.settings.font=migFont(this.settings.font);   /* (요청7) 보관 노트 글자 크기 → pt (v5.3) */
     try{ if(window.PublicKeyCredential && await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()) this.bio=true }catch(e){}
     $('#vBioRow').classList.toggle('hidden',!this.bio);
   },
