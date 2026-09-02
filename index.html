@@ -70,7 +70,7 @@ header{
   order:0; position:sticky; top:0; z-index:30; background:var(--bar);
   box-shadow:0 1px 3px rgba(0,0,0,.12); padding:.4em .5em;
   padding-top:calc(.4em + env(safe-area-inset-top));
-  flex:none; overflow:hidden;          /* (요청5) 헤더는 화면 상단에 항상 고정 — 버튼이 잘리지 않음 */
+  flex:none;                          /* (요청5) 헤더는 화면 상단에 항상 고정 */
 }
 /* ── (요청1) 폴더바(전체/노트…)는 하단에 그대로 ── */
 #folderNav{
@@ -80,12 +80,13 @@ header{
   flex:none;                          /* (요청5) 하단 바 고정 — 화면 밖으로 밀리지 않음 */
 }
 .hrow{display:flex;align-items:center;gap:.3em;min-width:0}
-.logo{font-weight:800;font-size:.9em;color:var(--text);margin-right:.2em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:38%;min-width:0;flex:none}
-/* (요청10) 항상 보이는 버전 배지 → 새 버전이 떴는지 눈으로 확인 */
+.logo{font-weight:800;font-size:.78em;color:var(--text);margin-right:.25em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:32%;min-width:0;flex:none}
+/* (요청10) 항상 보이는 버전 배지 → 새 버전이 떴는지 눈으로 확인. 좁은 화면에서는 감춤(아이콘 잘림 방지) */
 .verbadge{font-size:.5em;color:var(--sub);font-weight:700;background:var(--chip);border-radius:.5em;padding:.15em .5em;vertical-align:middle;white-space:nowrap}
+@media(max-width:380px){.verbadge{display:none}}
 
 #search{
-  flex:1;min-width:0;background:var(--chip);border:none;border-radius:1.2em;
+  flex:1;min-width:2.5em;background:var(--chip);border:none;border-radius:1.2em;
   padding:.4em .8em;font-size:.72em;color:var(--text);outline:none
 }
 #search::placeholder{color:var(--sub)}
@@ -259,9 +260,10 @@ html[data-theme="dark"] mark{background:#c8a000;color:#fff}
 #addItemBtn{margin:.6em 1em;width:calc(100% - 2em)}
 
 /* (요구8) 선택 시 뜨는 서식(볼드 등) 플로팅 툴바 */
-#selBar{position:fixed;z-index:60;display:flex;gap:.15em;background:var(--card);
+#selBar{position:fixed;z-index:95;display:flex;gap:.15em;background:var(--card);   /* (요청) 상단 고정 + 높은 z-index */
   border:1px solid var(--line);border-radius:.6em;box-shadow:0 4px 16px rgba(0,0,0,.25);
-  padding:.25em;opacity:0;visibility:hidden;transform:translateY(6px);transition:opacity .15s,transform .15s}
+  padding:.25em;opacity:0;visibility:hidden;transform:translateY(6px);transition:opacity .15s,transform .15s;
+  max-width:calc(100vw - 12px);flex-wrap:wrap}
 #selBar.show{opacity:1;visibility:visible;transform:translateY(0)}
 #selBar .tb{background:var(--chip);border:none;color:var(--text);border-radius:.4em;
   min-width:1.9em;height:1.9em;font-size:.78em;font-weight:700}
@@ -376,7 +378,7 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
 <header>
   <div class="hrow">
     <span class="logo" id="logoText">SK 노트</span>
-    <span class="verbadge" id="appVer">v5.3</span>
+    <span class="verbadge" id="appVer">v5.4</span>
     <input id="search" type="search" placeholder="검색...">
     <span class="syncdot" id="syncDot" title="동기화 상태"></span>
     <button class="iconbtn" id="btnView" title="보기 전환">▦</button>
@@ -623,7 +625,7 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
 
     <div class="setsec">
       <h4>정보</h4>
-      <div class="hint">SK 노트 v5.3 · Type(T) 서식(크기·굵기·밑줄·이모티콘·줄간격) + 글자크기 스테퍼(10~25pt·샘플) + 이미지 크기조절/카메라 + 보관노트 폴더 + 미리보기 완전 고정</div>
+      <div class="hint">SK 노트 v5.4 · 이미지 탭-선택/크기 조절 안정화 + 서식 바 상단 고정 + 보관 화면 UI 완전 고정 + 헤더 잘림 해결</div>
     </div>
   </div>
 </div>
@@ -720,8 +722,6 @@ function persistActive(){ if(ui.vault) VLT.persist(); else save(); }
    현재 화면(보관 모드면 VLT.settings, 아니면 S.settings)을 돌려준다. */
 function curSettings(){ return ui.vault ? VLT.settings : S.settings; }
 
-/* (요청4) 글자 크기 5단계 → pt */
-const FONTS_PT={xs:14,s:16,m:18,l:20,xl:22};
 /* (요청7/요청1) 글자 크기: 'pt 숫자(10~25)' 하나로 통일 — 노트별 크기 기능은 폐지, 크기는 설정에서만.
    모든 크기는 --note 인라인으로만 적용되어 UI(17pt)와 완전 분리됨 */
 function ptClamp(v){ v=parseInt(v)||12; return Math.max(10,Math.min(25,v)); }
@@ -1305,15 +1305,14 @@ $('#imgBigger').onclick=()=>imgScale(10);
 $('#imgDelete').onclick=delImg;
 $('#imgClose').onclick=()=>{selImg&&selImg.classList.remove('sel');selImg=null;$('#imgBar').classList.add('hidden')};
 $('#imgPrev').onclick=e=>{if(e.target.id==='imgPrev')$('#imgPrev').classList.add('hidden')};
-$('#edBody').addEventListener('click',e=>{ const im=e.target.closest?e.target.closest('img.edimg'):null;
-  if(im){ e.preventDefault(); if(ui.edEdit)selectImg(im); else previewImg(im); } });
+/* 이미지 선택/미리보기는 pointerup 분기에서 처리 (click 중복 방지) */
 /* (요청2) 카메라: 탭 = 갤러리 / 길게 = 직접 촬영(capture) */
-let imgBtnT=null;
-$('#edImgBtn').onpointerdown=()=>{imgBtnT=setTimeout(()=>{imgBtnT=null;$('#edImgCam').click()},450)};
+/* (요청2) 카메라: 탭=갤러리 / 길게=직접 촬영(capture). imgLong 플래그로 길게 후 click 무시 */
+let imgBtnT=null, imgLong=false;
+$('#edImgBtn').onpointerdown=()=>{imgLong=false;imgBtnT=setTimeout(()=>{imgLong=true;$('#edImgCam').click()},500)};
 $('#edImgBtn').onpointerup=()=>{clearTimeout(imgBtnT)};
 $('#edImgBtn').onpointercancel=()=>{clearTimeout(imgBtnT)};
-/* (요청2) edImgBtn: pointerdown 로직(위)에서 길게=카메라 처리, 여기서는 탭=갤러리만 개시 */
-$('#edImgBtn').onclick=e=>{e.stopPropagation();if(!imgBtnT)return;$('#edImgFile').click()};
+$('#edImgBtn').onclick=e=>{e.stopPropagation(); if(imgLong){imgLong=false;return} $('#edImgFile').click()};
 $('#edImgFile').addEventListener('change',e=>{[...e.target.files].forEach(f=>insertImageFile(f));e.target.value=''});
 $('#edImgCam').addEventListener('change',e=>{[...e.target.files].forEach(f=>insertImageFile(f));e.target.value=''});
 $('#edBody').addEventListener('paste',e=>{
@@ -1344,10 +1343,18 @@ $('#edBody').addEventListener('click',e=>{
   if(a && !ui.edEdit){ e.preventDefault(); window.open(a.href,'_blank','noopener'); }
 });
 $('#edBody').addEventListener('dblclick',e=>{ if(cur()&&cur().type!=='check')enterEditAtPoint(e.clientX,e.clientY); });
-let lastTap=0,lastX=0,lastY=0;
+/* (요청2) 이미지 탭 분기: pointerup에서 처리 (click은 모바일에서 caret 이동과 충돌해 무시될 수 있음) */
+let lastTap=0,lastX=0,lastY=0,imgTapGuard=false;
 $('#edBody').addEventListener('pointerup',e=>{
+  const im=e.target&&e.target.closest?e.target.closest('img.edimg'):null;
+  if(im){ /* 이미지 탭: 편집 중=선택(재탭=해제) / 보기=전체화면 */
+    e.preventDefault(); imgTapGuard=true; setTimeout(()=>{imgTapGuard=false},0);
+    if(ui.edEdit){ if(selImg===im)$('#imgClose').click(); else selectImg(im); }
+    else previewImg(im);
+    return;
+  }
   const now=Date.now();
-  if(now-lastTap<320 && Math.abs(e.clientX-lastX)<25 && Math.abs(e.clientY-lastY)<25){
+  if(!imgTapGuard && now-lastTap<320 && Math.abs(e.clientX-lastX)<25 && Math.abs(e.clientY-lastY)<25){
     if(cur()&&cur().type!=='check')enterEditAtPoint(e.clientX,e.clientY);
   }
   lastTap=now;lastX=e.clientX;lastY=e.clientY;
@@ -1421,12 +1428,14 @@ function showSelBar(){
   if(!ui.edEdit||!sel||sel.isCollapsed||!sel.rangeCount){hideSelBar();return}
   const r=sel.getRangeAt(0);
   if(!$('#edBody').contains(r.commonAncestorContainer)){hideSelBar();return}
-  const rect=r.getBoundingClientRect();
   selBar.classList.add('show');
-  const bw=selBar.offsetWidth||240, bh=selBar.offsetHeight||36;
-  let left=rect.left+rect.width/2-bw/2;
-  left=Math.max(6,Math.min(left,innerWidth-bw-6));
-  let top=rect.top-bh-8; if(top<6)top=rect.bottom+8;
+  /* (요청) 서식 바는 항상 화면 상단(제목/도구줄 바로 아래)에 고정 —
+     OS의 복사/잘라내기 메뉴(선택 지점 위)와 겹치지 않게 함 */
+  const bw=selBar.offsetWidth||260, bh=selBar.offsetHeight||40;
+  const edb=document.querySelector('.edbar');
+  const anchor=edb?edb.getBoundingClientRect().bottom+6:8;
+  const top=Math.max(6,anchor);
+  let left=(innerWidth-bw)/2; left=Math.max(6,Math.min(left,innerWidth-bw-6));
   selBar.style.left=left+'px'; selBar.style.top=top+'px';
 }
 function hideSelBar(){selBar.classList.remove('show');$('#palColor').classList.add('hidden');$('#palHi').classList.add('hidden')}
@@ -1481,8 +1490,7 @@ function buildKebab(){
   m.append(fwrow);
 }
 
-/** v5.0 노트별 본문 굵기 적용: --edfs처럼 에디터 본문에 굵기 변수 사용.
-    폰트가 통일되도록 --notefw를 현재 노트 값으로 덮어쓰는 헬퍼. */
+/* 노트별 본문 굵기 적용: 현재 노트값(또는 전역)을 FONT_WEIGHTS로 변환해 --notefw에 덮어씀 */
 function applyEditorWeight(n){
   const sc=curSettings();
   const fw=FONT_WEIGHTS[(n&&n.fontWeight)||sc.fontWeight]||'500';
