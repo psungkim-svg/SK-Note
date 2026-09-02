@@ -300,8 +300,7 @@ html[data-theme="dark"] mark{background:#c8a000;color:#fff}
   border-radius:.5em;color:var(--text);line-height:1.4;text-align:center}
 
 /* (요청2) 이미지 리사이즈: 에디터 안 이미지 + 선택 시 컨트롤 바 + 전체화면 미리보기 */
-#edBody img.edimg{max-width:100%;height:auto;border-radius:8px;margin:.3em 0;display:block;
-  -webkit-user-drag:none;user-select:none;-webkit-touch-callout:none}   /* (v5.5) 기본 드래그·길게누름 메뉴 차단 */
+#edBody img.edimg{max-width:100%;height:auto;border-radius:8px;margin:.3em 0;display:block}
 #edBody img.edimg.sel{outline:3px solid var(--accent);outline-offset:2px}
 /* (요청) 이미지 선택 시 모서리 핸들 — 드래그로 확대/축소 (비율 유지) */
 #imgSelBox{position:absolute;z-index:73;pointer-events:none;border:2px solid var(--accent);
@@ -367,20 +366,30 @@ input#acUrl,input#acKey{letter-spacing:normal;font-stretch:normal}
 input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numeric:tabular-nums}
 #vGate input[type=password],#dlgInput{text-align:center}
 
-/* ── (요청) 보관 노트 잠금 화면 — 아주 심플: 흰 박스 + 암호입력 + 큰 입력 + 확인 ── */
-#vGate{align-items:center;background:rgba(0,0,0,.4)}
-#vGate .vgateSimple{width:min(86vw,310px);background:#fff;border-radius:14px;
-  padding:.8em 1.3em .75em;box-shadow:0 10px 40px rgba(0,0,0,.35);text-align:center;
-  animation:vpop .22s ease}
-@keyframes vpop{from{transform:scale(.95);opacity:0}to{transform:none;opacity:1}}
-#vGate .vgateTitle{font-size:.72em;color:#555;font-weight:600;margin-bottom:.3em}
-#vGate input[type=password]{display:block;width:100%;height:1.5em;text-align:center;
-  font-size:1.05em;letter-spacing:.5em;border:1.5px solid #d0d0d0;border-radius:8px;
-  background:#fff;color:#222;outline:none;margin:0 0 .45em;transition:border-color .15s}
-#vGate input[type=password]:focus{border-color:var(--accent)}
-#vGate .vgateOk{display:block;width:100%;height:1.9em;background:var(--accent);color:#3d2c00;
-  border:none;border-radius:8px;font-size:.8em;font-weight:800;cursor:pointer}
-#vGate .vgateOk:active{transform:scale(.97)}
+/* ── (요청) 보관 노트 잠금 화면 — 프로페셔널 카드 ── */
+#vGate{align-items:center;background:rgba(15,16,20,.55);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+#vGate .vgateCard{border-radius:22px;max-width:340px;width:calc(100% - 2.4em);background:var(--card);
+  padding:2em 1.4em 1.4em;text-align:center;position:relative;
+  box-shadow:0 18px 60px rgba(0,0,0,.4);transform:translateY(0) scale(1);
+  animation:vpop .3s cubic-bezier(.2,.9,.3,1.2)}
+@keyframes vpop{from{transform:scale(.92) translateY(8px);opacity:0}to{transform:none;opacity:1}}
+#vGate .vclose{position:absolute;top:.6em;right:.6em;color:var(--sub)}
+#vGate .lockicon{width:3.4em;height:3.4em;margin:0 auto 1em;border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),#ff9d00);color:#3d2c00;
+  display:flex;align-items:center;justify-content:center;font-size:1.5em;
+  box-shadow:0 8px 20px rgba(255,193,7,.45)}
+#vGate h3{margin:0 0 .3em;font-size:1.1em;font-weight:800;color:var(--text);display:block;text-align:center}
+#vGate .vsub{font-size:.72em;color:var(--sub);line-height:1.5;margin:0 0 1.1em}
+#vGate input[type=password]{display:block;width:100%;text-align:center;font-size:1.05em;
+  letter-spacing:.6em;padding:.75em .5em;border-radius:.7em;margin:0 0 .8em;
+  background:var(--bg2);border:1.5px solid var(--line);color:var(--text);outline:none;transition:border-color .2s}
+#vGate input[type=password]:focus{border-color:var(--accent);background:var(--card)}
+#vGate .btn.primary.vunlock{width:100%;padding:.75em;border-radius:.7em;font-size:.85em;font-weight:800;
+  box-shadow:0 4px 14px rgba(255,193,7,.4)}
+#vGate .vbio{width:100%;background:var(--chip);border:none;color:var(--text);border-radius:.7em;
+  padding:.7em;font-size:.8em;font-weight:700}
+#vGate .vfoot{font-size:.6em;color:var(--sub);line-height:1.5;margin-top:1.6em}
+#vGate .hidden{display:none!important}
 
 /* 토스트 */
 #toast{
@@ -462,13 +471,11 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
       <button class="btn" id="addItemBtn">+ 항목 추가</button>
       <!-- (요청2) 이미지 리사이즈 바 -->
       <div id="imgBar" class="hidden">
-        <button class="ib" id="imgPrevPos" title="앞으로 이동">◀ 앞</button>
-        <button class="ib" id="imgSmaller">−</button>
+        <button class="ib" id="imgSmaller">− 작게</button>
         <span class="stat" id="imgBarPct">100%</span>
-        <button class="ib" id="imgBigger">＋</button>
-        <button class="ib" id="imgNextPos" title="뒤로 이동">뒤 ▶</button>
-        <button class="ib danger" id="imgDelete">🗑</button>
-        <button class="ib" id="imgClose">✕</button>
+        <button class="ib" id="imgBigger">크게 ＋</button>
+        <button class="ib danger" id="imgDelete">🗑 삭제</button>
+        <button class="ib" id="imgClose">✕ 닫기</button>
       </div>
     </div>
   </div>
@@ -652,7 +659,7 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
 
     <div class="setsec">
       <h4>정보</h4>
-      <div class="hint">SK 노트 v5.5 (재시작) · 일반/보관 완전 분리 + 심플 잠금(높이 절반) + 이미지 탭-선택/드래그 이동/삭제/크기 확실 동작 + 자동 백업</div>
+      <div class="hint">SK 노트 v5.5 · 이미지 모서리 드래그로 확대/축소 + 보관함 잠금 화면 리뉴얼 + 보관 화면 헤더/폴더 바 확실 반영(캐시 갱신)</div>
     </div>
   </div>
 </div>
@@ -686,10 +693,15 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
 
 <!-- ───────── 보관 노트 (Vault) ───────── -->
 <div class="overlay" id="vGate" style="z-index:80">
-  <div class="vgateSimple">
-    <div class="vgateTitle">암호 입력</div>
-    <input type="password" inputmode="numeric" id="vGatePass" placeholder="" maxlength="12" autocomplete="current-password">
-    <button class="vgateOk" id="vPassBtn">확인</button>
+  <div class="sheet vgateCard">
+    <button class="iconbtn vclose" id="vGateClose" title="닫기">✕</button>
+    <div class="lockicon">🔒</div>
+    <h3>SK 노트 보관함</h3>
+    <div class="vsub">개인 메모를 안전하게 보관하는 공간입니다.<br>비밀번호를 입력해 주세요.</div>
+    <input type="password" inputmode="numeric" id="vGatePass" placeholder="비밀번호 입력" maxlength="12" autocomplete="current-password">
+    <button class="btn primary vunlock" id="vPassBtn">해제하기</button>
+    <div class="hidden" id="vBioRow" style="margin-top:.5em"><button class="btn vbio" id="vBioBtn">👆 지문으로 해제</button></div>
+    <div class="vfoot">보관 노트는 이 기기에만 안전하게 저장되며<br>서버 동기화 없이 완전히 분리됩니다.</div>
   </div>
 </div>
 
@@ -739,8 +751,6 @@ let ui={folder:'',nofolder:false,view:null,search:'',trash:false,editingId:null,
 
 /* (요구10) 현재 활성 컬렉션: 보관 모드면 VLT.notes, 아니면 일반 S.notes */
 function NOTES(){ return ui.vault ? VLT.notes : S.notes; }
-/* (요청1) 일반/보관 완전 분리: 현재 화면의 폴더 목록. 보관에선 보관 폴더만, 일반에선 일반 폴더만 보임 */
-function FOLDERS(){ return ui.vault ? VLT.folders : S.folders; }
 function persistActive(){ if(ui.vault) VLT.persist(); else save(); }
 
 /* (요청6) 일반 노트와 보관 노트는 서로 '설정'의 영향을 주지 않음.
@@ -791,20 +801,7 @@ function load(){
   // (요청4) 정렬은 색상 우선을 기본으로 강제 (기존 기기의 '최근수정' 설정 1회 교정)
   if(!S.settings._sortFixed){ S.settings.sort='color'; S.settings._sortFixed=true; }
 }
-function save(){ STORE.setItem(LS.notes,JSON.stringify(S.notes)); STORE.setItem(LS.folders,JSON.stringify(S.folders)); STORE.setItem(LS.settings,JSON.stringify(S.settings)); autoBackup(); }
-/* (v5.5) 데이터 안전망: 하루 1회, 오늘 날짜 키로 전체 스냅샷 백업 (최근 5일 보관).
-   실수로 앱을 다른 위치에서 열어 데이터가 없어 보여도 이 키로 복구할 수 있음 */
-function autoBackup(){
-  try{
-    const k='sk.backup.'+new Date().toISOString().slice(0,10);
-    if(STORE.getItem(k))return;
-    STORE.setItem(k,JSON.stringify({t:Date.now(),notes:S.notes,folders:S.folders,
-      vault:(typeof VLT!=='undefined'&&VLT.notes)||[],vaultFolders:(typeof VLT!=='undefined'&&VLT.folders)||[],settings:S.settings}));
-    const keys=[]; for(let i=0;i<STORE.length;i++){const kk=STORE.key(i); if(kk&&kk.indexOf('sk.backup.')===0)keys.push(kk)}
-    keys.sort().reverse();
-    while(keys.length>5){STORE.removeItem(keys.pop())}
-  }catch(e){}
-}
+function save(){ STORE.setItem(LS.notes,JSON.stringify(S.notes)); STORE.setItem(LS.folders,JSON.stringify(S.folders)); STORE.setItem(LS.settings,JSON.stringify(S.settings)); }
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),2200)}
 function fmtDate(ts){const d=new Date(ts);const n=new Date();const p=x=>String(x).padStart(2,'0');
   if(d.toDateString()===n.toDateString())return `오늘 ${p(d.getHours())}:${p(d.getMinutes())}`;
@@ -946,7 +943,7 @@ function render(){
     const nfc=document.createElement('button');nfc.className='chip'+(ui.nofolder&&!ui.trash?' on':'');
     nfc.textContent='노트';nfc.title='폴더에 없는 보관 노트만';
     nfc.onclick=()=>{ui.folder='';ui.nofolder=true;ui.trash=false;exitSel();render()};bar.append(nfc);
-    FOLDERS().forEach(f=>{                                   /* (요청1) 보관 폴더만 표시 */
+    S.folders.forEach(f=>{
       const b=document.createElement('button');b.className='chip'+(ui.folder===f.id&&!ui.nofolder&&!ui.trash?' on':'');
       const cnt=VLT.notes.filter(n=>n.folder===f.id).length;
       b.textContent=`${f.name} (${cnt})`;b.onclick=()=>{ui.folder=f.id;ui.nofolder=false;ui.trash=false;exitSel();render()};
@@ -965,7 +962,7 @@ function render(){
     const nfc=document.createElement('button');nfc.className='chip'+(ui.nofolder&&!ui.trash?' on':'');
     nfc.textContent='노트';nfc.title='폴더에 없는 노트만';
     nfc.onclick=()=>{ui.folder='';ui.nofolder=true;ui.trash=false;exitSel();render()};bar.append(nfc);
-    FOLDERS().forEach(f=>{                                    /* (요청1) 일반 폴더만 표시 */
+    S.folders.forEach(f=>{
       const b=document.createElement('button');b.className='chip'+(ui.folder===f.id&&!ui.nofolder&&!ui.trash?' on':'');
       const cnt=S.notes.filter(n=>!n.deleted&&n.folder===f.id).length;
       b.textContent=`${f.name} (${cnt})`;b.onclick=()=>{ui.folder=f.id;ui.nofolder=false;ui.trash=false;exitSel();render()};
@@ -1136,9 +1133,7 @@ function openEditor(id){
   $('#edBody').classList.toggle('hidden',isCheck);
   $('#edItems').classList.toggle('hidden',!isCheck);
   $('#addItemBtn').classList.toggle('hidden',!isCheck);
-$('#edBody').innerHTML=linkify(n.content||'');
-  /* (v5.5) 재오픈 시 이미지에도 선택/이동 보장: edimg 클래스 + 기본 드래그 비활성 재적용 */
-  $$('#edBody img').forEach(im=>{im.classList.add('edimg');im.setAttribute('draggable','false')});
+  $('#edBody').innerHTML=linkify(n.content||'');
   applyEditorColor(n.color||0);                      // (요청3) 노트 색 적용
   /* (요청1) 노트별 글자 크기 기능 폐지 — 크기는 설정(--note)에서만, 서식은 Type(T) 버튼 */
   applyEditorWeight(n);                              // (요구3) 노트 전용 본문 굵기 적용 (미지정이면 전역값) — v5.1 데드코드 활성화
@@ -1240,7 +1235,6 @@ function closeEditor(fromBack){
   else ovCloseUi($('#edOverlay'));
   hideSelBar();$('#edMenu').classList.remove('show');$('#edColorPop').classList.remove('show');$('#edTypePop').classList.remove('show');
   selImg=null;if(imgBox)imgBox.remove();imgBox=null;$('#imgBar').classList.add('hidden');$('#imgPrev').classList.add('hidden');
-  imgDrag=null;imgDragging=false;ghostOff();
   scheduleReminders();render();
 }
 $('#edSaveBtn').onclick=()=>{ flushEd(); closeEditor(); };   // ✓ = 저장 후 목록으로
@@ -1326,7 +1320,6 @@ async function insertImageFile(file){
   if(!ui.edEdit){ui.edEdit=true;applyEdMode();}
   const dataUrl=await new Promise(res=>{const r=new FileReader();r.onload=()=>res(r.result);r.readAsDataURL(file)});
   const img=document.createElement('img'); img.className='edimg'; img.src=dataUrl; img.alt='이미지';
-  img.setAttribute('draggable','false');   /* (v5.5) 기본 이미지 드래그 비활성 → 탭 선택/우리 드래그와 충돌 방지 */
   img.style.width='100%';
   $('#edBody').focus();
   const s=window.getSelection(); const r=s.rangeCount?s.getRangeAt(0):document.createRange();
@@ -1369,10 +1362,7 @@ function placeImgBox(){
   imgBox.style.left=Math.max(0,ir.left-er.left)+'px';imgBox.style.top=Math.max(0,ir.top-er.top)+'px';
   imgBox.style.width=ir.width+'px';imgBox.style.height=ir.height+'px';
 }
-function selectImg(img){ selImg=img;
-  /* (v5.5) 현재 실제 폭 기준 % 표시 — 이동 후에도 정확한 크기 표시 */
-  const edm=document.querySelector('.edmain'); const base=edm?edm.getBoundingClientRect().width:1;
-  imgPct=Math.max(20,Math.min(100,Math.round((img.getBoundingClientRect().width/base)*100)));
+function selectImg(img){ selImg=img; imgPct=100;
   $$('#edBody img.edimg').forEach(im=>im.classList.remove('sel'));
   img.classList.add('sel'); updateImgBar();
   $('#imgBar').classList.remove('hidden');
@@ -1384,13 +1374,6 @@ function delImg(){ if(!selImg)return; selImg.remove(); selImg=null; if(imgBox)im
 function previewImg(img){ const ov=$('#imgPrev'); if(ov){ov.innerHTML='<span>✕</span>';const im=document.createElement('img');im.src=img.src;ov.appendChild(im);ov.classList.remove('hidden')} }
 $('#imgSmaller').onclick=()=>imgScale(-10);
 $('#imgBigger').onclick=()=>imgScale(10);
-/* (요청3) 이미지 위치 이동: 앞/뒤로 (드래그 외 버튼으로도 정밀 이동) */
-function imgMove(dir){ if(!selImg)return; const p=selImg.parentNode; if(!p)return;
-  if(dir===-1&&selImg.previousSibling)p.insertBefore(selImg,selImg.previousSibling);
-  else if(dir===1&&selImg.nextSibling)p.insertBefore(selImg.nextSibling,selImg);
-  placeImgBox();schedSave(); }
-$('#imgPrevPos').onclick=()=>imgMove(-1);
-$('#imgNextPos').onclick=()=>imgMove(1);
 $('#imgDelete').onclick=delImg;
 $('#imgClose').onclick=()=>{selImg&&selImg.classList.remove('sel');selImg=null;if(imgBox)imgBox.remove();imgBox=null;$('#imgBar').classList.add('hidden')};
 /* (요청) 에디터 스크롤/크기변경 시 핸들 위치 추적 */
@@ -1435,92 +1418,11 @@ $('#edBody').addEventListener('click',e=>{
   if(a && !ui.edEdit){ e.preventDefault(); window.open(a.href,'_blank','noopener'); }
 });
 $('#edBody').addEventListener('dblclick',e=>{ if(cur()&&cur().type!=='check')enterEditAtPoint(e.clientX,e.clientY); });
-/* (요청2/3) 이미지 상호작용 — v5.5 재시작, 모든 기기에서 확실히 동작.
-   근본 원인 3가지 해결:
-   ① 터치 기기: 브라우저 스크롤이 pointermove를 가로챔 → 이미지에서 touch-action:none + preventDefault
-   ② iOS Safari: caretRangeFromPoint 미지원 → elementFromPoint 기반 놓을 지점 계산으로 대체
-   ③ contenteditable 이미지 기본 드래그(HTML5)와 충돌 → draggable=false */
+/* (요청2) 이미지 탭 분기: pointerup에서 처리 (click은 모바일에서 caret 이동과 충돌해 무시될 수 있음) */
 let lastTap=0,lastX=0,lastY=0,imgTapGuard=false;
-let imgDragStart=null;            /* {img,x,y} */
-let imgDragging=false, imgGhost=null;
-function deepestTextNode(el){
-  if(!el)return null;
-  if(el.nodeType===3)return el;
-  for(const c of el.childNodes){const r=deepestTextNode(c);if(r)return r}
-  return null;
-}
-function findInsertRange(x,y){
-  let range=null;
-  try{ if(document.caretRangeFromPoint)range=document.caretRangeFromPoint(x,y); }catch(e){}
-  if(!range&&document.caretPositionFromPoint){ try{
-    const p=document.caretPositionFromPoint(x,y);
-    if(p&&p.offsetNode){range=document.createRange();range.setStart(p.offsetNode,p.offset);range.collapse(true)}
-  }catch(e){} }
-  if(range){ try{ if(!$('#edBody').contains(range.startContainer))range=null; }catch(e){range=null} }
-  if(!range){ /* iOS Safari 등 caret API 미지원 → 포인터 아래 요소의 텍스트 끝에 놓기 */
-    try{
-      const el=document.elementFromPoint(x,y);
-      if(el&&$('#edBody').contains(el)&&el!==(imgDragStart&&imgDragStart.img)){
-        const tn=deepestTextNode(el);
-        if(tn){range=document.createRange();range.setStart(tn,tn.length);range.collapse(true)}
-        else{range=document.createRange();range.selectNode(el);range.collapse(false)}
-      }
-    }catch(e){}
-  }
-  return range||null;
-}
-function ghostOn(x,y,w){
-  ghostOff();
-  imgGhost=document.createElement('div');
-  imgGhost.style.cssText=`position:fixed;left:${x}px;top:${y}px;width:${w}px;height:auto;pointer-events:none;opacity:.5;z-index:140;transform:translate(-50%,-50%);border:2px dashed var(--accent);border-radius:8px;background:rgba(0,0,0,.15);display:flex;align-items:center;justify-content:center;font-size:2em`;
-  imgGhost.textContent='📷';document.body.appendChild(imgGhost);
-}
-function ghostMove(x,y){ if(imgGhost){imgGhost.style.left=x+'px';imgGhost.style.top=y+'px'} }
-function ghostOff(){ if(imgGhost){imgGhost.remove();imgGhost=null} }
-function imgResetDrag(){
-  imgDragging=false; ghostOff();
-  const src=imgDragStart&&imgDragStart.img;
-  if(src){ try{src.style.touchAction=''}catch(e){} }
-  imgDragStart=null;
-}
-function dropImgAt(x,y){
-  const src=imgDragStart&&imgDragStart.img;
-  if(!src||!src.isConnected){imgResetDrag();return}
-  const wasSel=(selImg===src);
-  const range=findInsertRange(x,y);
-  if(range){
-    try{ range.insertNode(src); }
-    catch(e){ try{$('#edBody').appendChild(src)}catch(e2){} }
-  }
-  /* 놓을 지점이 본문이 아니면 → 본문 끝으로 이동 (화면 밖 유실 방지) */
-  else if(!$('#edBody').contains(src)){ try{$('#edBody').appendChild(src)}catch(e){} }
-  if(wasSel){ selectImg(src); }
-  else if(selImg)placeImgBox();
-  imgResetDrag(); schedSave();
-}
-$('#edBody').addEventListener('pointerdown',e=>{
-  const im=e.target&&e.target.closest?e.target.closest('img.edimg'):null;
-  if(!im)return;
-  if(ui.edEdit){
-    e.preventDefault();                      /* 기본 이미지 드래그/선택 방지 */
-    try{im.style.touchAction='none'}catch(e){}  /* 드래그 동안 스크롤 가로채기 차단 */
-    imgDragStart={img:im,x:e.clientX,y:e.clientY}; imgDragging=false;
-  }
-});
-$('#edBody').addEventListener('pointermove',e=>{
-  if(!imgDragStart||imgDragging||!ui.edEdit)return;
-  if(Math.hypot(e.clientX-imgDragStart.x,e.clientY-imgDragStart.y)>12){
-    imgDragging=true;
-    const w=imgDragStart.img.getBoundingClientRect().width||160;
-    ghostOn(e.clientX,e.clientY,w);
-  } else return;
-  ghostMove(e.clientX,e.clientY);
-});
 $('#edBody').addEventListener('pointerup',e=>{
   const im=e.target&&e.target.closest?e.target.closest('img.edimg'):null;
-  if(im||imgDragging){
-    if(imgDragging){ e.preventDefault(); dropImgAt(e.clientX,e.clientY); return; }
-    /* 탭: 편집=선택(재탭=해제) / 보기=전체화면 */
+  if(im){ /* 이미지 탭: 편집 중=선택(재탭=해제) / 보기=전체화면 */
     e.preventDefault(); imgTapGuard=true; setTimeout(()=>{imgTapGuard=false},0);
     if(ui.edEdit){ if(selImg===im)$('#imgClose').click(); else selectImg(im); }
     else previewImg(im);
@@ -1532,10 +1434,6 @@ $('#edBody').addEventListener('pointerup',e=>{
   }
   lastTap=now;lastX=e.clientX;lastY=e.clientY;
 });
-/* 터치 스크롤 등 브라우저가 제스처를 가로채도(pointercancel) 안전 정리 */
-$('#edBody').addEventListener('pointercancel',()=>{ if(imgDragStart&&imgDragStart.img) imgResetDrag(); });
-document.addEventListener('pointerup',e=>{ if(imgDragging) dropImgAt(e.clientX,e.clientY); });
-document.addEventListener('pointercancel',()=>{ imgResetDrag(); });
 
 /* ═══════════════ (요청1) Type(T) 버튼 — 선택 텍스트 서식: 크기·볼드·기울임·밑줄·이모티콘·줄간격 ═══════════════ */
 const EMOJIS=['😀','😂','😍','😊','🤔','👍','🙏','🔥','❤️','🎉','✅','⭐','🤷','💡','🎯','📌','🍀','🥳'];
@@ -1686,13 +1584,12 @@ async function shareNote(n){
   try{ await navigator.clipboard.writeText(text); toast('클립보드에 복사했습니다'); }catch(e){ toast('공유를 지원하지 않는 환경입니다'); }
 }
 async function moveNoteFolder(n){
-  const folders=FOLDERS();   /* (요청1) 현재 화면의 폴더만 이동 대상 */
-  const opts=['(폴더 없음)',...folders.map(f=>f.name)];
+  const opts=['(폴더 없음)',...S.folders.map(f=>f.name)];
   const list=opts.map((o,i)=>`${i}. ${o}`).join('\n');
   const v=await dlg('이동할 폴더 번호를 입력하세요:\n\n'+list,{input:true,okText:'이동'});
   if(v===null||v===undefined||v==='')return;
   const idx=parseInt(v);
-  if(idx===0)n.folder=''; else if(folders[idx-1])n.folder=folders[idx-1].id; else{toast('잘못된 번호');return}
+  if(idx===0)n.folder=''; else if(S.folders[idx-1])n.folder=S.folders[idx-1].id; else{toast('잘못된 번호');return}
   n.updatedAt=Date.now();n.dirty=true;schedSave();
   if(ui.vault)VLT.persist();   /* (요청3) 보관 노트는 즉시 저장(서버 동기화 없음) */
   toast('폴더를 이동했습니다');
@@ -1777,25 +1674,21 @@ $('#addItemBtn').onclick=()=>{const n=cur();n.items.push({text:'',done:false});s
 /* ═══════════════ 폴더 ═══════════════ */
 function openFolderMgr(){
   const list=$('#folderList');list.innerHTML='';
-  const folders=FOLDERS();   /* (요청1) 현재 화면(일반/보관)의 폴더만 관리 */
-  if(!folders.length)list.innerHTML='<div class="hint">'+ (ui.vault?'보관 노트 폴더가 없습니다.':'폴더가 없습니다.') +' 아래에서 추가하세요.</div>';
-  folders.forEach(f=>{
+  if(!S.folders.length)list.innerHTML='<div class="hint">폴더가 없습니다. 아래에서 추가하세요.</div>';
+  S.folders.forEach(f=>{
     const row=document.createElement('div');row.className='setrow';
     const nm=document.createElement('span');nm.textContent=f.name;nm.style.fontWeight='600';
     const wrap=document.createElement('div');
     const re=document.createElement('button');re.className='btn';re.textContent='이름 변경';re.style.marginRight='.3em';
     re.onclick=async()=>{const v=await dlg('새 폴더 이름',{input:true,def:f.name,okText:'변경'});
-      if(v){f.name=v;if(ui.vault){VLT.persistFolders()}else{f._synced=false;touch();syncSoon()}
-        openFolderMgr();render()}};
+      if(v){f.name=v;f._synced=false;touch();openFolderMgr();render();syncSoon()}};
     const del=document.createElement('button');del.className='btn danger';del.textContent='삭제';
     del.onclick=async()=>{
       if(!await dlg(`'${f.name}' 폴더를 삭제할까요?\n노트는 '전체'로 이동합니다.`,{danger:true,okText:'삭제'}))return;
-      NOTES().forEach(n=>{if(n.folder===f.id){n.folder='';n.updatedAt=Date.now()}});
-      if(ui.vault){VLT.persist()}else{S.notes.forEach(n=>{if(n.folder===f.id)n.dirty=true});touch()}
-      if(ui.vault){VLT.folders=VLT.folders.filter(x=>x!==f);VLT.persistFolders()}
-      else{S.folders=S.folders.filter(x=>x!==f);SYNC.deleteFolder(f.id);touch();syncSoon()}
-      if(ui.folder===f.id)ui.folder='';
-      openFolderMgr();render()};
+      S.notes.forEach(n=>{if(n.folder===f.id){n.folder='';n.dirty=true;n.updatedAt=Date.now()}});
+      VLT.notes.forEach(n=>{if(n.folder===f.id)n.folder=''});VLT.persist();   /* (요청3) 보관 노트 폴더도 정리 */
+      S.folders=S.folders.filter(x=>x!==f);if(ui.folder===f.id)ui.folder='';
+      SYNC.deleteFolder(f.id);touch();openFolderMgr();render();syncSoon()};
     wrap.append(re,del);row.append(nm,wrap);list.append(row);
   });
   ovOpen($('#folderOverlay'));
@@ -1803,11 +1696,8 @@ function openFolderMgr(){
 $('#folderClose').onclick=()=>ovCloseUi($('#folderOverlay'));
 $('#addFolderBtn').onclick=()=>{
   const v=$('#newFolderName').value.trim();if(!v)return;
-  const f={id:uid(),name:v,createdAt:Date.now(),_synced:false};
-  if(ui.vault){VLT.folders.push(f);VLT.persistFolders()}
-  else{S.folders.push(f);touch();syncSoon()}
-  $('#newFolderName').value='';
-  openFolderMgr();render();
+  S.folders.push({id:uid(),name:v,createdAt:Date.now(),_synced:false});$('#newFolderName').value='';
+  touch();openFolderMgr();render();syncSoon();
 };
 $('#newFolderName').addEventListener('keydown',e=>{if(e.key==='Enter')$('#addFolderBtn').click()});
 
@@ -2220,20 +2110,10 @@ $('#btnTrash').onclick=()=>{ui.trash=!ui.trash;exitSel();render()};
 
 /* ═══════════════ 보관 노트 (Vault) — 진입 시마다 비밀번호 (요구11) ═══════════════ */
 const VLT={
-  notes:[], folders:[], bio:false, settings:{}, openUntil:0,
-  load(){
-    try{this.notes=JSON.parse(STORE.getItem('sk.vault'))||[]}catch(e){this.notes=[]}
-    try{this.folders=JSON.parse(STORE.getItem('sk.vault.folders'))||[]}catch(e){this.folders=[]}
-    /* (요청1) 기존 '일반 폴더를 공유하던' 보관 노트 1회 이관: 보관 노트가 참조하던 일반 폴더를 보관 전용 폴더로 복사 */
-    try{ const usedIds=new Set(this.notes.map(n=>n.folder).filter(Boolean));
-      if(usedIds.size&&!this.folders.length&&S.folders.length){
-        this.folders=S.folders.filter(f=>usedIds.has(f.id)).map(f=>({id:f.id,name:f.name,createdAt:f.createdAt}));
-      }
-    }catch(e){}
-    try{this.settings=Object.assign({},VAULT_DEF,JSON.parse(STORE.getItem('sk.vault.settings'))||{})}catch(e){this.settings=Object.assign({},VAULT_DEF)}
-  },
+  notes:[], bio:false, settings:{}, openUntil:0,
+  load(){ try{this.notes=JSON.parse(STORE.getItem('sk.vault'))||[]}catch(e){this.notes=[]
+      } try{this.settings=Object.assign({},VAULT_DEF,JSON.parse(STORE.getItem('sk.vault.settings'))||{})}catch(e){this.settings=Object.assign({},VAULT_DEF)} },
   persist(){STORE.setItem('sk.vault',JSON.stringify(this.notes))},
-  persistFolders(){STORE.setItem('sk.vault.folders',JSON.stringify(this.folders))},
   persistSettings(){STORE.setItem('sk.vault.settings',JSON.stringify(this.settings))},
   async init(){
     this.load();
@@ -2244,7 +2124,7 @@ const VLT={
     }else if(!['l','n','b','x'].includes(this.settings.fontWeight))this.settings.fontWeight='n';   /* (요구3) v5.2: 새 굵기 키체계 1회 이관 */
     this.settings.font=migFont(this.settings.font);   /* (요청7) 보관 노트 글자 크기 → pt (v5.3) */
     try{ if(window.PublicKeyCredential && await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()) this.bio=true }catch(e){}
-    const vbio=$('#vBioRow'); if(vbio)vbio.classList.toggle('hidden',!this.bio);   /* 심플 게이트에는 지문 버튼 미표시 */
+    $('#vBioRow').classList.toggle('hidden',!this.bio);
   },
   /* (요구11) 진입할 때: '암호 없이 열리는 시간(요청7)' 안이라면 바로 들어감, 아니면 비밀번호 창 */
   open(){
@@ -2303,10 +2183,10 @@ const VLT={
     }catch(e){ toast('지문 인식 실패/취소 — 비밀번호로 해제하세요') }
   }
 };
-$('#vGateClose').onclick=()=>ovCloseUi($('#vGate'));   /* 닫기 버튼 없음 — back/외부 탭으로 닫음 (호환 유지) */
+$('#vGateClose').onclick=()=>ovCloseUi($('#vGate'));
 $('#vPassBtn').onclick=()=>VLT.unlockPass();
 $('#vGatePass').addEventListener('keydown',e=>{if(e.key==='Enter')VLT.unlockPass()});
-const vBioBtnEl=$('#vBioBtn'); if(vBioBtnEl)vBioBtnEl.onclick=()=>VLT.unlockBio();
+$('#vBioBtn').onclick=()=>VLT.unlockBio();
 $('#stVaultBtn').onclick=()=>{ovCloseUi($('#setOverlay'));VLT.open()};
 
 /* ═══════════════ 시작 ═══════════════ */
