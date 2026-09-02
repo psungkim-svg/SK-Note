@@ -300,7 +300,8 @@ html[data-theme="dark"] mark{background:#c8a000;color:#fff}
   border-radius:.5em;color:var(--text);line-height:1.4;text-align:center}
 
 /* (요청2) 이미지 리사이즈: 에디터 안 이미지 + 선택 시 컨트롤 바 + 전체화면 미리보기 */
-#edBody img.edimg{max-width:100%;height:auto;border-radius:8px;margin:.3em 0;display:block}
+#edBody img.edimg{max-width:100%;height:auto;border-radius:8px;margin:.3em 0;display:block;
+  -webkit-user-drag:none;user-select:none;-webkit-touch-callout:none}   /* (v5.5) 기본 드래그·길게누름 메뉴 차단 */
 #edBody img.edimg.sel{outline:3px solid var(--accent);outline-offset:2px}
 /* (요청) 이미지 선택 시 모서리 핸들 — 드래그로 확대/축소 (비율 유지) */
 #imgSelBox{position:absolute;z-index:73;pointer-events:none;border:2px solid var(--accent);
@@ -369,16 +370,16 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
 /* ── (요청) 보관 노트 잠금 화면 — 아주 심플: 흰 박스 + 암호입력 + 큰 입력 + 확인 ── */
 #vGate{align-items:center;background:rgba(0,0,0,.4)}
 #vGate .vgateSimple{width:min(86vw,310px);background:#fff;border-radius:14px;
-  padding:1.6em 1.4em 1.4em;box-shadow:0 10px 40px rgba(0,0,0,.35);text-align:center;
+  padding:.8em 1.3em .75em;box-shadow:0 10px 40px rgba(0,0,0,.35);text-align:center;
   animation:vpop .22s ease}
 @keyframes vpop{from{transform:scale(.95);opacity:0}to{transform:none;opacity:1}}
-#vGate .vgateTitle{font-size:.8em;color:#555;font-weight:600;margin-bottom:.9em}
-#vGate input[type=password]{display:block;width:100%;height:3em;text-align:center;
-  font-size:1.15em;letter-spacing:.5em;border:1.5px solid #d0d0d0;border-radius:10px;
-  background:#fff;color:#222;outline:none;margin:0 0 .8em;transition:border-color .15s}
+#vGate .vgateTitle{font-size:.72em;color:#555;font-weight:600;margin-bottom:.3em}
+#vGate input[type=password]{display:block;width:100%;height:1.5em;text-align:center;
+  font-size:1.05em;letter-spacing:.5em;border:1.5px solid #d0d0d0;border-radius:8px;
+  background:#fff;color:#222;outline:none;margin:0 0 .45em;transition:border-color .15s}
 #vGate input[type=password]:focus{border-color:var(--accent)}
-#vGate .vgateOk{display:block;width:100%;height:2.9em;background:var(--accent);color:#3d2c00;
-  border:none;border-radius:10px;font-size:.85em;font-weight:800;cursor:pointer}
+#vGate .vgateOk{display:block;width:100%;height:1.9em;background:var(--accent);color:#3d2c00;
+  border:none;border-radius:8px;font-size:.8em;font-weight:800;cursor:pointer}
 #vGate .vgateOk:active{transform:scale(.97)}
 
 /* 토스트 */
@@ -402,7 +403,7 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
 <header>
   <div class="hrow">
     <span class="logo" id="logoText">SK 노트</span>
-    <span class="verbadge" id="appVer">v5.6</span>
+    <span class="verbadge" id="appVer">v5.5</span>
     <input id="search" type="search" placeholder="검색...">
     <span class="syncdot" id="syncDot" title="동기화 상태"></span>
     <button class="iconbtn" id="btnView" title="보기 전환">▦</button>
@@ -651,7 +652,7 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
 
     <div class="setsec">
       <h4>정보</h4>
-      <div class="hint">SK 노트 v5.6 · 일반/보관 노트·폴더 완전 분리 + 잠금화면 심플화 + 이미지 드래그 이동·앞뒤 이동</div>
+      <div class="hint">SK 노트 v5.5 (재시작) · 일반/보관 완전 분리 + 심플 잠금(높이 절반) + 이미지 탭-선택/드래그 이동/삭제/크기 확실 동작 + 자동 백업</div>
     </div>
   </div>
 </div>
@@ -790,7 +791,20 @@ function load(){
   // (요청4) 정렬은 색상 우선을 기본으로 강제 (기존 기기의 '최근수정' 설정 1회 교정)
   if(!S.settings._sortFixed){ S.settings.sort='color'; S.settings._sortFixed=true; }
 }
-function save(){ STORE.setItem(LS.notes,JSON.stringify(S.notes)); STORE.setItem(LS.folders,JSON.stringify(S.folders)); STORE.setItem(LS.settings,JSON.stringify(S.settings)); }
+function save(){ STORE.setItem(LS.notes,JSON.stringify(S.notes)); STORE.setItem(LS.folders,JSON.stringify(S.folders)); STORE.setItem(LS.settings,JSON.stringify(S.settings)); autoBackup(); }
+/* (v5.5) 데이터 안전망: 하루 1회, 오늘 날짜 키로 전체 스냅샷 백업 (최근 5일 보관).
+   실수로 앱을 다른 위치에서 열어 데이터가 없어 보여도 이 키로 복구할 수 있음 */
+function autoBackup(){
+  try{
+    const k='sk.backup.'+new Date().toISOString().slice(0,10);
+    if(STORE.getItem(k))return;
+    STORE.setItem(k,JSON.stringify({t:Date.now(),notes:S.notes,folders:S.folders,
+      vault:(typeof VLT!=='undefined'&&VLT.notes)||[],vaultFolders:(typeof VLT!=='undefined'&&VLT.folders)||[],settings:S.settings}));
+    const keys=[]; for(let i=0;i<STORE.length;i++){const kk=STORE.key(i); if(kk&&kk.indexOf('sk.backup.')===0)keys.push(kk)}
+    keys.sort().reverse();
+    while(keys.length>5){STORE.removeItem(keys.pop())}
+  }catch(e){}
+}
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),2200)}
 function fmtDate(ts){const d=new Date(ts);const n=new Date();const p=x=>String(x).padStart(2,'0');
   if(d.toDateString()===n.toDateString())return `오늘 ${p(d.getHours())}:${p(d.getMinutes())}`;
@@ -1122,7 +1136,9 @@ function openEditor(id){
   $('#edBody').classList.toggle('hidden',isCheck);
   $('#edItems').classList.toggle('hidden',!isCheck);
   $('#addItemBtn').classList.toggle('hidden',!isCheck);
-  $('#edBody').innerHTML=linkify(n.content||'');
+$('#edBody').innerHTML=linkify(n.content||'');
+  /* (v5.5) 재오픈 시 이미지에도 선택/이동 보장: edimg 클래스 + 기본 드래그 비활성 재적용 */
+  $$('#edBody img').forEach(im=>{im.classList.add('edimg');im.setAttribute('draggable','false')});
   applyEditorColor(n.color||0);                      // (요청3) 노트 색 적용
   /* (요청1) 노트별 글자 크기 기능 폐지 — 크기는 설정(--note)에서만, 서식은 Type(T) 버튼 */
   applyEditorWeight(n);                              // (요구3) 노트 전용 본문 굵기 적용 (미지정이면 전역값) — v5.1 데드코드 활성화
@@ -1310,6 +1326,7 @@ async function insertImageFile(file){
   if(!ui.edEdit){ui.edEdit=true;applyEdMode();}
   const dataUrl=await new Promise(res=>{const r=new FileReader();r.onload=()=>res(r.result);r.readAsDataURL(file)});
   const img=document.createElement('img'); img.className='edimg'; img.src=dataUrl; img.alt='이미지';
+  img.setAttribute('draggable','false');   /* (v5.5) 기본 이미지 드래그 비활성 → 탭 선택/우리 드래그와 충돌 방지 */
   img.style.width='100%';
   $('#edBody').focus();
   const s=window.getSelection(); const r=s.rangeCount?s.getRangeAt(0):document.createRange();
@@ -1352,7 +1369,10 @@ function placeImgBox(){
   imgBox.style.left=Math.max(0,ir.left-er.left)+'px';imgBox.style.top=Math.max(0,ir.top-er.top)+'px';
   imgBox.style.width=ir.width+'px';imgBox.style.height=ir.height+'px';
 }
-function selectImg(img){ selImg=img; imgPct=100;
+function selectImg(img){ selImg=img;
+  /* (v5.5) 현재 실제 폭 기준 % 표시 — 이동 후에도 정확한 크기 표시 */
+  const edm=document.querySelector('.edmain'); const base=edm?edm.getBoundingClientRect().width:1;
+  imgPct=Math.max(20,Math.min(100,Math.round((img.getBoundingClientRect().width/base)*100)));
   $$('#edBody img.edimg').forEach(im=>im.classList.remove('sel'));
   img.classList.add('sel'); updateImgBar();
   $('#imgBar').classList.remove('hidden');
@@ -1415,48 +1435,92 @@ $('#edBody').addEventListener('click',e=>{
   if(a && !ui.edEdit){ e.preventDefault(); window.open(a.href,'_blank','noopener'); }
 });
 $('#edBody').addEventListener('dblclick',e=>{ if(cur()&&cur().type!=='check')enterEditAtPoint(e.clientX,e.clientY); });
-/* (요청2) 이미지 탭 분기: pointerup에서 처리 (click은 모바일에서 caret 이동과 충돌해 무시될 수 있음) */
-/* (요청3) 이미지 드래그: 이미지를 눌러 끌면 반투명 고스트가 따라가고, 놓는 지점으로 이미지가 이동 */
+/* (요청2/3) 이미지 상호작용 — v5.5 재시작, 모든 기기에서 확실히 동작.
+   근본 원인 3가지 해결:
+   ① 터치 기기: 브라우저 스크롤이 pointermove를 가로챔 → 이미지에서 touch-action:none + preventDefault
+   ② iOS Safari: caretRangeFromPoint 미지원 → elementFromPoint 기반 놓을 지점 계산으로 대체
+   ③ contenteditable 이미지 기본 드래그(HTML5)와 충돌 → draggable=false */
 let lastTap=0,lastX=0,lastY=0,imgTapGuard=false;
-let imgDrag=null, imgDragging=false, imgGhost=null;
-function ghostOn(x,y,w){
-  imgGhost=document.createElement('div');
-  imgGhost.style.cssText=`position:fixed;left:${x}px;top:${y}px;width:${w}px;pointer-events:none;opacity:.55;z-index:140;transform:translate(-50%,-50%);border:1px dashed #fff;border-radius:8px;filter:drop-shadow(0 4px 10px rgba(0,0,0,.4))`;
-  imgGhost.textContent='🖼️ 이동';
-  imgGhost.style.display='flex';imgGhost.style.alignItems='center';imgGhost.style.justifyContent='center';
-  imgGhost.style.background='rgba(0,0,0,.2)';imgGhost.style.boxSizing='border-box';
-  document.body.appendChild(imgGhost);
+let imgDragStart=null;            /* {img,x,y} */
+let imgDragging=false, imgGhost=null;
+function deepestTextNode(el){
+  if(!el)return null;
+  if(el.nodeType===3)return el;
+  for(const c of el.childNodes){const r=deepestTextNode(c);if(r)return r}
+  return null;
 }
-function ghostMove(x,y){ if(imgGhost)imgGhost.style.left=x+'px',imgGhost.style.top=y+'px'; }
-function ghostOff(){ if(imgGhost){imgGhost.remove();imgGhost=null} }
-function dropImgAt(x,y){
-  const src=imgDrag&&imgDrag.img; if(!src||!src.isConnected){imgDragging=false;ghostOff();return}
+function findInsertRange(x,y){
   let range=null;
-  if(document.caretRangeFromPoint)range=document.caretRangeFromPoint(x,y);
-  else if(document.caretPositionFromPoint){const p=document.caretPositionFromPoint(x,y);if(p){range=document.createRange();range.setStart(p.offsetNode,p.offset);range.collapse(true)}}
-  /* 유효한 놓을 지점(본문 안)이면 그 위치로 이미지 이동, 아니면 제자리 */
-  if(range&&$('#edBody').contains(range.startContainer)){
-    try{ range.insertNode(src); }catch(err){}
+  try{ if(document.caretRangeFromPoint)range=document.caretRangeFromPoint(x,y); }catch(e){}
+  if(!range&&document.caretPositionFromPoint){ try{
+    const p=document.caretPositionFromPoint(x,y);
+    if(p&&p.offsetNode){range=document.createRange();range.setStart(p.offsetNode,p.offset);range.collapse(true)}
+  }catch(e){} }
+  if(range){ try{ if(!$('#edBody').contains(range.startContainer))range=null; }catch(e){range=null} }
+  if(!range){ /* iOS Safari 등 caret API 미지원 → 포인터 아래 요소의 텍스트 끝에 놓기 */
+    try{
+      const el=document.elementFromPoint(x,y);
+      if(el&&$('#edBody').contains(el)&&el!==(imgDragStart&&imgDragStart.img)){
+        const tn=deepestTextNode(el);
+        if(tn){range=document.createRange();range.setStart(tn,tn.length);range.collapse(true)}
+        else{range=document.createRange();range.selectNode(el);range.collapse(false)}
+      }
+    }catch(e){}
   }
-  if(selImg)placeImgBox();
-  schedSave(); imgDragging=false; ghostOff(); imgDrag=null;
+  return range||null;
+}
+function ghostOn(x,y,w){
+  ghostOff();
+  imgGhost=document.createElement('div');
+  imgGhost.style.cssText=`position:fixed;left:${x}px;top:${y}px;width:${w}px;height:auto;pointer-events:none;opacity:.5;z-index:140;transform:translate(-50%,-50%);border:2px dashed var(--accent);border-radius:8px;background:rgba(0,0,0,.15);display:flex;align-items:center;justify-content:center;font-size:2em`;
+  imgGhost.textContent='📷';document.body.appendChild(imgGhost);
+}
+function ghostMove(x,y){ if(imgGhost){imgGhost.style.left=x+'px';imgGhost.style.top=y+'px'} }
+function ghostOff(){ if(imgGhost){imgGhost.remove();imgGhost=null} }
+function imgResetDrag(){
+  imgDragging=false; ghostOff();
+  const src=imgDragStart&&imgDragStart.img;
+  if(src){ try{src.style.touchAction=''}catch(e){} }
+  imgDragStart=null;
+}
+function dropImgAt(x,y){
+  const src=imgDragStart&&imgDragStart.img;
+  if(!src||!src.isConnected){imgResetDrag();return}
+  const wasSel=(selImg===src);
+  const range=findInsertRange(x,y);
+  if(range){
+    try{ range.insertNode(src); }
+    catch(e){ try{$('#edBody').appendChild(src)}catch(e2){} }
+  }
+  /* 놓을 지점이 본문이 아니면 → 본문 끝으로 이동 (화면 밖 유실 방지) */
+  else if(!$('#edBody').contains(src)){ try{$('#edBody').appendChild(src)}catch(e){} }
+  if(wasSel){ selectImg(src); }
+  else if(selImg)placeImgBox();
+  imgResetDrag(); schedSave();
 }
 $('#edBody').addEventListener('pointerdown',e=>{
   const im=e.target&&e.target.closest?e.target.closest('img.edimg'):null;
-  if(im&&ui.edEdit){ imgDrag={img:im,x:e.clientX,y:e.clientY}; imgDragging=false; return; }
+  if(!im)return;
+  if(ui.edEdit){
+    e.preventDefault();                      /* 기본 이미지 드래그/선택 방지 */
+    try{im.style.touchAction='none'}catch(e){}  /* 드래그 동안 스크롤 가로채기 차단 */
+    imgDragStart={img:im,x:e.clientX,y:e.clientY}; imgDragging=false;
+  }
 });
 $('#edBody').addEventListener('pointermove',e=>{
-  if(!imgDrag||imgDragging)return;
-  if(Math.hypot(e.clientX-imgDrag.x,e.clientY-imgDrag.y)>10){ imgDragging=true;
-    const w=imgDrag.img.getBoundingClientRect().width||160; ghostOn(e.clientX,e.clientY,w); }
-  else return;
+  if(!imgDragStart||imgDragging||!ui.edEdit)return;
+  if(Math.hypot(e.clientX-imgDragStart.x,e.clientY-imgDragStart.y)>12){
+    imgDragging=true;
+    const w=imgDragStart.img.getBoundingClientRect().width||160;
+    ghostOn(e.clientX,e.clientY,w);
+  } else return;
   ghostMove(e.clientX,e.clientY);
 });
 $('#edBody').addEventListener('pointerup',e=>{
   const im=e.target&&e.target.closest?e.target.closest('img.edimg'):null;
   if(im||imgDragging){
     if(imgDragging){ e.preventDefault(); dropImgAt(e.clientX,e.clientY); return; }
-    /* 이미지 탭: 편집 중=선택(재탭=해제) / 보기=전체화면 */
+    /* 탭: 편집=선택(재탭=해제) / 보기=전체화면 */
     e.preventDefault(); imgTapGuard=true; setTimeout(()=>{imgTapGuard=false},0);
     if(ui.edEdit){ if(selImg===im)$('#imgClose').click(); else selectImg(im); }
     else previewImg(im);
@@ -1468,8 +1532,10 @@ $('#edBody').addEventListener('pointerup',e=>{
   }
   lastTap=now;lastX=e.clientX;lastY=e.clientY;
 });
-/* 드래그 종료가 본문 밖(스크롤 영역 밖)에서 일어나도 깨끗이 정리 */
-document.addEventListener('pointerup',e=>{ if(imgDragging){ dropImgAt(e.clientX,e.clientY); } });
+/* 터치 스크롤 등 브라우저가 제스처를 가로채도(pointercancel) 안전 정리 */
+$('#edBody').addEventListener('pointercancel',()=>{ if(imgDragStart&&imgDragStart.img) imgResetDrag(); });
+document.addEventListener('pointerup',e=>{ if(imgDragging) dropImgAt(e.clientX,e.clientY); });
+document.addEventListener('pointercancel',()=>{ imgResetDrag(); });
 
 /* ═══════════════ (요청1) Type(T) 버튼 — 선택 텍스트 서식: 크기·볼드·기울임·밑줄·이모티콘·줄간격 ═══════════════ */
 const EMOJIS=['😀','😂','😍','😊','🤔','👍','🙏','🔥','❤️','🎉','✅','⭐','🤷','💡','🎯','📌','🍀','🥳'];
