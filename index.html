@@ -252,13 +252,19 @@ html[data-theme="dark"] mark{background:#c8a000;color:#fff}
   display:flex;align-items:center;justify-content:center;transition:background .15s,transform .1s
 }
 .edtool svg{width:1.25em;height:1.25em}
-.edtool.undo{font-size:.95em;font-weight:800}
 /* (요청) 노트 열람/편집 상단바 노출 규칙
-   보기 모드(기본): ✓ 저장 · 연필 · 칼라 · ⋮(3점) 만 표시 → Undo/T/카메라는 숨김
-   편집 모드(.editmode): ✓ 저장 · ↶Undo · T · 📷카메라 만 표시 → 연필/칼라/⋮은 숨김 */
-.edbar:not(.editmode) #edUndo,.edbar:not(.editmode) #edTypeBtn,.edbar:not(.editmode) #edImgBtn{display:none}
-.edbar.editmode #edPencil,.edbar.editmode #edColorBtn,.edbar.editmode #edKebab{display:none}
-/* (요청) 휴지통 아이콘만 80%로 축소 */
+   보기 모드(기본): 연필 · 칼라 · ⋮(3점) 만 표시 (✓체크·Undo·T·카메라 숨김)
+   편집 모드(.editmode): ✓체크 · ↶Undo · T(볼드) · 📷카메라 · ⋮(3점) 만 표시 (연필·칼라 숨김) */
+.edbar:not(.editmode) #edSaveBtn,.edbar:not(.editmode) #edUndo,.edbar:not(.editmode) #edTypeBtn,.edbar:not(.editmode) #edImgBtn{display:none}
+.edbar.editmode #edPencil,.edbar.editmode #edColorBtn{display:none}
+/* 보기 모드: 연필 110% 확대, 칼라박스 90% 축소 */
+.edbar:not(.editmode) #edPencil{font-size:1.1em}
+.edbar:not(.editmode) #edPencil svg{width:1.3em;height:1.3em}
+.edbar:not(.editmode) #edColorBtn{width:1.3em;height:1.3em}
+/* 편집 모드: Undo 120% 확대, T 볼드체 */
+.edbar.editmode #edUndo{font-size:1.14em;font-weight:800}
+#edTypeBtn{font-weight:800}
+/* (요청) 휴지통 아이콘 80%로 축소 */
 #btnTrash{font-size:.78em;padding:.32em}
 .edtool:active{background:var(--chip);transform:translateY(1px) scale(.9);box-shadow:inset 0 2px 4px rgba(0,0,0,.2)}   /* (요청3) 눌리는 모양이 확실히 보이게 */
 /* (요청3) 연필: 박스 없이 연필만. 연필심(끝)은 왼쪽. 편집 ON=노란 연필(박스 없음), 누르면 '들어가는' 눌림 */
@@ -452,7 +458,7 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
 <header>
   <div class="hrow">
     <span class="logo" id="logoText"></span>
-    <span class="verbadge" id="appVer">v5.12</span>
+    <span class="verbadge" id="appVer">v5.13</span>
     <input id="search" type="search" data-i18n-ph="search_ph" placeholder="검색...">
     <span class="syncdot" id="syncDot" title="동기화 상태"></span>
     <button class="iconbtn" id="btnView" data-i18n-title="view_toggle" title="보기 전환">▦</button>
@@ -547,15 +553,15 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
 <!-- 알림 설정 -->
 <div class="overlay" id="remindOverlay">
   <div class="sheet" style="max-width:380px">
-    <h3>⏰ 알림 설정 <button class="iconbtn" id="remindClose">✕</button></h3>
+    <h3><span data-i18n="rm_title">⏰ 알림 설정</span> <button class="iconbtn" id="remindClose">✕</button></h3>
     <div class="field">
-      <label for="remindTime">알릴 시각</label>
+      <label for="remindTime" data-i18n="rm_time">알릴 시각</label>
       <input type="datetime-local" id="remindTime">
     </div>
-    <div class="hint">앱이 켜져 있을 때 지정 시각에 기기 알림이 뜹니다. (무료 구성이라 앱을 완전히 닫으면 예약 알림은 보장되지 않습니다.)</div>
+    <div class="hint" data-i18n="rm_hint">앱이 켜져 있을 때 지정 시각에 기기 알림이 뜹니다. (무료 구성이라 앱을 완전히 닫으면 예약 알림은 보장되지 않습니다.)</div>
     <div class="btnrow">
-      <button class="btn primary" id="remindSave">저장</button>
-      <button class="btn danger" id="remindClear">알림 해제</button>
+      <button class="btn primary" id="remindSave" data-i18n="save">저장</button>
+      <button class="btn danger" id="remindClear" data-i18n="rm_clear">알림 해제</button>
     </div>
   </div>
 </div>
@@ -563,51 +569,51 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
 <!-- ───────── 계정 · 동기화 ───────── -->
 <div class="overlay" id="acOverlay">
   <div class="sheet" style="max-width:440px">
-    <h3>☁️ 계정 · 동기화 <button class="iconbtn" id="acClose">✕</button></h3>
+    <h3><span data-i18n="ac_title">☁️ 계정 · 동기화</span> <button class="iconbtn" id="acClose">✕</button></h3>
     <div class="setsec" id="acCfgSec">
-      <h4>서버 연결 (Supabase)</h4>
+      <h4 data-i18n="ac_server">서버 연결 (Supabase)</h4>
       <div class="field">
-        <label for="acUrl">프로젝트 URL</label>
+        <label for="acUrl" data-i18n="ac_url">프로젝트 URL</label>
         <input type="text" id="acUrl" placeholder="https://xxxx.supabase.co" autocomplete="off">
       </div>
       <div class="field">
-        <label for="acKey">공개 키 (anon 또는 sb_publishable)</label>
+        <label for="acKey" data-i18n="ac_key">공개 키 (anon 또는 sb_publishable)</label>
         <input type="text" id="acKey" placeholder="eyJhbGciOi... 또는 sb_publishable_..." autocomplete="off">
       </div>
       <div class="btnrow" style="margin-top:0">
-        <button class="btn primary" id="acSave">저장 · 연결</button>
-        <button class="btn" id="acTest">연결 테스트</button>
+        <button class="btn primary" id="acSave" data-i18n="ac_save">저장 · 연결</button>
+        <button class="btn" id="acTest" data-i18n="ac_test">연결 테스트</button>
       </div>
       <div class="stat" id="acTestStat"></div>
     </div>
     <div class="setsec" id="acFormSec">
-      <h4>계정 로그인 (이메일)</h4>
+      <h4 data-i18n="ac_login">계정 로그인 (이메일)</h4>
       <div class="field">
-        <label for="acEmail">이메일</label>
+        <label for="acEmail" data-i18n="ac_email">이메일</label>
         <input type="email" id="acEmail" placeholder="me@example.com" autocomplete="username">
       </div>
       <div class="field">
-        <label for="acPass">비밀번호 (6자 이상)</label>
+        <label for="acPass" data-i18n="ac_pass">비밀번호 (6자 이상)</label>
         <input type="password" id="acPass" autocomplete="current-password">
       </div>
       <div class="btnrow" style="margin-top:0">
-        <button class="btn primary" id="acLogin">로그인</button>
-        <button class="btn" id="acSignup">회원가입</button>
-        <button class="btn" id="acReset">비밀번호 재설정 메일</button>
+        <button class="btn primary" id="acLogin" data-i18n="ac_login_btn">로그인</button>
+        <button class="btn" id="acSignup" data-i18n="ac_signup">회원가입</button>
+        <button class="btn" id="acReset" data-i18n="ac_reset">비밀번호 재설정 메일</button>
       </div>
       <div class="stat" id="acAuthStat"></div>
     </div>
     <div class="setsec hidden" id="acLoggedSec">
-      <h4>내 계정</h4>
+      <h4 data-i18n="ac_my">내 계정</h4>
       <div class="setrow"><span id="acEmailView" style="font-weight:700"></span></div>
-      <div class="setrow"><span>동기화 상태</span><span class="stat" id="acSyncState"></span></div>
-      <div class="setrow"><span>마지막 동기화</span><span class="stat" id="acLastSync"></span></div>
+      <div class="setrow"><span data-i18n="ac_syncstate">동기화 상태</span><span class="stat" id="acSyncState"></span></div>
+      <div class="setrow"><span data-i18n="ac_lastsync">마지막 동기화</span><span class="stat" id="acLastSync"></span></div>
       <div class="btnrow">
-        <button class="btn primary" id="acSyncNow">지금 동기화</button>
-        <button class="btn" id="acDiag">동기화 점검</button>
-        <button class="btn danger" id="acLogout">로그아웃</button>
+        <button class="btn primary" id="acSyncNow" data-i18n="ac_syncnow">지금 동기화</button>
+        <button class="btn" id="acDiag" data-i18n="ac_diag">동기화 점검</button>
+        <button class="btn danger" id="acLogout" data-i18n="ac_logout">로그아웃</button>
       </div>
-      <div class="hint">⚠️ 두 기기(PC·폰)에서 <b>같은 이메일</b>로 로그인해야 노트가 공유됩니다. 로그인한 이메일이 서로 다르면 동기화되지 않습니다.</div>
+      <div class="hint" data-i18n="ac_hint">⚠️ 두 기기(PC·폰)에서 <b>같은 이메일</b>로 로그인해야 노트가 공유됩니다. 로그인한 이메일이 서로 다르면 동기화되지 않습니다.</div>
     </div>
   </div>
 </div>
@@ -615,9 +621,9 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
 <!-- ───────── 설정 ───────── -->
 <div class="overlay" id="setOverlay">
   <div class="sheet">
-    <h3>⚙️ 설정
+    <h3><span data-i18n="settings_title">⚙️ 설정</span>
       <span>
-        <button class="btn primary" id="setSave">저장</button>
+        <button class="btn primary" id="setSave" data-i18n="save">저장</button>
         <button class="iconbtn" id="setClose">✕</button>
       </span>
     </h3>
@@ -731,8 +737,8 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
     <h3><span id="folderMgrTitle">📁 폴더 관리</span> <button class="iconbtn" id="folderClose">✕</button></h3>
     <div id="folderList"></div>
     <div class="setrow" style="margin-top:.5em">
-      <input type="text" id="newFolderName" placeholder="새 폴더 이름" style="flex:1">
-      <button class="btn primary" id="addFolderBtn">추가</button>
+      <input type="text" id="newFolderName" placeholder="새 폴더 이름" data-i18n-ph="folder_ph" style="flex:1">
+      <button class="btn primary" id="addFolderBtn" data-i18n="add2">추가</button>
     </div>
   </div>
 </div>
@@ -740,14 +746,14 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
 <!-- 보관 노트 비밀번호 설정 -->
 <div class="overlay" id="pinOverlay">
   <div class="sheet" style="max-width:380px">
-    <h3>🔐 보관 노트 비밀번호 <button class="iconbtn" id="pinClose">✕</button></h3>
+    <h3><span data-i18n="pin_title">🔐 보관 노트 비밀번호</span> <button class="iconbtn" id="pinClose">✕</button></h3>
     <div class="setrow" style="flex-direction:column;align-items:stretch">
-      <input type="password" inputmode="numeric" id="pinNew" placeholder="새 비밀번호 (숫자 4자리 권장)" maxlength="12">
-      <input type="password" inputmode="numeric" id="pinNew2" placeholder="다시 입력" maxlength="12" style="margin-top:.4em">
+      <input type="password" inputmode="numeric" id="pinNew" placeholder="새 비밀번호 (숫자 4자리 권장)" data-i18n-ph="pin_new_ph" maxlength="12">
+      <input type="password" inputmode="numeric" id="pinNew2" placeholder="다시 입력" data-i18n-ph="pin_again_ph" maxlength="12" style="margin-top:.4em">
     </div>
     <div class="btnrow">
-      <button class="btn primary" id="pinSave">저장</button>
-      <button class="btn danger" id="pinRemove">삭제 (잠금 해제)</button>
+      <button class="btn primary" id="pinSave" data-i18n="save">저장</button>
+      <button class="btn danger" id="pinRemove" data-i18n="pin_remove">삭제 (잠금 해제)</button>
     </div>
   </div>
 </div>
@@ -783,8 +789,8 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
     <input type="password" inputmode="numeric" id="dlgInput" class="hidden" maxlength="12"
       style="width:100%;padding:.5em;border-radius:.5em;background:var(--chip);border:1px solid var(--line);color:var(--text);outline:none;font-size:.85em;margin-bottom:.6em">
     <div class="btnrow" style="justify-content:flex-end;margin-top:0">
-      <button class="btn" id="dlgNo">취소</button>
-      <button class="btn primary" id="dlgOk">확인</button>
+      <button class="btn" id="dlgNo" data-i18n="dlg_no">취소</button>
+      <button class="btn primary" id="dlgOk" data-i18n="dlg_ok">확인</button>
     </div>
   </div>
 </div>
@@ -847,6 +853,23 @@ const I18N={
   bk_cleared:{en:'Backup list cleared'},bk_bad:{en:'Not a valid backup file'},
   data_hint:{en:'⚠ Notes are stored on this phone, in this browser, at this address. If you open a different address or clear browser data, notes may not show. Tap “Backup (save to phone)” once in a while or enable Sync. Even if the app is reinstalled or deleted, the backup file lets you Import everything back.'},
   app_name:{en:'SK Notes — color notepad'},
+  settings_title:{en:'⚙️ Settings'},save2:{en:'Save'},
+  ac_title:{en:'☁️ Account · Sync'},ac_server:{en:'Server connection (Supabase)'},
+  ac_url:{en:'Project URL'},ac_key:{en:'Public key (anon or sb_publishable)'},
+  ac_save:{en:'Save · Connect'},ac_test:{en:'Test connection'},ac_login:{en:'Sign in (email)'},
+  ac_email:{en:'Email'},ac_pass:{en:'Password (6+ characters)'},ac_login_btn:{en:'Sign in'},
+  ac_signup:{en:'Sign up'},ac_reset:{en:'Send reset email'},ac_my:{en:'My account'},
+  ac_syncstate:{en:'Sync status'},ac_lastsync:{en:'Last sync'},ac_syncnow:{en:'Sync now'},
+  ac_diag:{en:'Diagnose'},ac_logout:{en:'Sign out'},
+  ac_hint:{en:'⚠️ Sign in with the <b>same email</b> on both devices (PC and phone) to share notes. Different emails won’t sync.'},
+  rm_title:{en:'⏰ Reminder'},rm_time:{en:'Time to remind'},
+  rm_hint:{en:'A device notification fires at the set time while the app is open. (Scheduled reminders aren’t guaranteed when the app is fully closed.)'},
+  rm_clear:{en:'Clear reminder'},
+  folder_ph:{en:'New folder name'},add2:{en:'Add'},
+  pin_title:{en:'🔐 Vault password'},pin_new_ph:{en:'New password (4 digits recommended)'},
+  pin_again_ph:{en:'Enter again'},pin_remove:{en:'Remove (unlock)'},
+  pin_set_btn:{en:'Set / Change'},pin_change_btn:{en:'Change / Reset'},pin_set_btn2:{en:'Set'},
+  dlg_no:{en:'Cancel'},dlg_ok:{en:'OK'},
   empty_new:{en:'Tap ＋ to create your first note'},empty_search:{en:'No results'},
   empty_folder:{en:'No notes in this folder'},empty_trash:{en:'Trash is empty (deleted notes are removed after 30 days)'},
   chip_all:{en:'All'},chip_notes:{en:'Notes'},chip_addfolder:{en:'+ Folder'},
@@ -1401,11 +1424,16 @@ $('#edUndo').onclick=()=>{
   schedSave();
 };
 $('#edPencil').onclick=()=>{
+  const entering=!ui.edEdit;
   ui.edEdit=!ui.edEdit;applyEdMode();
-  /* (요청3) 연필(편집 진입) 시 커서가 본문 맨 아래로 이동 */
+  /* (요청) 연필(편집 진입) 시: 본문 맨 아래 텍스트에서 한 줄을 띄우고 그 다음 줄에 커서 */
   const nb=$('#edBody');
-  if(ui.edEdit && nb && $('#edItems').classList.contains('hidden')){
+  if(ui.edEdit && entering && nb && $('#edItems').classList.contains('hidden')){
     nb.focus({preventScroll:true});
+    /* 맨 끝에 <br> 2개(=한 줄 띄우고 다음 줄)를 보장한 뒤 커서를 맨 끝으로 */
+    const html=nb.innerHTML;
+    if(html && !/<br\s*\/?>/i.test(html.slice(-12))){ nb.innerHTML=html.replace(/(<br\s*\/?>)+$/i,'')+'<br><br>'; }
+    else if(/<br\s*\/?>$/i.test(html)){ nb.innerHTML=html+'<br>'; }
     const r=document.createRange();r.selectNodeContents(nb);r.collapse(false);
     const s=window.getSelection();s.removeAllRanges();s.addRange(r);
     setTimeout(()=>{nb.scrollTop=nb.scrollHeight},0);
@@ -2321,7 +2349,7 @@ function openSettings(){
   $('#stFontWeight').value=sc.fontWeight||'b';   /* (요구3) 본문 굵기 4단계 — 키 기본 'b'(보통), 드롭다운 선택 표시 정상화 (v5.1) */
   $('#stRule').value=sc.rule||'none';
   $('#stVaultOpen').value=String(VLT.settings.unlockMinutes||0);
-  $('#stPinBtn').textContent=S.settings.pinHash?(IS_KO?'변경 / 초기화':'Change / Reset'):(IS_KO?'설정':'Set');
+  $('#stPinBtn').textContent=S.settings.pinHash?tr('변경 / 초기화','pin_change_btn'):tr('설정','pin_set_btn2');
   buildDefColor();
   ovOpen($('#setOverlay'));
 }
