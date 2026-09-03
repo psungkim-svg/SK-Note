@@ -77,13 +77,21 @@ header{
   order:3; bottom:0; z-index:30;
   /* (요청) 일반 노트 하단바 = 라이트 옐로우. 보관 노트는 JS가 .vault를 붙여 라이트 그린으로 바꿈 */
   background:#fff3c4;
-  box-shadow:0 -1px 3px rgba(0,0,0,.12); padding:.3em .5em;
-  padding-bottom:calc(.3em + env(safe-area-inset-bottom));
+  box-shadow:0 -1px 3px rgba(0,0,0,.12);
+  /* (요청) 일반 노트 하단바 높이를 약 80%로 축소 */
+  padding:.16em .5em;
+  padding-bottom:calc(.16em + env(safe-area-inset-bottom));
   flex:none;                          /* (요청5) 하단 바 고정 — 화면 밖으로 밀리지 않음 */
   transition:background .2s ease;
 }
+/* (요청) 일반 노트: 칩/바도 80% 높이로 콤팩트하게 */
+#folderNav .folderbar{padding:.22em .1em .02em}
+#folderNav .chip{padding:.22em .55em;font-size:.58em;border-radius:.9em}
 html[data-theme="dark"] #folderNav{background:#4d451f}      /* 다크모드 대응 옐로우 */
-#folderNav.vault{background:#dcf3d6}                         /* (요청) 보관 노트 하단바 = 라이트 그린 */
+#folderNav.vault{background:#dcf3d6;                         /* (요청) 보관 노트 하단바 = 라이트 그린 */
+  padding:.3em .5em; padding-bottom:calc(.3em + env(safe-area-inset-bottom))}
+#folderNav.vault .folderbar{padding:.4em .1em .1em}
+#folderNav.vault .chip{padding:.32em .7em;font-size:.66em;border-radius:1em}
 html[data-theme="dark"] #folderNav.vault{background:#23351f} /* 다크모드 대응 그린 */
 .hrow{display:flex;align-items:center;gap:.3em;min-width:0;flex-wrap:nowrap}
 .logo{font-weight:800;font-size:.72em;color:var(--text);margin-right:.25em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:26%;min-width:0;flex:none}
@@ -286,7 +294,7 @@ html[data-theme="dark"] mark{background:#c8a000;color:#fff}
 .palpop button{width:1.4em;height:1.4em;border-radius:50%;border:1px solid rgba(0,0,0,.15)}
 
 /* 컬러 선택 팝오버(사각 컬러박스용) */
-/* (요청1) Type(서식) 팝오버 — 글자크기·볼드·이탤릭·밑줄·이모티콘·줄간격 */
+/* (요청) Type(서식) 팝오버 — 글자크기·볼드·이탤릭·밑줄·줄간격 */
 #edTypePop{position:absolute;z-index:70;top:2.6em;right:.4em;background:var(--card);
   border:1px solid var(--line);border-radius:.6em;box-shadow:0 6px 20px rgba(0,0,0,.25);
   padding:.5em .6em;width:min(92vw,280px);
@@ -298,9 +306,6 @@ html[data-theme="dark"] mark{background:#c8a000;color:#fff}
 .tpval{min-width:2.6em;text-align:center;font-size:.78em;font-weight:800}
 .tpbiu{background:var(--chip);border:none;color:var(--text);border-radius:.4em;min-width:2.2em;height:2.2em;font-size:.8em;font-weight:800;font-style:normal}
 .tpbiu.on{background:var(--accent);color:#3d2c00}
-.tpemo{display:flex;flex-wrap:wrap;gap:.1em;margin:.15em 0}
-.tpemo button{background:none;border:none;font-size:1.15em;padding:.08em .18em;border-radius:.3em}
-.tpemo button:active{background:var(--chip)}
 
 /* (요청7) 설정 - 글자크기 스테퍼 + 실시간 샘플 */
 .fontstep{display:flex;align-items:center;gap:.35em}
@@ -323,7 +328,8 @@ html[data-theme="dark"] mark{background:#c8a000;color:#fff}
 #edBody img.edimg.al-center{margin-left:auto;margin-right:auto;float:none;clear:both}
 #edBody img.edimg.al-left{float:left;margin:.3em .6em .3em 0;clear:none}
 #edBody img.edimg.al-right{float:right;margin:.3em 0 .3em .6em;clear:none}
-#edBody img.edimg.al-block{float:none;margin:.3em auto;clear:both}
+#edBody img.edimg.al-block{float:none;margin:.3em 0;clear:both}
+#edBody.editing img.edimg.al-left,#edBody.editing img.edimg.al-right{touch-action:none}
 #imgBar .ib.al-on{background:var(--accent);color:#3d2c00;font-weight:800}
 /* (요청3) 이미지 드래그 이동 중 놓을 위치 표시 선 (.edmain이 스크롤 컨테이너 — fixed로 화면 기준 고정) */
 #imgDropMark{position:fixed;z-index:74;height:0;border-top:3px dashed var(--accent);
@@ -439,7 +445,7 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
 <header>
   <div class="hrow">
     <span class="logo" id="logoText">SK <span data-i18n="logo_note">노트</span></span>
-    <span class="verbadge" id="appVer">v5.10</span>
+    <span class="verbadge" id="appVer">v5.11</span>
     <input id="search" type="search" data-i18n-ph="search_ph" placeholder="검색...">
     <span class="syncdot" id="syncDot" title="동기화 상태"></span>
     <button class="iconbtn" id="btnView" data-i18n-title="view_toggle" title="보기 전환">▦</button>
@@ -688,12 +694,12 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
     <div class="setsec">
       <h4 data-i18n="sec_data">데이터 / Data</h4>
       <div class="btnrow">
-        <button class="btn" id="stExport" data-i18n="btn_backup">백업 (폰에 저장) · Backup to phone</button>
-        <button class="btn" id="stImport" data-i18n="btn_restore">백업 가져오기 (복구) · Restore</button>
+        <button class="btn primary" id="stExport" data-i18n="btn_backup">💾 백업하기 (이 기기에 저장)</button>
+        <button class="btn" id="stImport" data-i18n="btn_restore">♻️ 복구하기 (저장된 백업 목록)</button>
       </div>
       <div class="btnrow">
-        <button class="btn" id="stExportEn" data-i18n="btn_export_en">Export Notes</button>
-        <button class="btn" id="stImportEn" data-i18n="btn_import_en">Import Notes</button>
+        <button class="btn" id="stExportEn" data-i18n="btn_export_en">📤 Export Notes (Google Drive 등 외부에 저장)</button>
+        <button class="btn" id="stImportEn" data-i18n="btn_import_en">📥 Import Notes (외부에서 가져오기)</button>
       </div>
       <div class="btnrow">
         <button class="btn danger" id="stWipe" data-i18n="btn_wipe">전체 삭제 · Delete all</button>
@@ -705,8 +711,8 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
     <div class="setsec">
       <div class="appver">
         <div data-i18n="app_name">SK 노트 — 색상 메모장</div>
-        <div id="stVersion">SK Notes v5.10</div>
-        <div class="hint" style="margin-top:.5em">SK 노트 v5.8 · 첫 화면은 톡=열기·꾹=삭제만 + Undo 버튼 + 이미지 자유 이동 + 암호창 축소 + 기본 컬러/폰트 설정 + 백업(폰 저장)·Export/Import Notes + 시스템 언어 자동</div>
+        <div id="stVersion">SK Notes v5.11</div>
+        <div class="hint" style="margin-top:.5em">SK 노트 v5.10 · 사진 배치(가운데·옆으로 글자 감쌈) + 첫 화면 톡=열기·꾹=삭제 + Undo + 하단바 색상(일반 노랑/보관 초록) + 암호창 축소 + 기본 컬러/폰트 + 백업·Export/Import + 시스템 언어 자동</div>
       </div>
     </div>
   </div>
@@ -748,7 +754,20 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
   </div>
 </div>
 
-<input type="file" id="importFile" accept=".json" class="hidden">
+<input type="file" id="importFile" accept=".json,application/json" class="hidden">
+
+<!-- ───────── 복구: 저장된 백업 목록 ───────── -->
+<div class="overlay" id="bkOverlay">
+  <div class="sheet" style="max-width:440px">
+    <h3><span data-i18n="bk_title">♻️ 저장된 백업</span> <button class="iconbtn" id="bkClose">✕</button></h3>
+    <div class="hint" style="margin-bottom:.6em" data-i18n="bk_hint">이 기기에 자동 저장된 백업 목록입니다. 하나를 눌러 복구하거나, 아래에서 파일을 불러올 수도 있습니다.</div>
+    <div id="bkList"></div>
+    <div class="btnrow" style="margin-top:.6em">
+      <button class="btn" id="bkImportFile" data-i18n="bk_from_file">📂 파일에서 가져오기</button>
+      <button class="btn danger" id="bkClear" data-i18n="bk_clear">백업 목록 비우기</button>
+    </div>
+  </div>
+</div>
 
 <!-- 공통 다이얼로그 -->
 <div class="overlay" id="dlg" style="z-index:110">
@@ -810,9 +829,15 @@ const I18N={
   sec_vault:{en:'Vault'},vault_hint:{en:'Regular notes need no password. Vault asks for a password every time (unless a grace time is set).'},
   vault_open:{en:'🔐 Vault'},open:{en:'Open'},vault_pin:{en:'Vault password'},pin_set:{en:'Set / Change'},
   vault_unlock_time:{en:'Stay unlocked for'},vault_always:{en:'Always ask'},
-  sec_data:{en:'Data'},btn_backup:{en:'Backup (save to phone)'},btn_restore:{en:'Restore from backup'},
-  btn_export_en:{en:'Export Notes'},btn_import_en:{en:'Import Notes'},btn_wipe:{en:'Delete all'},
-  btn_emptytrash:{en:'Empty trash'},
+  sec_data:{en:'Data'},btn_backup:{en:'💾 Backup (save on this device)'},btn_restore:{en:'♻️ Restore (saved backups)'},
+  btn_export_en:{en:'📤 Export Notes (save to Google Drive, etc.)'},btn_import_en:{en:'📥 Import Notes (from a file)'},
+  btn_wipe:{en:'Delete all'},btn_emptytrash:{en:'Empty trash'},
+  bk_title:{en:'♻️ Saved backups'},bk_hint:{en:'Backups stored on this device. Tap one to restore, or load a file below.'},
+  bk_from_file:{en:'📂 Load from file'},bk_clear:{en:'Clear backup list'},
+  bk_empty:{en:'No saved backups yet. Tap “Backup” first.'},
+  bk_restore_q:{en:'Restore this backup?\n(Missing content is filled in; it won’t erase current notes)'},
+  bk_clear_q:{en:'Clear the saved backup list on this device?\n(Your notes themselves are not deleted)'},
+  bk_cleared:{en:'Backup list cleared'},bk_bad:{en:'Not a valid backup file'},
   data_hint:{en:'⚠ Notes are stored on this phone, in this browser, at this address. If you open a different address or clear browser data, notes may not show. Tap “Backup (save to phone)” once in a while or enable Sync. Even if the app is reinstalled or deleted, the backup file lets you Import everything back.'},
   app_name:{en:'SK Notes — color notepad'},
   empty_new:{en:'Tap ＋ to create your first note'},empty_search:{en:'No results'},
@@ -1727,8 +1752,7 @@ $('#edBody').addEventListener('pointerup',e=>{
   lastTap=now;lastX=e.clientX;lastY=e.clientY;
 });
 
-/* ═══════════════ (요청1) Type(T) 버튼 — 선택 텍스트 서식: 크기·볼드·기울임·밑줄·이모티콘·줄간격 ═══════════════ */
-const EMOJIS=['😀','😂','😍','😊','🤔','👍','🙏','🔥','❤️','🎉','✅','⭐','🤷','💡','🎯','📌','🍀','🥳'];
+/* ═══════════════ (요청) Type(T) 버튼 — 선택 텍스트 서식: 크기·볼드·기울임·밑줄·줄간격 (이모티콘 제거) ═══════════════ */
 let typeFs=12, typeLh=1.5;
 function buildTypePop(){
   const p=$('#edTypePop'); if(p._built)return; p._built=true;
@@ -1750,12 +1774,6 @@ function buildTypePop(){
     r2.append(b);
   });
   p.append(r2);
-  /* 이모티콘 */
-  const r3=document.createElement('div');r3.className='tpemo';
-  EMOJIS.forEach(em=>{const b=document.createElement('button');b.textContent=em;
-    b.onclick=e=>{e.preventDefault();e.stopPropagation();$('#edBody').focus();document.execCommand('insertText',false,em);schedSave()};
-    r3.append(b)});
-  p.append(r3);
   /* 줄간격 */
   const r4=document.createElement('div');r4.className='tprow';
   r4.innerHTML='<span class="tplab">줄간격</span>';
@@ -2367,44 +2385,119 @@ $('#stEmptyTrash').onclick=async()=>{
   if(SYNC.client&&SYNC.session)SYNC.client.from('notes').delete().in('id',ids).then(()=>{},()=>{});
   touch();render();toast('휴지통을 비웠습니다');
 };
-$('#stExport').onclick=()=>{
-  /* (요구·복구 대비) 백업에는 일반 노트 + 일반 폴더 + 보관 노트 + 보관 폴더가 모두 포함된다 */
-  const payload={app:'sk-note',v:4,exportedAt:new Date().toISOString(),
+/* ───────── (요구) 백업/복구: 이 기기 백업 목록 + 외부(Google Drive 등) Export/Import ───────── */
+function buildBackup(){
+  return {app:'sk-note',v:4,exportedAt:new Date().toISOString(),
     notes:S.notes,
     folders:S.folders.map(f=>({id:f.id,name:f.name,createdAt:f.createdAt})),
     vaultNotes:VLT.notes||[],
     vaultFolders:(VLT.folders||[]).map(f=>({id:f.id,name:f.name,createdAt:f.createdAt}))};
+}
+function backupName(){ const d=new Date(); const p=x=>String(x).padStart(2,'0');
+  return `sknote-backup-${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}.json`; }
+/* 이 기기에 저장된 백업 목록(localStorage, 최대 12개) */
+function localBackups(){ try{return JSON.parse(STORE.getItem('sk.backups')||'[]')}catch(e){return[]} }
+function saveLocalBackup(data){
+  const list=localBackups();
+  list.unshift({at:Date.now(),name:backupName(),data});
+  STORE.setItem('sk.backups',JSON.stringify(list.slice(0,12)));
+}
+/* 백업 데이터를 실제 노트에 반영(병합) */
+function applyBackup(d){
+  if(!d||!d.notes)throw 0;
+  let added=0,updated=0,vadded=0;
+  d.notes.forEach(sn=>{if(sn.color>4)sn.color=sn.color%5;
+    const local=S.notes.find(n=>n.id===sn.id);
+    if(!local){S.notes.push(Object.assign({},sn,{dirty:true}));added++}
+    else if((sn.updatedAt||0)>local.updatedAt){Object.assign(local,sn,{dirty:true});updated++}});
+  (d.folders||[]).forEach(sf=>{const lf=S.folders.find(f=>f.id===sf.id);
+    if(lf)lf.name=sf.name; else S.folders.push({id:sf.id,name:sf.name,createdAt:sf.createdAt,_synced:false})});
+  if(Array.isArray(d.vaultNotes)){
+    (d.vaultNotes||[]).forEach(vn=>{if(!VLT.notes.find(n=>n.id===vn.id)){VLT.notes.push(vn);vadded++}});
+    (d.vaultFolders||[]).forEach(vf=>{if(!VLT.folders.find(f=>f.id===vf.id))VLT.folders.push(vf)});
+    VLT.persist();
+  }
+  save();touch();render();syncSoon();
+  return {added,updated,vadded};
+}
+/* 💾 백업하기: 이 기기 목록에 저장 + 파일로도 받기 */
+$('#stExport').onclick=()=>{
+  const payload=buildBackup();
+  saveLocalBackup(payload);                                   // (요구) 이 기기 백업 목록에 저장
+  downloadBackup(payload);                                     // 파일로도 저장(폴백)
+  toast(tr('백업했습니다. 복구 버튼에서 언제든 되살릴 수 있어요','toast_backup'));
+};
+function downloadBackup(payload){
   const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-  a.download='sknote-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();
-  URL.revokeObjectURL(a.href);
-  toast(tr('백업 파일을 저장했습니다 (일반+보관 노트 포함)','toast_backup'));
+  a.download=backupName();a.click();URL.revokeObjectURL(a.href);
+}
+/* ♻️ 복구하기: 저장된 백업 목록 오버레이 열기 */
+$('#stImport').onclick=()=>{openBkList()};
+$('#bkClose').onclick=()=>ovCloseUi($('#bkOverlay'));
+$('#bkClear').onclick=async()=>{
+  if(!await dlg(tr('이 기기에 저장된 백업 목록을 비울까요?\n(노트 자체는 지워지지 않습니다)','bk_clear_q'),{okText:'비우기'}))return;
+  STORE.removeItem('sk.backups');openBkList();toast(tr('백업 목록을 비웠습니다','bk_cleared'));
 };
-$('#stImport').onclick=()=>$('#importFile').click();
-$('#stExportEn').onclick=()=>$('#stExport').click();
-$('#stImportEn').onclick=()=>$('#stImport').click();
+$('#bkImportFile').onclick=()=>$('#importFile').click();
+function fmtTime(ts){const d=new Date(ts);const p=x=>String(x).padStart(2,'0');
+  return `${d.getFullYear()}.${p(d.getMonth()+1)}.${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;}
+function openBkList(){
+  const list=$('#bkList');list.innerHTML='';
+  const bks=localBackups();
+  if(!bks.length){
+    list.innerHTML=`<div class="hint">${tr('저장된 백업이 없습니다. "백업하기"를 먼저 눌러 주세요.','bk_empty')}</div>`;
+  }
+  bks.forEach((b,i)=>{
+    const row=document.createElement('div');row.className='setrow';
+    const nm=document.createElement('span');
+    const nCnt=(b.data.notes||[]).length, vCnt=(b.data.vaultNotes||[]).length;
+    nm.innerHTML=`<b>${fmtTime(b.at)}</b><br><span class="stat">${tr('노트','note')} ${nCnt}${vCnt?` · 🔐 ${vCnt}`:''}</span>`;
+    const btn=document.createElement('button');btn.className='btn primary';btn.textContent=tr('복구','restore');
+    btn.onclick=async()=>{
+      if(!await dlg(tr(`${fmtTime(b.at)} 백업으로 복구할까요?\n(현재 노트에 덮어쓰지 않고 없는 내용을 채웁니다)`,'bk_restore_q'),{okText:'복구'}))return;
+      try{ const r=applyBackup(b.data);
+        ovCloseUi($('#bkOverlay'));
+        toast(IS_KO?`복구 완료: 추가 ${r.added}, 갱신 ${r.updated}, 보관 ${r.vadded}`:`Restored: added ${r.added}, updated ${r.updated}, vault ${r.vadded}`);
+      }catch(e){ toast(tr('올바른 백업이 아닙니다','bk_bad')); }
+    };
+    const del=document.createElement('button');del.className='btn danger';del.textContent='✕';del.style.marginLeft='.3em';
+    del.onclick=()=>{ const arr=localBackups();arr.splice(i,1);STORE.setItem('sk.backups',JSON.stringify(arr));openBkList()};
+    const wrap=document.createElement('div');wrap.append(btn,del);
+    row.append(nm,wrap);list.append(row);
+  });
+  ovOpen($('#bkOverlay'));
+}
+/* 📤 Export Notes: 외부 저장소(Google Drive 등) 위치를 직접 골라 저장.
+   지원 환경(Chrome/Edge·Android 등)은 showSaveFilePicker로 원하는 폴더에 저장,
+   지원 안 하면(사파리 등) 일반 다운로드로 폴백. */
+$('#stExportEn').onclick=async()=>{
+  const payload=buildBackup();
+  const json=JSON.stringify(payload,null,2);
+  const name=backupName();
+  try{
+    if(window.showSaveFilePicker){
+      const handle=await window.showSaveFilePicker({suggestedName:name,
+        types:[{description:'SK Notes backup',accept:{'application/json':['.json']}}]});
+      const w=await handle.createWritable();await w.write(json);await w.close();
+      saveLocalBackup(payload);
+      toast(IS_KO?'선택한 위치(Google Drive 등)에 저장했습니다':'Saved to the chosen location');
+      return;
+    }
+  }catch(e){ if(e&&e.name==='AbortError')return; }
+  downloadBackup(payload);saveLocalBackup(payload);
+  toast(IS_KO?'이 브라우저는 위치 선택을 지원하지 않아 다운로드로 저장했습니다':'Saved as download');
+};
+/* 📥 Import Notes: 외부에 저장된 백업 파일 가져오기 */
+$('#stImportEn').onclick=()=>$('#importFile').click();
 $('#importFile').addEventListener('change',e=>{
   const f=e.target.files[0];if(!f)return;
   const r=new FileReader();
   r.onload=()=>{try{
     const d=JSON.parse(r.result);
-    if(!d.notes)throw 0;
-    let added=0,updated=0,vadded=0;
-    d.notes.forEach(sn=>{if(sn.color>4)sn.color=sn.color%5;
-      const local=S.notes.find(n=>n.id===sn.id);
-      if(!local){S.notes.push(Object.assign({},sn,{dirty:true}));added++}
-      else if((sn.updatedAt||0)>local.updatedAt){Object.assign(local,sn,{dirty:true});updated++}});
-    (d.folders||[]).forEach(sf=>{const lf=S.folders.find(f=>f.id===sf.id);
-      if(lf)lf.name=sf.name; else S.folders.push({id:sf.id,name:sf.name,createdAt:sf.createdAt,_synced:false})});
-    /* 보관 노트/폴더 복원 (이 기기·이 주소에서만) */
-    if(Array.isArray(d.vaultNotes)){
-      (d.vaultNotes||[]).forEach(vn=>{if(!VLT.notes.find(n=>n.id===vn.id)){VLT.notes.push(vn);vadded++}});
-      (d.vaultFolders||[]).forEach(vf=>{if(!VLT.folders.find(f=>f.id===vf.id))VLT.folders.push(vf)});
-      VLT.persist();
-    }
-    touch();render();syncSoon();
-    toast(IS_KO?`가져오기 완료: 일반 추가 ${added}/갱신 ${updated}, 보관 ${vadded}개`:`Import done: added ${added}, updated ${updated}, vault ${vadded}`);
-  }catch(err){toast('올바른 백업 파일이 아닙니다')}};
+    const res=applyBackup(d);
+    toast(IS_KO?`가져오기 완료: 추가 ${res.added}/갱신 ${res.updated}, 보관 ${res.vadded}개`:`Import done: added ${res.added}, updated ${res.updated}, vault ${res.vadded}`);
+  }catch(err){toast(tr('올바른 백업 파일이 아닙니다','bk_bad'))}};
   r.readAsText(f);e.target.value='';
 });
 $('#stWipe').onclick=async()=>{
@@ -2523,7 +2616,8 @@ $('#stVaultBtn').onclick=()=>{ovCloseUi($('#setOverlay'));VLT.open()};
 
 /* ═══════════════ 시작 ═══════════════ */
 applyI18n();
-$('#stVersion').textContent='SK Notes v5.8';
+/* 버전은 상단 배지(#appVer) 한 곳에서만 관리 — 설정창 버전은 그걸 그대로 표시 */
+$('#stVersion').textContent='SK Notes '+($('#appVer').textContent||'');
 load();
 VLT.load();
 ui.view=S.settings.view||'grid';
