@@ -74,11 +74,17 @@ header{
 }
 /* ── (요청1) 폴더바(전체/노트…)는 하단에 그대로 ── */
 #folderNav{
-  order:3; bottom:0; z-index:30; background:var(--bar);
+  order:3; bottom:0; z-index:30;
+  /* (요청) 일반 노트 하단바 = 라이트 옐로우. 보관 노트는 JS가 .vault를 붙여 라이트 그린으로 바꿈 */
+  background:#fff3c4;
   box-shadow:0 -1px 3px rgba(0,0,0,.12); padding:.3em .5em;
   padding-bottom:calc(.3em + env(safe-area-inset-bottom));
   flex:none;                          /* (요청5) 하단 바 고정 — 화면 밖으로 밀리지 않음 */
+  transition:background .2s ease;
 }
+html[data-theme="dark"] #folderNav{background:#4d451f}      /* 다크모드 대응 옐로우 */
+#folderNav.vault{background:#dcf3d6}                         /* (요청) 보관 노트 하단바 = 라이트 그린 */
+html[data-theme="dark"] #folderNav.vault{background:#23351f} /* 다크모드 대응 그린 */
 .hrow{display:flex;align-items:center;gap:.3em;min-width:0;flex-wrap:nowrap}
 .logo{font-weight:800;font-size:.72em;color:var(--text);margin-right:.25em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:26%;min-width:0;flex:none}
 /* (요청10) 항상 보이는 버전 배지 → 새 버전이 떴는지 눈으로 확인. 좁은 화면에서는 감춤(아이콘 잘림 방지) */
@@ -193,9 +199,13 @@ html[data-theme="dark"] mark{background:#c8a000;color:#fff}
 @media(min-width:640px){.overlay{align-items:center}}
 .sheet{
   background:var(--bg2);width:100%;max-width:640px;max-height:92vh;overflow:auto;
+  box-sizing:border-box;                       /* (설정창 에러 방지) 패딩 포함 폭 계산 */
+  flex:0 1 auto;margin:0;                       /* flex 안에서 폭이 새거나 늘어나지 않게 */
   border-radius:18px 18px 0 0;padding:.8em .8em calc(1em + env(safe-area-inset-bottom));
   transform:translateY(24px);transition:transform .28s ease
 }
+/* (설정창 에러 방지) 모달 시트는 절대 화면 폭을 벗어나지 않는다 */
+.overlay .sheet{max-width:min(640px,calc(100vw - 1.6em))}
 .overlay.show .sheet{transform:translateY(0)}
 @media(min-width:640px){.sheet{border-radius:18px}}
 .sheet h3{margin:.2em 0 .7em;font-size:.85em;display:flex;align-items:center;justify-content:space-between;gap:.4em}
@@ -303,6 +313,8 @@ html[data-theme="dark"] mark{background:#c8a000;color:#fff}
 
 /* (요청2/3) 이미지 리사이즈: 에디터 안 이미지 + 선택 시 컨트롤 바 + 전체화면 미리보기 */
 #edBody img.edimg{max-width:100%;height:auto;border-radius:8px;margin:.3em 0;display:block}
+/* (요청3) 편집 모드 이미지: 탭=선택, 잡고 드래그=이동. 터치에서도 동작해야 하므로 편집 중엔 스크롤/선택 기본동작 차단 */
+#edBody.editing img.edimg{touch-action:none;cursor:move;-webkit-user-drag:none}
 #edBody img.edimg.sel{outline:3px solid var(--accent);outline-offset:2px;cursor:move;touch-action:none;
   box-shadow:0 2px 10px rgba(0,0,0,.25)}
 #edBody img.edimg.dragging{opacity:.55}
@@ -420,7 +432,7 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
 <header>
   <div class="hrow">
     <span class="logo" id="logoText">SK <span data-i18n="logo_note">노트</span></span>
-    <span class="verbadge" id="appVer">v5.8</span>
+    <span class="verbadge" id="appVer">v5.9</span>
     <input id="search" type="search" data-i18n-ph="search_ph" placeholder="검색...">
     <span class="syncdot" id="syncDot" title="동기화 상태"></span>
     <button class="iconbtn" id="btnView" data-i18n-title="view_toggle" title="보기 전환">▦</button>
@@ -682,15 +694,9 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
     <div class="setsec">
       <div class="appver">
         <div data-i18n="app_name">SK 노트 — 색상 메모장</div>
-        <div id="stVersion">SK Notes v5.8</div>
+        <div id="stVersion">SK Notes v5.9</div>
+        <div class="hint" style="margin-top:.5em">SK 노트 v5.8 · 첫 화면은 톡=열기·꾹=삭제만 + Undo 버튼 + 이미지 자유 이동 + 암호창 축소 + 기본 컬러/폰트 설정 + 백업(폰 저장)·Export/Import Notes + 시스템 언어 자동</div>
       </div>
-    </div>
-      <div class="hint" style="margin-top:.6em">⚠ 노트는 이 기기·이 브라우저·이 주소(주소창)에 저장됩니다. 열던 주소가 바뀌거나(파일 직접 열기 ↔ 웹주소) 브라우저 데이터를 지우면 노트가 안 보일 수 있어요. 한 달에 한 번쯤 <b>백업 내보내기</b>를 누르거나 동기화를 켜두시면 안전합니다.</div>
-    </div>
-
-    <div class="setsec">
-      <h4>정보</h4>
-      <div class="hint">SK 노트 v5.8 · 첫 화면은 톡=열기·꾹=삭제만(텍스트 선택 안 됨) + Undo 버튼·상단 아이콘 작게 + 이미지 자유 이동 + 암호창 1/3 크기 + 기본 컬러/폰트 설정 + 백업(폰 저장)·Export/Import Notes + 시스템 언어(한국어 아니면 영어)</div>
     </div>
   </div>
 </div>
@@ -1025,6 +1031,8 @@ function visibleNotes(){
 function render(){
   applyPrefs();
   const dark=isDark(); const PAL=dark?COLORS_D:COLORS, HEAD=dark?HEADS_D:HEADS_L;
+  /* (요청) 하단 폴더바 배경: 일반=라이트 옐로우, 보관=라이트 그린 */
+  $('#folderNav').classList.toggle('vault',ui.vault);
   const bar=$('#folderBar');bar.innerHTML='';
   if(ui.vault){
     // (요구10) 보관 모드: 일반 화면과 동일 UI, 폴더바만 '보관' 표시 + 나가기
@@ -1279,6 +1287,7 @@ function applyEdMode(){
   const n=cur(); const isCheck=n&&n.type==='check';
   $('#edBody').contentEditable=(ui.edEdit&&!isCheck)?'true':'false';
   $('#edBody').classList.toggle('viewmode',!ui.edEdit);
+  $('#edBody').classList.toggle('editing',ui.edEdit&&!isCheck);   /* (요청3) 편집 중 이미지 드래그 허용 */
   $('#edPencil').classList.toggle('on',ui.edEdit);
   // (요청6) 보기 모드=링크 활성 / 편집 모드=순수 편집(링크 표시는 유지)
   if(n && n.type==='note'){
@@ -1506,10 +1515,8 @@ function startImgDrag(img,startX,startY){
     imgDropLine(null);
     if(imgMoved){
       imgMoved=false;
-      const r=dropLineAt(ev.clientX,ev.clientY);
-      if(r&&r.insert){ try{ img.parentNode&&img.parentNode.removeChild(img); r.insert.insertNode(img);
-        r.insert.collapse(true);
-        const sel=window.getSelection();sel.removeAllRanges();sel.addRange(r.insert); }catch(e){} }
+      const tgt=dropTargetAt(ev.clientX,ev.clientY);
+      if(tgt){ moveImgTo(img,tgt.node,tgt.before); }
       ui._edSnap='__force__'; schedSave(); placeImgBoxSoon();
     }
   };
@@ -1517,27 +1524,67 @@ function startImgDrag(img,startX,startY){
   document.addEventListener('pointerup',up);
   document.addEventListener('pointercancel',up);
 }
-/* 포인터 좌표 → edBody 안 삽입 지점 Range + 표시선 사각. edBody 밖이면 null.
-   Range가 가리키는 노드 위/아래 중 가까운 쪽 경계를 사용. */
+/* 포인터 좌표 → 표시선 사각. (실제 삽입은 블록 단위 dropTargetAt이 처리) */
 function dropLineAt(x,y){
   const body=$('#edBody');
   const br=body.getBoundingClientRect();
   if(x<br.left-20||x>br.right+20||y<br.top-10||y>br.bottom+10)return null;
-  let range=null;
-  if(document.caretRangeFromPoint)range=document.caretRangeFromPoint(x,y);
-  else if(document.caretPositionFromPoint){const p=document.caretPositionFromPoint(x,y);if(p){range=document.createRange();range.setStart(p.offsetNode,p.offset);range.collapse(true);}}
-  if(!range)return null;
-  /* 삽입 지점을 이미지 자신 위로 잡으면 무의미 → 그냥 사용(자기 앞/뒤 중 근접 경계) */
-  let node=range.startContainer;
-  if(node.nodeType===3)node=node.parentNode;
-  if(node&&node!==body&&!body.contains(node))return null;
-  const rects=range.getClientRects();
-  let line=rects.length?rects[0]:(node&&node.getBoundingClientRect?node.getBoundingClientRect():br);
-  /* y가 절반보다 위면 그 줄 위로, 아래면 그 줄 아래로 → insertNode는 항상 start 앞이므로 line rect를 그린다 */
-  const ly=(line&&line.height)?(y<line.top+line.height/2?line.top:line.bottom):y;
-  return {insert:range,line:{top:ly,left:br.left,right:br.right}};
+  const tgt=dropTargetAt(x,y);
+  if(!tgt)return {line:{top:br.top,left:br.left,right:br.right}};
+  const r=tgt.node.getBoundingClientRect();
+  const ly=tgt.before?r.top:r.bottom;
+  return {line:{top:ly,left:br.left,right:br.right}};
 }
-/* Range.insertNode를 insertNode로 감싼 보정: start/end 노드 중 edBody 자식을 찾아 사용 */
+/* (요청3) 드롭 위치를 '줄(블록)' 단위로 계산 — caretRangeFromPoint 없이도 확실히 동작.
+   body 안을 차지하는 블록(요소노드 또는 텍스트 줄)을 모아, y 기준으로 앞/뒤 블록을 정한다. */
+function dropTargetAt(x,y){
+  const body=$('#edBody');
+  const br=body.getBoundingClientRect();
+  if(x<br.left-30||x>br.right+30||y<br.top-15||y>br.bottom+15)return null;
+  /* 후보: edBody의 직계 자식 중 보이는 것. 텍스트 노드는 줄 rect로 변환 */
+  const cands=[];
+  const walk=()=>{
+    const kids=[...body.childNodes];
+    kids.forEach(nd=>{
+      if(nd===selImg)return;
+      if(nd.nodeType===3){
+        const t=nd.textContent; if(!t || !t.trim())return;
+        const r=document.createRange();r.selectNodeContents(nd);
+        const rs=r.getClientRects();
+        for(const rc of rs){ if(rc.height>2)cands.push({node:nd,rect:rc,text:true}); }
+      }else if(nd.nodeType===1){
+        const rc=nd.getBoundingClientRect();
+        if(rc.height>2&&rc.width>2)cands.push({node:nd,rect:rc,text:false});
+      }
+    });
+  };
+  walk();
+  if(!cands.length)return {node:null,before:true};   /* 본문이 비었거나 이미지뿐 → 맨 앞/뒤 */
+  cands.sort((a,b)=>a.rect.top-b.rect.top);
+  for(const c of cands){
+    if(y < c.rect.top + c.rect.height/2) return {node:c.node,before:true,text:c.text};
+  }
+  const last=cands[cands.length-1];
+  return {node:last.node,before:false,text:last.text};
+}
+/* 이미지를 target 블록 앞(before) 또는 뒤로 이동. 텍스트 줄이면 그 줄 앞/뒤 경계에 삽입. */
+function moveImgTo(img,node,before){
+  const body=$('#edBody');
+  try{
+    if(img.parentNode)img.parentNode.removeChild(img);
+    if(!node){ if(before)body.insertBefore(img,body.firstChild); else body.appendChild(img); return; }
+    if(node.nodeType===3){
+      /* 텍스트 노드: 줄 시작/끝 경계에 Range로 삽입 */
+      const range=document.createRange();
+      if(before){ range.setStart(node,0); }
+      else { range.setStart(node,node.textContent.length); }
+      range.collapse(true); range.insertNode(img);
+    }else{
+      if(before)node.parentNode.insertBefore(img,node);
+      else node.parentNode.insertBefore(img,node.nextSibling);
+    }
+  }catch(e){}
+}
 function atPoint(el,x,y){const r=el.getBoundingClientRect();return x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom}
 function placeImgBoxSoon(){ placeImgBox(); setTimeout(placeImgBox,30); setTimeout(placeImgBox,120); }
 function selectImg(img){
@@ -1570,10 +1617,15 @@ $('#imgClose').onclick=e=>{e.stopPropagation();deselectImg()};
 document.querySelector('.edmain').addEventListener('scroll',()=>{if(selImg)placeImgBox()});
 addEventListener('resize',()=>{if(selImg)placeImgBox()});
 $('#imgPrev').onclick=e=>{if(e.target.id==='imgPrev'||e.target.tagName==='SPAN')$('#imgPrev').classList.add('hidden')};
-/* (요청3) 선택한 이미지 자체를 잡고 드래그 → 이동. 모서리 핸들은 imgBox가 먼저 가로챈다. */
+/* (요청3) 편집 중엔 이미지를 잡으면 바로 '선택 + 드래그 이동'이 시작된다 (미리 선택하지 않아도 됨).
+   모서리 핸들은 imgBox가 먼저 가로채므로 리사이즈와 충돌하지 않는다. */
 $('#edBody').addEventListener('pointerdown',e=>{
   const im=e.target&&e.target.closest?e.target.closest('img.edimg'):null;
-  if(im&&selImg===im&&ui.edEdit){ e.preventDefault(); startImgDrag(im,e.clientX,e.clientY); }
+  if(im&&ui.edEdit){
+    e.preventDefault();
+    if(selImg!==im)selectImg(im);        /* 잡는 순간 그 이미지를 선택 */
+    startImgDrag(im,e.clientX,e.clientY);
+  }
 },true);
 /* 이미지 선택/미리보기는 pointerup 분기에서 처리 (click 중복 방지) */
 /* (요청2) 카메라: 탭 = 갤러리 / 길게 = 직접 촬영(capture) */
@@ -1620,8 +1672,10 @@ $('#edBody').addEventListener('pointerup',e=>{
   const im=e.target&&e.target.closest?e.target.closest('img.edimg'):null;
   if(im){
     e.preventDefault(); imgTapGuard=true; setTimeout(()=>{imgTapGuard=false},0);
-    if(imgMoved){ /* 드래그로 막 이동을 끝낸 경우: 탭 선택 토글은 생략 */ imgMoved=false; return; }
-    if(ui.edEdit){ if(selImg===im)deselectImg(); else selectImg(im); }
+    if(imgMoved){ /* 드래그로 막 이동을 끝낸 경우: 탭 토글은 생략하고 선택만 유지 */ imgMoved=false; return; }
+    if(ui.edEdit){ /* 탭(=안 움직인 눌렀다 뗌): 선택된 이미지는 해제, 아니면 선택 */
+      if(selImg===im)deselectImg(); else selectImg(im);
+    }
     else{ /* 보기 모드 → 편집 모드로 바꾼 뒤 그 이미지를 선택 (이동·삭제·크기조절 가능) */
       const imgs=$$('#edBody img.edimg'); const idx=imgs.indexOf(im);
       ui.edEdit=true; applyEdMode();
