@@ -253,6 +253,13 @@ html[data-theme="dark"] mark{background:#c8a000;color:#fff}
 }
 .edtool svg{width:1.25em;height:1.25em}
 .edtool.undo{font-size:.95em;font-weight:800}
+/* (요청) 노트 열람/편집 상단바 노출 규칙
+   보기 모드(기본): ✓ 저장 · 연필 · 칼라 · ⋮(3점) 만 표시 → Undo/T/카메라는 숨김
+   편집 모드(.editmode): ✓ 저장 · ↶Undo · T · 📷카메라 만 표시 → 연필/칼라/⋮은 숨김 */
+.edbar:not(.editmode) #edUndo,.edbar:not(.editmode) #edTypeBtn,.edbar:not(.editmode) #edImgBtn{display:none}
+.edbar.editmode #edPencil,.edbar.editmode #edColorBtn,.edbar.editmode #edKebab{display:none}
+/* (요청) 휴지통 아이콘만 80%로 축소 */
+#btnTrash{font-size:.78em;padding:.32em}
 .edtool:active{background:var(--chip);transform:translateY(1px) scale(.9);box-shadow:inset 0 2px 4px rgba(0,0,0,.2)}   /* (요청3) 눌리는 모양이 확실히 보이게 */
 /* (요청3) 연필: 박스 없이 연필만. 연필심(끝)은 왼쪽. 편집 ON=노란 연필(박스 없음), 누르면 '들어가는' 눌림 */
 #edPencil{background:none!important;border:none}
@@ -444,12 +451,12 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
 
 <header>
   <div class="hrow">
-    <span class="logo" id="logoText">SK <span data-i18n="logo_note">노트</span></span>
-    <span class="verbadge" id="appVer">v5.11</span>
+    <span class="logo" id="logoText"></span>
+    <span class="verbadge" id="appVer">v5.12</span>
     <input id="search" type="search" data-i18n-ph="search_ph" placeholder="검색...">
     <span class="syncdot" id="syncDot" title="동기화 상태"></span>
     <button class="iconbtn" id="btnView" data-i18n-title="view_toggle" title="보기 전환">▦</button>
-    <button class="iconbtn" id="btnAccount" data-i18n-title="account_sync" title="계정 · 동기화">☁️</button>
+    <!-- (요청) 구름(계정·동기화) 아이콘은 상단바에서 제거 — 설정 → 계정·동기화로 진입 -->
     <button class="iconbtn" id="btnTrash" data-i18n-title="trash" title="휴지통">🗑️</button>
     <button class="iconbtn" id="btnSettings" data-i18n-title="settings" title="설정">⚙️</button>
   </div>
@@ -1088,11 +1095,11 @@ function render(){
       bar.append(b);
     });
     const add=document.createElement('button');add.className='chip';add.textContent=tr('+ 폴더','chip_addfolder');add.onclick=openFolderMgr;bar.append(add);
-    /* (요청) 보관 화면: 로고 짧게 + 버전 배지 숨김 → 톱니바퀴 등 모든 아이콘 공간 확보 */
-    $('#logoText').innerHTML='🔐 '+tr('보관','vault_title');$('#logoText').title=tr('보관 노트','vault_title');
-    $('#appVer').style.display='none';
+    /* (요청) 상단바 로고 텍스트("SK노트") 제거 — 검색창이 넓게 차지 */
+    const lt=$('#logoText'); if(lt){lt.innerHTML='';lt.title=tr('보관 노트','vault_title');}
+    $('#appVer').style.display='';
   }else{
-    $('#logoText').innerHTML='SK <span>'+tr('노트','logo_note')+'</span>';$('#logoText').title='';
+    const lt2=$('#logoText'); if(lt2){lt2.innerHTML='';lt2.title='';}
     $('#appVer').style.display='';
     const all=document.createElement('button');all.className='chip'+(ui.folder===''&&!ui.nofolder&&!ui.trash?' on':'');
     all.textContent=tr('전체','chip_all');all.onclick=()=>{ui.folder='';ui.nofolder=false;ui.trash=false;exitSel();render()};bar.append(all);
@@ -1325,6 +1332,10 @@ function applyEdMode(){
   $('#edBody').classList.toggle('viewmode',!ui.edEdit);
   $('#edBody').classList.toggle('editing',ui.edEdit&&!isCheck);   /* (요청3) 편집 중 이미지 드래그 허용 */
   $('#edPencil').classList.toggle('on',ui.edEdit);
+  /* (요청) 상단 도구줄 노출 규칙:
+     보기 모드 = ✓(저장) · 연필 · 칼라 · ⋮(3점)
+     편집 모드 = ✓(저장) · ↶Undo · T · 📷(카메라) */
+  $('.edbar')&&$('.edbar').classList.toggle('editmode',ui.edEdit);
   // (요청6) 보기 모드=링크 활성 / 편집 모드=순수 편집(링크 표시는 유지)
   if(n && n.type==='note'){
     if(ui.edEdit) $('#edBody').innerHTML=n.content||'';
@@ -2167,7 +2178,7 @@ function setStatus(st,txt){
   const a=$('#acSyncState'),b=$('#stSyncState');
   if(a)a.textContent=label;
   if(b)b.textContent=label||'미설정';
-  $('#btnAccount').classList.toggle('on',st==='ok');
+  const ba=$('#btnAccount'); if(ba)ba.classList.toggle('on',st==='ok');
 }
 /* (요청7) 주기 동기화: 올리기+내려받기 둘 다 (기존엔 올리기만 해서 상대 노트를 못 받아왔음) */
 setInterval(()=>{if(SYNC.session&&!document.hidden)syncNow()},20000);
@@ -2195,7 +2206,7 @@ function openAccount(){
   updateAccountUI();
   ovOpen($('#acOverlay'));
 }
-$('#btnAccount').onclick=openAccount;
+if($('#btnAccount'))$('#btnAccount').onclick=openAccount;   /* (요청) 구름 버튼은 상단바에서 제거됨 — 설정에서 진입 */
 $('#acClose').onclick=()=>ovCloseUi($('#acOverlay'));
 $('#acSave').onclick=()=>{
   S.settings.sbUrl=$('#acUrl').value.trim();
