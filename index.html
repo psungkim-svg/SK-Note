@@ -318,6 +318,13 @@ html[data-theme="dark"] mark{background:#c8a000;color:#fff}
 #edBody img.edimg.sel{outline:3px solid var(--accent);outline-offset:2px;cursor:move;touch-action:none;
   box-shadow:0 2px 10px rgba(0,0,0,.25)}
 #edBody img.edimg.dragging{opacity:.55}
+/* (요청) 이미지 배치: 한 줄 차지(기본) / 가운데 / 왼쪽·오른쪽으로 띄워 글자가 옆으로 흐르게(감쌈) */
+#edBody img.edimg{ /* 기본 = 왼쪽 한 줄 차지 */ clear:none }
+#edBody img.edimg.al-center{margin-left:auto;margin-right:auto;float:none;clear:both}
+#edBody img.edimg.al-left{float:left;margin:.3em .6em .3em 0;clear:none}
+#edBody img.edimg.al-right{float:right;margin:.3em 0 .3em .6em;clear:none}
+#edBody img.edimg.al-block{float:none;margin:.3em auto;clear:both}
+#imgBar .ib.al-on{background:var(--accent);color:#3d2c00;font-weight:800}
 /* (요청3) 이미지 드래그 이동 중 놓을 위치 표시 선 (.edmain이 스크롤 컨테이너 — fixed로 화면 기준 고정) */
 #imgDropMark{position:fixed;z-index:74;height:0;border-top:3px dashed var(--accent);
   pointer-events:none;display:none}
@@ -432,7 +439,7 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
 <header>
   <div class="hrow">
     <span class="logo" id="logoText">SK <span data-i18n="logo_note">노트</span></span>
-    <span class="verbadge" id="appVer">v5.9</span>
+    <span class="verbadge" id="appVer">v5.10</span>
     <input id="search" type="search" data-i18n-ph="search_ph" placeholder="검색...">
     <span class="syncdot" id="syncDot" title="동기화 상태"></span>
     <button class="iconbtn" id="btnView" data-i18n-title="view_toggle" title="보기 전환">▦</button>
@@ -492,11 +499,15 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
       <button class="btn" id="addItemBtn" data-i18n="add_item">+ 항목 추가</button>
       <!-- (요청3) 이미지 드래그 이동 시 놓을 위치 표시 선 -->
       <div id="imgDropMark"></div>
-      <!-- (요청2) 이미지 선택 바: 확대/축소 · 미리보기 · 삭제 · 닫기 -->
+      <!-- (요청) 이미지 선택 바: 확대/축소 · 배치(감쌈/가운데/기본) · 미리보기 · 삭제 · 닫기 -->
       <div id="imgBar" class="hidden">
         <button class="ib" id="imgSmaller">−</button>
         <span class="stat" id="imgBarPct">100%</span>
         <button class="ib" id="imgBigger">＋</button>
+        <button class="ib" id="imgFloatL" title="사진 왼쪽 · 글자는 오른쪽으로 감쌈">◧</button>
+        <button class="ib" id="imgCenter" title="사진을 가운데로">가운데</button>
+        <button class="ib" id="imgFloatR" title="사진 오른쪽 · 글자는 왼쪽으로 감쌈">◨</button>
+        <button class="ib" id="imgClear" title="기본(한 줄 차지, 왼쪽)">▤</button>
         <button class="ib" id="imgPreview">🔍</button>
         <button class="ib danger" id="imgDelete">🗑</button>
         <button class="ib" id="imgClose">✕</button>
@@ -694,7 +705,7 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
     <div class="setsec">
       <div class="appver">
         <div data-i18n="app_name">SK 노트 — 색상 메모장</div>
-        <div id="stVersion">SK Notes v5.9</div>
+        <div id="stVersion">SK Notes v5.10</div>
         <div class="hint" style="margin-top:.5em">SK 노트 v5.8 · 첫 화면은 톡=열기·꾹=삭제만 + Undo 버튼 + 이미지 자유 이동 + 암호창 축소 + 기본 컬러/폰트 설정 + 백업(폰 저장)·Export/Import Notes + 시스템 언어 자동</div>
       </div>
     </div>
@@ -1595,7 +1606,7 @@ function selectImg(img){
   const w=img.getBoundingClientRect().width;
   imgPct=Math.max(20,Math.min(100,Math.round(w/base*100)||parseFloat(img.style.width)||100));
   $$('#edBody img.edimg').forEach(im=>im.classList.remove('sel'));
-  img.classList.add('sel'); updateImgBar();
+  img.classList.add('sel'); updateImgBar(); updateImgAlign();
   $('#imgBar').classList.remove('hidden');
   makeImgBox();placeImgBoxSoon();
 }
@@ -1605,11 +1616,37 @@ function deselectImg(){
   $('#imgBar').classList.add('hidden'); imgDropLine(null);
 }
 function updateImgBar(){ const v=$('#imgBarPct'); if(v)v.textContent=imgPct+'%'; }
+/* (요청) 이미지 배치: 가운데 / 왼쪽으로 띄워 글자 감쌈 / 오른쪽으로 띄워 글자 감쌈 / 기본(한 줄 차지).
+   배치는 img의 class+style로 저장되어 노트를 다시 열어도 그대로 유지된다. */
+function setImgAlign(mode){
+  const img=selImg; if(!img)return;
+  img.classList.remove('al-center','al-left','al-right','al-block');
+  if(mode!=='block'){
+    img.classList.add('al-'+mode);
+    if((mode==='left'||mode==='right')&&imgPct>70){   /* 글자가 옆에 올 공간이 필요하므로 감쌈 땐 60%로 */
+      imgPct=60; img.style.width='60%'; img.style.height='auto'; updateImgBar();
+    }
+  }
+  img.style.display='block';
+  ui._edSnap='__force__'; schedSave(); placeImgBoxSoon(); updateImgAlign();
+}
+function updateImgAlign(){
+  const cur=selImg?(selImg.classList.contains('al-center')?'center':
+      selImg.classList.contains('al-left')?'left':
+      selImg.classList.contains('al-right')?'right':'block'):'block';
+  [['imgFloatL','left'],['imgCenter','center'],['imgFloatR','right'],['imgClear','block']].forEach(([id,m])=>{
+    const b=document.getElementById(id); if(b)b.classList.toggle('al-on',cur===m);
+  });
+}
 function imgScale(d){ if(!selImg)return; imgPct=Math.max(20,Math.min(100,imgPct+d)); selImg.style.width=imgPct+'%'; selImg.style.height='auto'; updateImgBar(); placeImgBoxSoon(); schedSave(); }
 function delImg(){ if(!selImg)return; selImg.remove(); deselectImg(); schedSave(); }
 function previewImg(img){ const ov=$('#imgPrev'); if(ov){ov.innerHTML='<span>✕</span>';const im=document.createElement('img');im.src=img.src;ov.appendChild(im);ov.classList.remove('hidden')} }
 $('#imgSmaller').onclick=e=>{e.stopPropagation();imgScale(-10)};
 $('#imgBigger').onclick=e=>{e.stopPropagation();imgScale(10)};
+$('#imgFloatL').onclick=e=>{e.stopPropagation();setImgAlign('left')};
+$('#imgCenter').onclick=e=>{e.stopPropagation();setImgAlign('center')};
+$('#imgFloatR').onclick=e=>{e.stopPropagation();setImgAlign('right')};
+$('#imgClear').onclick=e=>{e.stopPropagation();setImgAlign('block')};
 $('#imgPreview').onclick=e=>{e.stopPropagation();if(selImg)previewImg(selImg)};
 $('#imgDelete').onclick=e=>{e.stopPropagation();delImg()};
 $('#imgClose').onclick=e=>{e.stopPropagation();deselectImg()};
