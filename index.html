@@ -458,7 +458,7 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
 <header>
   <div class="hrow">
     <span class="logo" id="logoText"></span>
-    <span class="verbadge" id="appVer">v5.13</span>
+    <span class="verbadge" id="appVer">v6.0</span>
     <input id="search" type="search" data-i18n-ph="search_ph" placeholder="검색...">
     <span class="syncdot" id="syncDot" title="동기화 상태"></span>
     <button class="iconbtn" id="btnView" data-i18n-title="view_toggle" title="보기 전환">▦</button>
@@ -630,6 +630,13 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
 
     <div class="setsec">
       <h4 data-i18n="sec_screen">화면</h4>
+      <div class="setrow"><label data-i18n="language">언어 (Language)</label>
+        <select id="stLang">
+          <option value="auto" data-i18n="lang_auto">자동 (시스템 언어)</option>
+          <option value="en">English</option>
+          <option value="ko">한국어</option>
+        </select>
+      </div>
       <div class="setrow"><label data-i18n="theme">테마</label>
         <select id="stTheme"><option value="auto" data-i18n="auto">자동</option><option value="light" data-i18n="light">밝게</option><option value="dark" data-i18n="dark">어둡게</option></select>
       </div>
@@ -810,14 +817,24 @@ const HEADS_L=['#ffd0da','#f6e392','#cbebda','#c9e0fb','#ddccf0'];
 const COLORS_D=['#6b4a56','#665e38','#3f5f4a','#3f586d','#584a6d'];
 const HEADS_D =['#7d5a66','#78704a','#4d7159','#4d6780','#6a5a80'];
 const COLOR_NAMES=['핑크','노랑','민트','하늘','라벤더'];
+const COLOR_NAMES_EN=['Pink','Yellow','Mint','Sky','Lavender'];
+const cnName=i=>(IS_KO?COLOR_NAMES[i]:COLOR_NAMES_EN[i])||'';
 const TEXT_COLORS=['#212121','#e53935','#fb8c00','#f9a825','#43a047','#1e88e5','#8e24aa'];
 const HI_COLORS=['#fff59d','#ffccbc','#c8e6c9','#b3e5fc','#e1bee7','transparent'];
 
 const LS={notes:'sk.notes',folders:'sk.folders',settings:'sk.settings'};
-/* (요구10) 앱 언어 = 전화기 시스템 언어. 한국어가 아니면 영어로 표시.
-   t(key) 로 사전 조회, data-i18n 요소는 applyI18n()이 한 번에 교체한다. */
-const LANG=(navigator.language||navigator.userLanguage||'ko').toLowerCase();
-const IS_KO=LANG.startsWith('ko');
+/* (요구10) 앱 언어 = 전화기 시스템 언어(한국어면 한국어, 그 외 영어). + 설정에서 수동 강제(영어/한국어).
+   S.settings.lang: 'auto'(시스템 자동) / 'en'(항상 영어) / 'ko'(항상 한국어).
+   applyI18n()이 시작 시 1회 data-i18n 요소를 교체, 언어 변경 시 reload()로 재적용한다. */
+const SYS_LANG=(navigator.language||navigator.userLanguage||'en').toLowerCase();
+let IS_KO=SYS_LANG.startsWith('ko');
+function computeLang(){              // 반드시 load() 이후에 호출
+  const o=(S&&S.settings&&S.settings.lang)||'auto';
+  if(o==='en')IS_KO=false;
+  else if(o==='ko')IS_KO=true;
+  else IS_KO=SYS_LANG.startsWith('ko');
+  const d=document.documentElement; if(d)d.lang=IS_KO?'ko':'en';
+}
 const I18N={
   cancel:{en:'Cancel'},sel_count:{en:' selected'},restore:{en:'Restore'},delete:{en:'Delete'},
   search_ph:{en:'Search...'},view_toggle:{en:'View'},account_sync:{en:'Account · Sync'},trash:{en:'Trash'},
@@ -827,7 +844,8 @@ const I18N={
   body_ph:{en:'Type something...'},add_item:{en:'+ Add item'},
   img_smaller:{en:'−'},img_bigger:{en:'＋'},img_preview:{en:'🔍'},img_delete:{en:'🗑'},img_close:{en:'✕'},
   undo:{en:'Undo'},undone:{en:'Undone'},
-  sec_screen:{en:'Display'},theme:{en:'Theme'},auto:{en:'Auto'},light:{en:'Light'},dark:{en:'Dark'},
+  sec_screen:{en:'Display'},language:{en:'Language / 언어'},lang_auto:{en:'Auto (follow system)'},lang_en:{en:'English'},lang_ko:{en:'한국어'},
+  theme:{en:'Theme'},auto:{en:'Auto'},light:{en:'Light'},dark:{en:'Dark'},
   default_view:{en:'Default view'},grid:{en:'Grid'},list:{en:'List'},titles:{en:'Titles only'},
   sort_by:{en:'Sort order'},sort_color:{en:'By color'},sort_updated:{en:'Recently edited'},
   sort_created:{en:'Date created'},sort_title:{en:'Title'},sort_manual:{en:'Manual order'},
@@ -884,16 +902,51 @@ const I18N={
   dlg_pin_set:{en:'Set'},dlg_pin_4:{en:'Enter at least 4 characters'},dlg_pin_mismatch:{en:'The two values differ. Try again.'},
   dlg_pin_set_done:{en:'Password set. Please enter it again.'},dlg_pin_enter:{en:'Enter the password'},
   dlg_pin_wrong:{en:'Wrong password'},
-  vault_title:{en:'🔐 Vault'}
+  vault_title:{en:'🔐 Vault'},
+  /* ── v6 추가 키 (영문/한국어 동적 문구) ── */
+  sync_ok:{en:'Synced'},sync_syncing:{en:'Syncing…'},sync_err:{en:'Error'},sync_unset:{en:'Not set'},sync_nolog:{en:'Not signed in'},
+  none_yet:{en:'None yet'},today:{en:'Today'},back_hint:{en:'Press back again to exit'},
+  no_title:{en:'No title'},selected_cnt:{en:' selected'},sel_delete:{en:'Delete'},sel_purge:{en:'Delete forever'},
+  del_confirm_many:{en:'Permanently delete {n} selected note(s)? This cannot be undone.'},del_ok:{en:'Delete'},
+  trash_confirm_many:{en:'Move {n} selected note(s) to trash?'},purged:{en:'Deleted forever'},
+  del_one:{en:'Move to trash?'},del_one_ok:{en:'Delete'},
+  saved_toast:{en:'Saved'},settings_saved_toast:{en:'Settings saved'},backup_saved_toast:{en:'Backup saved (normal + vault included)'},
+  imported_ok:{en:'Import done'},img_added:{en:'Image added'},moved_to_trash:{en:'Moved to trash'},restored_toast:{en:'Restored'},
+  vault_locked:{en:'Vault locked'},moved_folder:{en:'Moved to folder'},defcolor_saved:{en:'Default color saved'},
+  share_copied:{en:'Copied to clipboard'},share_fail:{en:'Sharing not supported here'},
+  to_regular:{en:'Move to regular notes'},to_vault:{en:'Move to vault'},
+  fw_this:{en:'Font weight (this note)'},fw_default:{en:'Default'},fw_light:{en:'Light'},fw_normal:{en:'Normal'},fw_bold:{en:'Bold'},fw_black:{en:'Black'},
+  move_from_vault:{en:'Move out of Vault'},move_to_vault_m:{en:'Move to Vault'},move_confirm_vault:{en:'Move this note to Vault? (It will be stored on this device only, not synced)'},
+  delete_from_editor:{en:'Delete'},
+  no_folder_lbl:{en:'(No folder)'},regular_note:{en:'Regular note'},
+  move_note_q:{en:'{t} — move to folder number:'},folder_move_confirm:{en:'Folder changed'},invalid_num:{en:'Invalid number'},
+  rename:{en:'Rename'},delete:{en:'Delete'},rename_q:{en:'New folder name'},delete_folder_q:{en:"Delete folder '{n}'? Its notes move to 'All'."},
+  empty_folders:{en:'No folders yet. Add one below.'},folders_mgr:{en:'📁 Folders'},
+  remind_choose:{en:'Choose a time'},remind_future:{en:'Choose a time in the future'},
+  remind_set_toast:{en:'Reminder set: {t}'},remind_cleared:{en:'Reminder cleared'},item_ph:{en:'Type an item'},
+  add_folder_lbl:{en:'Add'},cancel_lbl:{en:'Cancel'},ok_lbl:{en:'OK'},
+  sync_state_lbl:{en:'Sync status'},err_note:{en:'Error'},n_url_key:{en:'Save a server URL and key first'},
+  n_email_pass:{en:'Enter an email and a password (6+ characters)'},login_fail:{en:'Login failed'},login_err:{en:'Login error'},
+  empty_vault_backup_q:{en:'Restore with this backup?'},wipe_all:{en:'Delete all'}
 };
 function t(key){ if(IS_KO)return null; const v=I18N[key]; return (v&&v.en)||''; }
 function tr(ko,key){ const e=t(key); return e!==null&&e!==undefined&&e!==''?e:ko; }
+/* (v6) 동적 문자열을 언어에 맞춰 즉시 선택: L(한국어, English) */
+const L=(ko,en)=>(IS_KO?ko:en);
+function dts(ts){ // 날짜·시각을 현재 언어로
+  return new Date(ts).toLocaleString(IS_KO?'ko-KR':'en-US');
+}
+function fmtDateL(ts){ // fmtDate와 동일하되 언어 반영
+  const d=new Date(ts),n=new Date();const p=x=>String(x).padStart(2,'0');
+  if(d.toDateString()===n.toDateString())return L(`오늘 ${p(d.getHours())}:${p(d.getMinutes())}`,`Today ${p(d.getHours())}:${p(d.getMinutes())}`);
+  return `${d.getMonth()+1}/${d.getDate()}`;
+}
 /* data-i18n 속성이 있는 요소의 텍스트를 시스템 언어에 맞게 교체(1회) */
 function applyI18n(){
   if(IS_KO)return;
   document.querySelectorAll('[data-i18n]').forEach(el=>{
     const k=el.getAttribute('data-i18n'); const e=t(k);
-    if(e!==null&&e!==undefined&&e!=='')el.textContent=e;
+    if(e!==null&&e!==undefined&&e!=='')el.innerHTML=e;   // 일부 값에 <b> 등 마크업 포함
   });
   document.querySelectorAll('[data-i18n-ph]').forEach(el=>{
     const e=t(el.getAttribute('data-i18n-ph')); if(e)el.setAttribute('placeholder',e);
@@ -932,7 +985,7 @@ function migFont(f){ if(f==null)return '12'; if(FONT_KEYS_PT[f]!=null)return Str
    가벼움 300(Light) · 보통 500(Medium) · 굵게 700(Bold) · 매우굵게 900(Black).
    FONT_WEIGHTS 맵이 '글자 키(l/n/b/x) ↔ 숫자 값' 변환의 유일한 기준. 모든 저장·로드·적용은 이 맵을 거침 */
 const FONT_WEIGHTS={l:'300',n:'500',b:'700',x:'900'};   /* 가벼움·보통·굵게·매우굵게 — 간격이 확실하게 나뉜 새 굵기 */
-const DEF={theme:'auto',view:'grid',sort:'color',font:'12',fontWeight:'n',box:'2',rule:'none',defColor:0,sbUrl:'',sbKey:'',lastSync:0,pinHash:null};
+const DEF={theme:'auto',view:'grid',sort:'color',font:'12',fontWeight:'n',box:'2',rule:'none',defColor:0,sbUrl:'',sbKey:'',lastSync:0,pinHash:null,lang:'auto'};
 /* (요청6) 보관 노트 전용 설정 기본값 — 일반 노트 설정과 별도로 저장됨 */
 const VAULT_DEF={theme:'auto',view:'grid',sort:'color',font:'12',fontWeight:'n',box:'2',rule:'none',defColor:0,unlockMinutes:0};
 function load(){
@@ -966,7 +1019,7 @@ function load(){
   // (요청4) 정렬은 색상 우선을 기본으로 강제 (기존 기기의 '최근수정' 설정 1회 교정)
   if(!S.settings._sortFixed){ S.settings.sort='color'; S.settings._sortFixed=true; }
 }
-function save(){ STORE.setItem(LS.notes,JSON.stringify(S.notes)); STORE.setItem(LS.folders,JSON.stringify(S.folders)); STORE.setItem(LS.settings,JSON.stringify(S.settings)); }
+function save(){ STORE.setItem(LS.notes,JSON.stringify(S.notes)); STORE.setItem(LS.folders,JSON.stringify(S.folders)); STORE.setItem(LS.settings,JSON.stringify(S.settings)); scheduleAutoSnap(); }
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),2200)}
 function fmtDate(ts){const d=new Date(ts);const n=new Date();const p=x=>String(x).padStart(2,'0');
   if(d.toDateString()===n.toDateString())return `오늘 ${p(d.getHours())}:${p(d.getMinutes())}`;
@@ -1036,7 +1089,7 @@ window.addEventListener('popstate',()=>{
   if(ui.vault){ VLT.leave(); histPush(); return }               // 보관 모드면 나가기
   const now=Date.now();
   if(now-lastBackHint<2500){ lastBackHint=0; return }
-  lastBackHint=now; toast('뒤로 버튼을 한 번 더 누르면 종료됩니다'); histPush();
+  lastBackHint=now; toast(L('뒤로 버튼을 한 번 더 누르면 종료됩니다','Press back again to exit')); histPush();
 });
 
 /* ═══════════════ 공통 다이얼로그 ═══════════════ */
@@ -1046,7 +1099,7 @@ function dlg(msg,opt={}){
     $('#dlgMsg').textContent=msg;
     inp.classList.toggle('hidden',!opt.input);inp.value=opt.def||'';
     inp.type=opt.password?'password':'text';
-    ok.textContent=opt.okText||'확인';
+    ok.textContent=opt.okText!==undefined&&opt.okText!==''?opt.okText:L('확인','OK');
     ok.className='btn '+(opt.danger?'danger':'primary');
     ovOpen(ov);
     const done=v=>{ovCloseUi(ov);ok.onclick=null;$('#dlgNo').onclick=null;inp.onkeydown=null;document.removeEventListener('keydown',esc2);res(v)};
@@ -1168,7 +1221,7 @@ function render(){
     el.innerHTML=`
       ${ui.selMode&&ui.selected.has(n.id)?'<span class="selmark">✓</span>':''}
       <div class="thead">
-        <div class="ttl">${hl(esc(n.title))||'제목 없음'}</div>
+        <div class="ttl">${hl(esc(n.title))||L('제목 없음','No title')}</div>
         <span class="badges">${n.pinned?'📌':''}${hasRemind?'⏰':''}${n.type==='check'?'☑️':''}</span>
       </div>
       <div class="tinner">
@@ -1212,21 +1265,21 @@ function toggleSel(id){ if(ui.selected.has(id))ui.selected.delete(id); else ui.s
   if(ui.selected.size===0){ exitSel(); } render(); }
 function updateSelBar(){
   $('#selMode').classList.toggle('show',ui.selMode);
-  $('#selCount').textContent=ui.selected.size+'개 선택';
+  $('#selCount').textContent=ui.selected.size+L('개 선택',' selected');
   $('#selRestore').style.display=ui.trash?'':'none';
-  $('#selDelete').textContent=ui.trash?'🗑️ 영구삭제':'🗑️ 삭제';
+  $('#selDelete').textContent=ui.trash?L('🗑️ 영구삭제','🗑️ Delete forever'):L('🗑️ 삭제','🗑️ Delete');
 }
 $('#selCancel').onclick=()=>{exitSel();render()};
 $('#selDelete').onclick=async()=>{
   const ids=[...ui.selected]; if(!ids.length)return;
   const coll=NOTES();
   if(ui.trash){
-    if(!await dlg(`선택한 ${ids.length}개를 영구 삭제할까요? 되돌릴 수 없습니다.`,{danger:true,okText:'삭제'}))return;
+    if(!await dlg(L(`선택한 ${ids.length}개를 영구 삭제할까요? 되돌릴 수 없습니다.`,`Permanently delete the ${ids.length} selected note(s)? This cannot be undone.`),{danger:true,okText:L('삭제','Delete')}))return;
     if(ui.vault)VLT.notes=VLT.notes.filter(n=>!ids.includes(n.id));
     else{S.notes=S.notes.filter(n=>!ids.includes(n.id));ids.forEach(id=>SYNC.hardDelete(id));}
-    toast('영구 삭제했습니다');
+    toast(L('영구 삭제했습니다','Deleted forever'));
   }else{
-    if(!await dlg(`선택한 ${ids.length}개를 휴지통으로 옮길까요?`,{okText:'삭제'}))return;
+    if(!await dlg(L(`선택한 ${ids.length}개를 휴지통으로 옮길까요?`,`Move the ${ids.length} selected note(s) to trash?`),{okText:L('삭제','Delete')}))return;
     ids.forEach(id=>{const n=coll.find(x=>x.id===id);if(n){n.deleted=true;n.updatedAt=Date.now();n.dirty=true;}});
     toast(tr('휴지통으로 옮겼습니다','toast_trash')); if(!ui.vault)syncSoon();
   }
@@ -1374,7 +1427,7 @@ function updateColorBtn(sel){
   // 팝오버 스와치
   const pop=$('#edColorPop');pop.innerHTML='';
   PAL.forEach((c,i)=>{const b=document.createElement('button');b.className='swatch'+(i===sel?' on':'');
-    b.style.background=c;b.title=COLOR_NAMES[i];
+    b.style.background=c;b.title=cnName(i);
     b.onclick=()=>{const n=cur();if(!n)return;n.color=i;n.updatedAt=Date.now();n.dirty=true;
       updateColorBtn(i);applyEditorColor(i);                          // (요청1) 색 바꾸면 배경·제목바 즉시 변화
       pop.classList.remove('show');schedSave()};pop.append(b)});
@@ -1394,7 +1447,7 @@ function flushEd(silent){
   if(n.type==='note' && ui.edEdit)n.content=$('#edBody').innerHTML;   // (요청6) 편집 중일 때만 본문 저장
   n.updatedAt=Date.now();n.dirty=true;persistActive();if(!ui.vault)syncSoon();
   ui._edSnap=edSnapshot();
-  if(!silent)toast('저장됨');
+  if(!silent)toast(tr('저장됨','toast_saved'));
 }
 function closeEditor(fromBack){
   clearTimeout(edSaveTimer);
@@ -1418,7 +1471,7 @@ $('#edSaveBtn').onclick=()=>{ flushEd(); closeEditor(); };   // ✓ = 저장 후
 /* (요구2) Undo(되돌리기): 본문/체크리스트 직전 편집 취소 */
 $('#edUndo').onclick=()=>{
   const nb=$('#edBody');
-  if(cur()&&cur().type==='check'){ toast(tr('되돌렸습니다','undo')); return; }
+  if(cur()&&cur().type==='check'){ toast(tr('되돌렸습니다','undone')); return; }
   nb.focus();
   try{ document.execCommand('undo',false,null); }catch(e){}
   schedSave();
@@ -1506,10 +1559,10 @@ $('#edOverlay').addEventListener('selectstart',e=>{
 /* (요청5) 이미지 붙여넣기: 클립보드 그림을 본문에 삽입 */
 async function insertImageFile(file){
   if(!file)return;
-  if(file.size>3*1024*1024){toast('이미지가 너무 큽니다(3MB 이하로)');return}
+  if(file.size>3*1024*1024){toast(L('이미지가 너무 큽니다(3MB 이하로)','Image is too large (max 3MB)'));return}
   if(!ui.edEdit){ui.edEdit=true;applyEdMode();}
   const dataUrl=await new Promise(res=>{const r=new FileReader();r.onload=()=>res(r.result);r.readAsDataURL(file)});
-  const img=document.createElement('img'); img.className='edimg'; img.src=dataUrl; img.alt='이미지';
+  const img=document.createElement('img'); img.className='edimg'; img.src=dataUrl; img.alt='image';
   img.style.width='100%';
   $('#edBody').focus();
   const s=window.getSelection(); const r=s.rangeCount?s.getRangeAt(0):document.createRange();
@@ -1797,7 +1850,7 @@ function buildTypePop(){
   const p=$('#edTypePop'); if(p._built)return; p._built=true;
   /* 글자 크기 */
   const r1=document.createElement('div');r1.className='tprow';
-  r1.innerHTML='<span class="tplab">글자 크기</span>';
+  r1.innerHTML='<span class="tplab">'+L('글자 크기','Font size')+'</span>';
   const bm=document.createElement('button');bm.className='tpbtn';bm.textContent='−';
   const val=document.createElement('span');val.className='tpval';val.id='tpFsVal';
   const bp=document.createElement('button');bp.className='tpbtn';bp.textContent='＋';
@@ -1806,7 +1859,7 @@ function buildTypePop(){
   bp.onclick=e=>{e.preventDefault();e.stopPropagation();typeFs=Math.min(48,typeFs+1);applyTypeFontSize()};
   p.append(r1);
   /* B / I / U */
-  const r2=document.createElement('div');r2.className='tprow';r2.innerHTML='<span class="tplab">서식</span>';
+  const r2=document.createElement('div');r2.className='tprow';r2.innerHTML='<span class="tplab">'+L('서식','Style')+'</span>';
   [['bold','B','b'],['italic','I','i'],['underline','U','u']].forEach(([cmd,lab,cls])=>{
     const b=document.createElement('button');b.className='tpbiu '+cls;b.textContent=lab;
     b.onclick=e=>{e.preventDefault();e.stopPropagation();execTypeCmd(cmd);b.classList.toggle('on')};
@@ -1815,7 +1868,7 @@ function buildTypePop(){
   p.append(r2);
   /* 줄간격 */
   const r4=document.createElement('div');r4.className='tprow';
-  r4.innerHTML='<span class="tplab">줄간격</span>';
+  r4.innerHTML='<span class="tplab">'+L('줄간격','Line spacing')+'</span>';
   const lm=document.createElement('button');lm.className='tpbtn';lm.textContent='−';
   const lv=document.createElement('span');lv.className='tpval';lv.id='tpLhVal';
   const lp=document.createElement('button');lp.className='tpbtn';lp.textContent='＋';
@@ -1826,14 +1879,14 @@ function buildTypePop(){
 }
 function typeSelRange(){ const s=window.getSelection(); if(!s.rangeCount)return null;
   const r=s.getRangeAt(0); if(!$('#edBody').contains(r.commonAncestorContainer))return null; return r; }
-function applyTypeFontSize(){ const r=typeSelRange(); if(!r||r.collapsed){toast('크기를 바꿀 텍스트를 먼저 선택하세요');updateTpVals();return}
+function applyTypeFontSize(){ const r=typeSelRange(); if(!r||r.collapsed){toast(L('크기를 바꿀 텍스트를 먼저 선택하세요','Select text to resize first'));updateTpVals();return}
   $('#edBody').focus(); document.execCommand('styleWithCSS',false,true);
   // execCommand fontSize를 쓰면 1~7 제한이므로, 선택을 span으로 감싸 실제 pt 적용
   const frag=r.extractContents(); const sp=document.createElement('span'); sp.style.fontSize=typeFs+'pt';
   sp.appendChild(frag); r.insertNode(sp);
   const ns=window.getSelection(); ns.removeAllRanges(); const nr=document.createRange(); nr.selectNodeContents(sp); ns.addRange(nr);
   $('#tpFsVal').textContent=typeFs+'pt'; schedSave(); }
-function applyTypeLh(){ const r=typeSelRange(); if(!r||r.collapsed){toast('줄간격을 바꿀 텍스트를 먼저 선택하세요');updateTpVals();return}
+function applyTypeLh(){ const r=typeSelRange(); if(!r||r.collapsed){toast(L('줄간격을 바꿀 텍스트를 먼저 선택하세요','Select text to change line spacing first'));updateTpVals();return}
   $('#edBody').focus();
   const frag=r.extractContents(); const sp=document.createElement('span'); sp.style.lineHeight=typeLh;
   sp.appendChild(frag); r.insertNode(sp);
@@ -1882,24 +1935,24 @@ function buildKebab(){
   const m=$('#edMenu');m.innerHTML='';
   const item=(emo,label,fn,cls)=>{const b=document.createElement('button');b.className='menuitem'+(cls?' '+cls:'');
     b.innerHTML=`<span class="emo">${emo}</span> ${label}`;b.onclick=()=>{m.classList.remove('show');fn()};m.append(b)};
-  item('📌',n.pinned?'고정 해제':'상단 고정',()=>{n.pinned=!n.pinned;n.updatedAt=Date.now();n.dirty=true;schedSave();toast(n.pinned?'고정했습니다':'고정을 해제했습니다')});
-  item('⏰','알림 설정',()=>openRemind(n.id));
-  item('📤','공유',()=>shareNote(n));
-  item('📑','전체 텍스트 선택',()=>{                                  // (요청1) 입력한 텍스트만 선택
+  item('📌',n.pinned?L('고정 해제','Unpin'):L('상단 고정','Pin to top'),()=>{n.pinned=!n.pinned;n.updatedAt=Date.now();n.dirty=true;schedSave();toast(n.pinned?L('고정했습니다','Pinned to top'):L('고정을 해제했습니다','Unpinned'))});
+  item('⏰',L('알림 설정','Reminder'),()=>openRemind(n.id));
+  item('📤',L('공유','Share'),()=>shareNote(n));
+  item('📑',L('전체 텍스트 선택','Select all text'),()=>{          // (요청1) 입력한 텍스트만 선택
     if(n.type==='check'){const f=$('#edItems .itxt');if(f){f.focus();f.select()}return;}
     selectBodyTextOnly();
   });
-  item('📁','폴더로 이동',()=>moveNoteFolder(n));   /* (요청3) 보관 노트도 폴더 이동 가능 */
-  item(n.type==='check'?'📝':'☑️', n.type==='check'?'메모로 전환':'체크리스트로 전환',()=>switchType(n.type==='check'?'note':'check'));
-  if(ui.vault)item('📤','일반 노트로 이동',()=>moveFromVault(n));
-  else item('📦','보관 노트로 이동',()=>moveToVault(n));
-  item('🗑️','삭제',()=>deleteFromEditor(),'danger');
+  item('📁',L('폴더로 이동','Move to folder'),()=>moveNoteFolder(n));   /* (요청3) 보관 노트도 폴더 이동 가능 */
+  item(n.type==='check'?'📝':'☑️', n.type==='check'?L('메모로 전환','To note'):L('체크리스트로 전환','To checklist'),()=>switchType(n.type==='check'?'note':'check'));
+  if(ui.vault)item('📤',L('일반 노트로 이동','Move to regular notes'),()=>moveFromVault(n));
+  else item('📦',L('보관 노트로 이동','Move to Vault'),()=>moveToVault(n));
+  item('🗑️',L('삭제','Delete'),()=>deleteFromEditor(),'danger');
   /* (요청1) '글자 크기(이 노트만)'는 폐지 — 크기는 설정(10~25pt)에서만 변경, 서식은 Type(T) 버튼에서 */
   /* v5.0 노트별 본문 굵기 — 가벼움·보통·굵게·매우굵게 (기본값 표시) */
-  const fwh=document.createElement('div');fwh.className='menuhead';fwh.textContent='✒ 글자 굵기 (이 노트만)';m.append(fwh);
+  const fwh=document.createElement('div');fwh.className='menuhead';fwh.textContent='✒ '+L('글자 굵기 (이 노트만)','Font weight (this note)');m.append(fwh);
   const fwrow=document.createElement('div');fwrow.className='fontpick';
   const curFw=(n.fontWeight||'__default__');
-  const wpicks=[['__default__','기본'],['l','가벼움'],['n','보통'],['b','굵게'],['x','매우굵게']];
+  const wpicks=[['__default__',L('기본','Default')],['l',L('가벼움','Light')],['n',L('보통','Normal')],['b',L('굵게','Bold')],['x',L('매우굵게','Black')]];
   wpicks.forEach(([v,lab])=>{
     const b=document.createElement('button');b.className='fpbtn'+(v===curFw?' on':'');b.textContent=lab;
     b.onclick=()=>{
@@ -1930,13 +1983,12 @@ function moveFromVault(n){
 async function shareNote(n){
   const text=(n.title?n.title+'\n\n':'')+(n.type==='check'?(n.items||[]).map(i=>(i.done?'☑ ':'☐ ')+i.text).join('\n'):plain(n.content));
   try{ if(navigator.share){await navigator.share({title:n.title||'SK 노트',text});return} }catch(e){return}
-  try{ await navigator.clipboard.writeText(text); toast('클립보드에 복사했습니다'); }catch(e){ toast('공유를 지원하지 않는 환경입니다'); }
+  try{ await navigator.clipboard.writeText(text); toast(L('클립보드에 복사했습니다','Copied to clipboard')); }catch(e){ toast(L('공유를 지원하지 않는 환경입니다','Sharing not supported here')); }
 }
 async function moveNoteFolder(n){
-  const opts=['(폴더 없음)',...FOLDERS().map(f=>f.name)];
+  const opts=[L('(폴더 없음)','(No folder)'),...FOLDERS().map(f=>f.name)];
   const list=opts.map((o,i)=>`${i}. ${o}`).join('\n');
-  const title=(ui.vault?tr('보관 노트','vault_title'):tr('일반 노트','note'));
-  const v=await dlg(tr(title+'에서 이동할 폴더 번호를 입력하세요:\n\n','dlg_folder_title')+'\n'+list,{input:true,okText:tr('이동','dlg_move')});
+  const v=await dlg(L(`이 노트를 이동할 폴더 번호를 입력하세요:\n\n${list}`,`Enter the folder number to move this note to:\n\n${list}`),{input:true,okText:L('이동','Move')});
   if(v===null||v===undefined||v==='')return;
   const idx=parseInt(v);
   if(idx===0)n.folder=''; else if(FOLDERS()[idx-1])n.folder=FOLDERS()[idx-1].id; else{toast(tr('잘못된 번호','dlg_wrong_num'));return}
@@ -1945,7 +1997,7 @@ async function moveNoteFolder(n){
   toast(tr('폴더를 이동했습니다','toast_folder_moved'));
 }
 async function moveToVault(n){
-  if(!await dlg('이 노트를 보관 노트로 옮길까요?\n(서버 동기화에서 제외되고 이 기기에만 저장됩니다)',{okText:'이동'}))return;
+  if(!await dlg(L('이 노트를 보관 노트로 옮길까요?\n(서버 동기화에서 제외되고 이 기기에만 저장됩니다)','Move this note to Vault?\n(Stored on this device only, not synced)'),{okText:L('이동','Move')}))return;
   VLT.notes.unshift({id:uid(),folder:'',color:n.color||0,type:n.type,title:n.title,content:n.content,items:n.items||[],
     createdAt:n.createdAt,updatedAt:Date.now(),deleted:false});   /* (요구1) 폴더는 일반/보관 별개 → 빈 값으로 이동 */
   VLT.persist();
@@ -1954,7 +2006,7 @@ async function moveToVault(n){
 }
 async function deleteFromEditor(){
   const n=cur();if(!n)return;
-  if(!await dlg('휴지통으로 이동할까요?',{okText:'삭제'}))return;
+  if(!await dlg(L('휴지통으로 이동할까요?','Move to trash?'),{okText:L('삭제','Delete')}))return;
   n.deleted=true;n.updatedAt=Date.now();n.dirty=true;ui.editingId=null;persistActive();
   ovCloseUi($('#edOverlay'));render();if(!ui.vault)syncSoon();
 }
@@ -1971,17 +2023,17 @@ function openRemind(id){
 $('#remindClose').onclick=()=>ovCloseUi($('#remindOverlay'));
 $('#remindSave').onclick=async()=>{
   const n=NOTES().find(x=>x.id===remindId);if(!n)return;
-  const v=$('#remindTime').value;if(!v){toast('시각을 선택하세요');return}
+  const v=$('#remindTime').value;if(!v){toast(L('시각을 선택하세요','Choose a time'));return}
   const ts=new Date(v).getTime();
-  if(ts<=Date.now()){toast('미래 시각을 선택하세요');return}
+  if(ts<=Date.now()){toast(L('미래 시각을 선택하세요','Choose a time in the future'));return}
   if('Notification' in window && Notification.permission==='default'){try{await Notification.requestPermission()}catch(e){}}
   n.remindAt=ts;n.updatedAt=Date.now();n.dirty=true;persistActive();scheduleReminders();
-  ovCloseUi($('#remindOverlay'));toast('알림을 설정했습니다: '+new Date(ts).toLocaleString('ko-KR'));if(!ui.vault)syncSoon();
+  ovCloseUi($('#remindOverlay'));toast(L('알림을 설정했습니다: ','Reminder set: ')+dts(ts));if(!ui.vault)syncSoon();
 };
 $('#remindClear').onclick=()=>{
   const n=NOTES().find(x=>x.id===remindId);if(!n)return;
   n.remindAt=0;n.updatedAt=Date.now();n.dirty=true;persistActive();scheduleReminders();
-  ovCloseUi($('#remindOverlay'));toast('알림을 해제했습니다');if(!ui.vault)syncSoon();
+  ovCloseUi($('#remindOverlay'));toast(L('알림을 해제했습니다','Reminder cleared'));if(!ui.vault)syncSoon();
 };
 
 /* 메모 ↔ 체크리스트 전환 */
@@ -2004,7 +2056,7 @@ function renderItems(n){
     const cb=document.createElement('input');cb.type='checkbox';cb.checked=!!it.done;
     cb.onchange=()=>{it.done=cb.checked;schedSave();renderItems(cur())};
     const tx=document.createElement('input');tx.type='text';tx.className='itxt'+(it.done?' done':'');tx.value=it.text||'';
-    tx.placeholder='항목 입력';
+    tx.placeholder=L('항목 입력','Type an item');
     tx.addEventListener('input',()=>{it.text=tx.value;schedSave()});
     tx.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addItemAt(idx+1)}});
     const up=document.createElement('button');up.className='mv';up.textContent='↑';
@@ -2029,17 +2081,17 @@ function openFolderMgr(){
   const title=$('#folderMgrTitle');
   if(title)title.textContent=ui.vault?tr('🔐 보관 노트 폴더','vault_folder_mgr'):tr('📁 폴더 관리','folder_mgr');
   const coll=FOLDERS();
-  if(!coll.length)list.innerHTML='<div class="hint">폴더가 없습니다. 아래에서 추가하세요.</div>';
+  if(!coll.length)list.innerHTML='<div class="hint">'+L('폴더가 없습니다. 아래에서 추가하세요.','No folders yet. Add one below.')+'</div>';
   coll.forEach(f=>{
     const row=document.createElement('div');row.className='setrow';
     const nm=document.createElement('span');nm.textContent=f.name;nm.style.fontWeight='600';
     const wrap=document.createElement('div');
-    const re=document.createElement('button');re.className='btn';re.textContent='이름 변경';re.style.marginRight='.3em';
-    re.onclick=async()=>{const v=await dlg('새 폴더 이름',{input:true,def:f.name,okText:'변경'});
+    const re=document.createElement('button');re.className='btn';re.textContent=L('이름 변경','Rename');re.style.marginRight='.3em';
+    re.onclick=async()=>{const v=await dlg(L('새 폴더 이름','New folder name'),{input:true,def:f.name,okText:L('변경','Rename')});
       if(v){f.name=v;f._synced=false;touch();openFolderMgr();render();if(!ui.vault)syncSoon();else VLT.persist()}};
-    const del=document.createElement('button');del.className='btn danger';del.textContent='삭제';
+    const del=document.createElement('button');del.className='btn danger';del.textContent=L('삭제','Delete');
     del.onclick=async()=>{
-      if(!await dlg(`'${f.name}' 폴더를 삭제할까요?\n노트는 '전체'로 이동합니다.`,{danger:true,okText:'삭제'}))return;
+      if(!await dlg(L(`'${f.name}' 폴더를 삭제할까요?\n노트는 '전체'로 이동합니다.`,`Delete folder '${f.name}'?\nIts notes move to 'All'.`),{danger:true,okText:L('삭제','Delete')}))return;
       NOTES().forEach(n=>{if(n.folder===f.id){n.folder='';n.dirty=true;n.updatedAt=Date.now()}});
       if(ui.vault){const i=VLT.folders.indexOf(f);if(i>=0)VLT.folders.splice(i,1);VLT.persist();}
       else{S.folders=S.folders.filter(x=>x!==f);SYNC.deleteFolder(f.id);}
@@ -2064,13 +2116,13 @@ $('#newFolderName').addEventListener('keydown',e=>{if(e.key==='Enter')$('#addFol
 function syncHint(m){
   m=m||'';const s=String(m).toLowerCase();
   if(s.includes('row-level security')||s.includes('policy')||s.includes('permission denied'))
-    return m+'\n→ RLS/정책 문제입니다. "설치_따라하기_왕초보"의 schema.sql을 SQL 에디터에서 실행했는지 확인하세요.';
+    return m+L('\n→ RLS/정책 문제입니다. setup guide의 schema.sql을 SQL 에디터에서 실행했는지 확인하세요.','\n→ This looks like an RLS/policy issue. Did you run schema.sql from the setup guide in the SQL editor?');
   if(s.includes('uuid'))
-    return m+'\n→ id 컬럼이 uuid로 만들어진 것 같습니다. notes 테이블을 삭제하고 schema.sql로 다시 만드세요.';
+    return m+L('\n→ id 컬럼이 uuid로 만들어진 것 같습니다. notes 테이블을 지우고 schema.sql로 다시 만드세요.','\n→ The id column seems to be uuid. Drop the notes table and recreate it with schema.sql.');
   if(s.includes('does not exist')||s.includes('relation')||s.includes('table'))
-    return m+'\n→ 테이블이 없습니다. schema.sql을 SQL 에디터에서 실행하세요.';
+    return m+L('\n→ 테이블이 없습니다. schema.sql을 SQL 에디터에서 실행하세요.','\n→ Table not found. Run schema.sql in the SQL editor.');
   if(s.includes('fetch')||s.includes('network')||s.includes('failed to'))
-    return m+'\n→ 네트워크 연결/URL을 확인하세요. 방금 저장한 URL과 키가 맞는지도 확인하세요.';
+    return m+L('\n→ 네트워크 연결/URL을 확인하세요. 저장한 URL과 키가 맞는지 확인하세요.','\n→ Check your network and URL. Also confirm the saved URL and key are correct.');
   return m;
 }
 const SYNC={
@@ -2100,7 +2152,7 @@ const SYNC={
     }else{
       this.uid=null;
       if(this.channel){try{this.channel.unsubscribe()}catch(e){} this.channel=null}
-      setStatus('','미로그인');
+      setStatus('',L('미로그인','Not signed in'));
     }
     updateAccountUI();
   },
@@ -2129,7 +2181,7 @@ const SYNC={
       }
       S.settings.lastSync=Date.now();save();
       setStatus('ok');
-    }catch(e){ setStatus('err','동기화 실패: '+syncHint(e.message||e)) }
+    }catch(e){ setStatus('err',L('동기화 실패: ','Sync failed: ')+syncHint(e.message||e)) }
     this.busy=false;
   },
   async pullAll(){
@@ -2159,7 +2211,7 @@ const SYNC={
       S.settings.lastSync=Date.now();save();scheduleReminders();
       if(!$('#edOverlay').classList.contains('show'))render();
       setStatus('ok');
-    }catch(e){ setStatus('err','불러오기 실패: '+syncHint(e.message||e)) }
+    }catch(e){ setStatus('err',L('불러오기 실패: ','Load failed: ')+syncHint(e.message||e)) }
     this.busy=false;
   },
   subscribe(){
@@ -2187,12 +2239,12 @@ const SYNC={
   hardDelete(id){ if(this.client&&this.session) this.client.from('notes').delete().eq('id',id).then(()=>{},()=>{}) },
   deleteFolder(id){ if(this.client&&this.session) this.client.from('folders').delete().eq('id',id).then(()=>{},()=>{}) },
   async test(){
-    if(!this.libOk())return{ok:false,msg:'라이브러리 로드 실패(오프라인?)'};
-    if(!this.cfg().url||!this.cfg().key)return{ok:false,msg:'URL과 공개 키를 먼저 저장하세요'};
-    const c=this.makeClient();if(!c)return{ok:false,msg:'클라이언트 생성 실패 (URL 확인)'};
+    if(!this.libOk())return{ok:false,msg:L('라이브러리 로드 실패(오프라인?)','Sync library not loaded (offline?)')};
+    if(!this.cfg().url||!this.cfg().key)return{ok:false,msg:L('URL과 공개 키를 먼저 저장하세요','Save the project URL and key first')};
+    const c=this.makeClient();if(!c)return{ok:false,msg:L('클라이언트 생성 실패 (URL 확인)','Could not create client (check URL)')};
     const {error}=await c.from('notes').select('id',{head:true,count:'exact'});
     if(error)return{ok:false,msg:error.message};
-    return{ok:true,msg:'연결 성공 ✅ (테이블 OK)'};
+    return{ok:true,msg:L('연결 성공 ✅ (테이블 OK)','Connection OK ✅ (table OK)')};
   }
 };
 let syncTimer=null;
@@ -2201,11 +2253,12 @@ function syncSoon(){clearTimeout(syncTimer);syncTimer=setTimeout(()=>SYNC.pushDi
 async function syncNow(){ if(!SYNC.session)return; await SYNC.pushDirty(); await SYNC.pullAll(); }
 function setStatus(st,txt){
   const d=$('#syncDot');d.className='syncdot '+(st||'');
-  const map={ok:'동기화됨',syncing:'동기화 중...',err:'오류','':'미설정'};
+  d.title=L('동기화 상태','Sync status');
+  const map={ok:L('동기화됨','Synced'),syncing:L('동기화 중...','Syncing…'),err:L('오류','Error'),'':L('미설정','Not set')};
   const label=txt||(st in map?map[st]:'');
   const a=$('#acSyncState'),b=$('#stSyncState');
   if(a)a.textContent=label;
-  if(b)b.textContent=label||'미설정';
+  if(b)b.textContent=label||L('미설정','Not set');
   const ba=$('#btnAccount'); if(ba)ba.classList.toggle('on',st==='ok');
 }
 /* (요청7) 주기 동기화: 올리기+내려받기 둘 다 (기존엔 올리기만 해서 상대 노트를 못 받아왔음) */
@@ -2222,9 +2275,9 @@ function updateAccountUI(){
   const logged=!!(SYNC.session&&SYNC.session.user);
   $('#acFormSec').classList.toggle('hidden',logged);
   $('#acLoggedSec').classList.toggle('hidden',!logged);
-  if(logged)$('#acEmailView').textContent=SYNC.session.user.email||'(이메일 ?)';
+  if(logged)$('#acEmailView').textContent=SYNC.session.user.email||L('(이메일 ?)','(email)');
   const ls=$('#acLastSync');
-  if(ls)ls.textContent=S.settings.lastSync?new Date(S.settings.lastSync).toLocaleString('ko-KR'):'아직 없음';
+  if(ls)ls.textContent=S.settings.lastSync?dts(S.settings.lastSync):L('아직 없음','None yet');
 }
 function openAccount(){
   $('#acUrl').value=S.settings.sbUrl||'';
@@ -2240,90 +2293,90 @@ $('#acSave').onclick=()=>{
   S.settings.sbUrl=$('#acUrl').value.trim();
   S.settings.sbKey=$('#acKey').value.trim();
   save();SYNC.reset();
-  if(SYNC.ready()){SYNC.makeClient();toast('저장했습니다. 이제 로그인하세요')}
-  else if(!SYNC.libOk())toast('저장했지만 오프라인 상태입니다(라이브러리 로드 안 됨)');
-  else toast('URL과 키를 확인하세요');
+  if(SYNC.ready()){SYNC.makeClient();toast(L('저장했습니다. 이제 로그인하세요','Saved. Now sign in'))}
+  else if(!SYNC.libOk())toast(L('저장했지만 오프라인 상태입니다(라이브러리 로드 안 됨)','Saved, but offline (sync library not loaded)'));
+  else toast(L('URL과 키를 확인하세요','Check the URL and key'));
 };
 $('#acTest').onclick=async()=>{
   S.settings.sbUrl=$('#acUrl').value.trim();S.settings.sbKey=$('#acKey').value.trim();save();
-  SYNC.reset();$('#acTestStat').textContent='테스트 중...';
+  SYNC.reset();$('#acTestStat').textContent=L('테스트 중...','Testing…');
   const r=await SYNC.test();
   $('#acTestStat').textContent=r.msg;
 };
 $('#acLogin').onclick=async()=>{
   const c=SYNC.makeClient();
-  if(!c){$('#acAuthStat').textContent='먼저 서버 연결을 저장하세요';return}
+  if(!c){$('#acAuthStat').textContent=L('먼저 서버 연결을 저장하세요','Save a server URL and key first');return}
   const email=$('#acEmail').value.trim(),pass=$('#acPass').value;
-  if(!email||pass.length<6){$('#acAuthStat').textContent='이메일과 6자 이상 비밀번호를 입력하세요';return}
-  $('#acAuthStat').textContent='로그인 중...';
+  if(!email||pass.length<6){$('#acAuthStat').textContent=L('이메일과 6자 이상 비밀번호를 입력하세요','Enter an email and a password (6+ characters)');return}
+  $('#acAuthStat').textContent=L('로그인 중...','Signing in…');
   const {error}=await c.auth.signInWithPassword({email,password:pass});
   if(error){
-    // (요구1) PC 로그인 실패 원인별 한국어 안내
+    // 로그인 실패 원인별 안내 (한국어/영어)
     const m=(error.message||'').toLowerCase();
     let msg;
     if(m.includes('email not confirmed'))
-      msg='❌ 이메일 인증이 아직 안 됐습니다. 메일함(스팸함 포함)에서 확인 링크를 누른 뒤 다시 로그인하세요.';
+      msg=L('❌ 이메일 인증이 아직 안 됐습니다. 메일함(스팸함 포함)에서 확인 링크를 누른 뒤 다시 로그인하세요.','❌ Email not confirmed yet. Tap the link in your inbox (incl. spam), then sign in again.');
     else if(m.includes('invalid login'))
-      msg='❌ 이메일 또는 비밀번호가 틀립니다.\\n· 대문자 잠금(Caps Lock)이 켜져 있는지 확인\\n· 앞뒤 공백/자동완성 오입력 확인\\n· 기억이 안 나면 아래 "비밀번호 재설정 메일"을 누르세요.';
-    else msg='실패: '+error.message;
+      msg=L('❌ 이메일 또는 비밀번호가 틀립니다.\n· 대문자 잠금(Caps Lock)이 켜져 있는지 확인\n· 앞뒤 공백/자동완성 오입력 확인\n· 기억이 안 나면 아래 "비밀번호 재설정 메일"을 누르세요.','❌ Wrong email or password.\n· Check that Caps Lock is off.\n· Check for extra spaces or autofill errors.\n· Forgot it? Tap "Send reset email" below.');
+    else msg=L('실패: ','Error: ')+error.message;
     $('#acAuthStat').style.whiteSpace='pre-line';
     $('#acAuthStat').textContent=msg;
   }
-  else{$('#acAuthStat').textContent='로그인됨 ✅ 노트를 가져옵니다...';toast('로그인 성공');setTimeout(()=>{ovCloseUi($('#acOverlay'))},800)}
+  else{$('#acAuthStat').textContent=L('로그인됨 ✅ 노트를 가져옵니다...','Signed in ✅ Loading your notes…');toast(L('로그인 성공','Signed in'));setTimeout(()=>{ovCloseUi($('#acOverlay'))},800)}
 };
 $('#acReset').onclick=async()=>{
   const c=SYNC.makeClient();
-  if(!c){$('#acAuthStat').textContent='먼저 서버 연결을 저장하세요';return}
+  if(!c){$('#acAuthStat').textContent=L('먼저 서버 연결을 저장하세요','Save a server URL and key first');return}
   const email=$('#acEmail').value.trim();
-  if(!email){$('#acAuthStat').textContent='재설정 메일을 받을 이메일을 입력하세요';return}
-  $('#acAuthStat').textContent='재설정 메일 보내는 중...';
-  // (요청5) 재설정 링크는 반드시 '지금 보고 있는 이 사이트 주소'로 돌아오게 함
+  if(!email){$('#acAuthStat').textContent=L('재설정 메일을 받을 이메일을 입력하세요','Enter the email for the reset link');return}
+  $('#acAuthStat').textContent=L('재설정 메일 보내는 중...','Sending reset email…');
+  // 재설정 링크는 반드시 '지금 보고 있는 이 사이트 주소'로 돌아오게 함
   const {error}=await c.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});
-  if(error)$('#acAuthStat').textContent='실패: '+error.message;
-  else $('#acAuthStat').textContent='✅ 재설정 메일을 보냈습니다. 메일함(스팸함 포함)을 확인하세요.\n메일의 링크는 반드시 이 앱을 연 그 기기/브라우저에서 누르세요.';
+  if(error)$('#acAuthStat').textContent=L('실패: ','Error: ')+error.message;
+  else $('#acAuthStat').textContent=L('✅ 재설정 메일을 보냈습니다. 메일함(스팸함 포함)을 확인하세요.\n메일의 링크는 반드시 이 앱을 연 그 기기/브라우저에서 누르세요.','✅ Reset email sent. Check your inbox (incl. spam).\nOpen the link on the same device/browser where you run this app.');
 };
 
 /* (요청5) 재설정 메일 링크로 돌아왔을 때: 새 비밀번호 입력받아 변경 */
 async function doPasswordRecovery(){
   const c=SYNC.makeClient(); if(!c)return;
   ovOpen($('#acOverlay'));
-  const a=await dlg('비밀번호 재설정\n\n새 비밀번호를 입력하세요 (6자 이상):',{input:true,password:true,okText:'변경'});
+  const a=await dlg(L('비밀번호 재설정\n\n새 비밀번호를 입력하세요 (6자 이상):','Password reset\n\nEnter a new password (6+ characters):'),{input:true,password:true,okText:L('변경','Change')});
   if(a===null||a===undefined)return;
-  if(a.length<6){toast('6자 이상 입력하세요');return doPasswordRecovery();}
-  const b=await dlg('한 번 더 입력하세요:',{input:true,password:true,okText:'확인'});
+  if(a.length<6){toast(L('6자 이상 입력하세요','Enter at least 6 characters'));return doPasswordRecovery();}
+  const b=await dlg(L('한 번 더 입력하세요:','Enter it again:'),{input:true,password:true,okText:L('확인','OK')});
   if(b===null||b===undefined)return;
-  if(a!==b){toast('두 값이 다릅니다. 다시 시도하세요');return doPasswordRecovery();}
+  if(a!==b){toast(L('두 값이 다릅니다. 다시 시도하세요','The two values differ. Try again.'));return doPasswordRecovery();}
   const {error}=await c.auth.updateUser({password:a});
-  if(error){toast('변경 실패: '+error.message);}
-  else{toast('✅ 비밀번호가 변경되었습니다. 이제 로그인됩니다.');}
+  if(error){toast(L('변경 실패: ','Change failed: ')+error.message);}
+  else{toast(L('✅ 비밀번호가 변경되었습니다. 이제 로그인됩니다.','✅ Password changed. You are now signed in.'));}
 }
 $('#acSignup').onclick=async()=>{
   const c=SYNC.makeClient();
-  if(!c){$('#acAuthStat').textContent='먼저 서버 연결을 저장하세요';return}
+  if(!c){$('#acAuthStat').textContent=L('먼저 서버 연결을 저장하세요','Save a server URL and key first');return}
   const email=$('#acEmail').value.trim(),pass=$('#acPass').value;
-  if(!email||pass.length<6){$('#acAuthStat').textContent='이메일과 6자 이상 비밀번호를 입력하세요';return}
-  $('#acAuthStat').textContent='가입 중...';
+  if(!email||pass.length<6){$('#acAuthStat').textContent=L('이메일과 6자 이상 비밀번호를 입력하세요','Enter an email and a password (6+ characters)');return}
+  $('#acAuthStat').textContent=L('가입 중...','Signing up…');
   const {data,error}=await c.auth.signUp({email,password:pass});
-  if(error){$('#acAuthStat').textContent='실패: '+error.message;return}
-  if(data&&data.session){$('#acAuthStat').textContent='가입 & 로그인 완료 ✅';toast('환영합니다! 노트를 동기화합니다')}
-  else $('#acAuthStat').textContent='가입 완료! 이메일 함에서 확인 링크를 누른 뒤 로그인하세요';
+  if(error){$('#acAuthStat').textContent=L('실패: ','Error: ')+error.message;return}
+  if(data&&data.session){$('#acAuthStat').textContent=L('가입 & 로그인 완료 ✅','Signed up & signed in ✅');toast(L('환영합니다! 노트를 동기화합니다','Welcome! Syncing your notes'))}
+  else $('#acAuthStat').textContent=L('가입 완료! 이메일 함에서 확인 링크를 누른 뒤 로그인하세요','Sign-up complete! Tap the confirmation link in your email, then sign in.');
 };
 $('#acLogout').onclick=async()=>{
   if(SYNC.client)await SYNC.client.auth.signOut();
-  SYNC.reset();updateAccountUI();setStatus('','미로그인');toast('로그아웃했습니다');
+  SYNC.reset();updateAccountUI();setStatus('',L('미로그인','Not signed in'));toast(L('로그아웃했습니다','Signed out'));
 };
-$('#acSyncNow').onclick=async()=>{ await SYNC.pushDirty(); await SYNC.pullAll(); updateAccountUI(); toast('동기화 완료'); };
+$('#acSyncNow').onclick=async()=>{ await SYNC.pushDirty(); await SYNC.pullAll(); updateAccountUI(); toast(L('동기화 완료','Sync complete')); };
 $('#acDiag').onclick=async()=>{
   const st=$('#acAuthStat');st.style.whiteSpace='pre-line';
-  if(!SYNC.session){st.textContent='❌ 로그인되어 있지 않습니다.';return}
-  st.textContent='점검 중...';
+  if(!SYNC.session){st.textContent=L('❌ 로그인되어 있지 않습니다.','❌ Not signed in.');return}
+  st.textContent=L('점검 중...','Checking…');
   const c=SYNC.client;
   try{
     const email=SYNC.session.user.email;
     const {count,error}=await c.from('notes').select('id',{head:true,count:'exact'});
-    if(error){st.textContent='❌ 테이블 오류: '+syncHint(error.message)+'\n(설치 안내서의 SQL을 실행했는지 확인하세요)';return}
+    if(error){st.textContent=L('❌ 테이블 오류: ','❌ Table error: ')+syncHint(error.message)+L('\n(설치 안내서의 SQL을 실행했는지 확인하세요)','\n(Did you run the SQL from the setup guide?)');return}
     const mine=S.notes.filter(n=>!n.deleted).length;
-    st.textContent=
+    st.textContent=L(
 `✅ 로그인: ${email}
 서버 노트 수: ${count}개
 이 기기 노트 수: ${mine}개
@@ -2331,13 +2384,20 @@ $('#acDiag').onclick=async()=>{
 → 다른 기기에서도 "${email}" 로 로그인했는지 확인하세요. 같은 이메일이면 자동으로 합쳐집니다.
 
 🗂️ 서버에 노트가 0개인데 나는 노트가 있는 경우:
-   이 기기 노트를 "한 번 더보기(동기화)" 버튼으로 올려보세요.
-   (바로 아래의 "지금 동기화" 버튼을 누르세요.)
+   이 기기 노트를 "지금 동기화" 버튼으로 올려보세요.
 
-⚠️ 여전히 안 되면 색상·제목·id 형식이 문제일 수 있습니다.
-   Supabase의 notes 테이블 id 컬럼이 "text(문자열)"인지 확인하고,
-   아니면 테이블을 삭제한 뒤 schema.sql을 실행하세요.`;
-  }catch(e){ st.textContent='❌ 점검 실패: '+(e.message||e); }
+⚠️ 여전히 안 되면 notes 테이블 id 컬럼이 text인지 확인하고, 아니면 테이블을 지우고 schema.sql을 실행하세요.`,
+`✅ Signed in: ${email}
+Server notes: ${count}
+On this device: ${mine}
+
+→ Sign in with the same email "${email}" on your other device to merge them.
+
+🗂️ Server shows 0 but you have notes?
+   Tap "Sync now" to upload this device's notes.
+
+⚠️ Still failing? Make sure the notes table's id column is text; otherwise delete the table and run schema.sql.`);
+  }catch(e){ st.textContent=L('❌ 점검 실패: ','❌ Check failed: ')+(e.message||e); }
 };
 
 /* ═══════════════ 설정 UI (요구13: 저장 버튼으로 확실 저장) ═══════════════ */
@@ -2350,6 +2410,7 @@ function openSettings(){
   $('#stRule').value=sc.rule||'none';
   $('#stVaultOpen').value=String(VLT.settings.unlockMinutes||0);
   $('#stPinBtn').textContent=S.settings.pinHash?tr('변경 / 초기화','pin_change_btn'):tr('설정','pin_set_btn2');
+  const langSel=$('#stLang'); if(langSel)langSel.value=S.settings.lang||'auto';   /* (v6) 언어(자동/영어/한국어) */
   buildDefColor();
   ovOpen($('#setOverlay'));
 }
@@ -2381,6 +2442,12 @@ function applySettingsFromUI(){
 }
 $('#btnSettings').onclick=openSettings;
 $('#stAccountBtn').onclick=()=>{ovCloseUi($('#setOverlay'));openAccount()};
+/* (v6) 언어 변경 → 즉시 저장 후 새로고침해 영어/한국어를 재적용 */
+$('#stLang').addEventListener('change',()=>{
+  S.settings.lang=$('#stLang').value; save();
+  ovCloseUi($('#setOverlay'));
+  location.reload();
+});
 /* 미리보기: 선택만 해도 즉시 반영(피드백) */
 ['#stTheme','#stView','#stSort','#stFontWeight','#stBox','#stRule','#stVaultOpen'].forEach(sel=>$(sel).addEventListener('change',applySettingsFromUI));   /* (v5.3) stFont는 select→스테퍼로 대체 */
 /* (요청7) 글자크기 스테퍼: − / ＋ 1pt씩, 10~25, 미리보기 샘플 동시 갱신 */
@@ -2394,7 +2461,7 @@ function fontStep(d){ const sc=curSettings(); sc.font=String(ptClamp((parseInt($
   applyPrefs();render();updateFontStepUI(); }
 $('#stFontMinus').onclick=()=>fontStep(-1);
 $('#stFontPlus').onclick=()=>fontStep(+1);
-$('#setSave').onclick=()=>{ applySettingsFromUI(); toast('설정을 저장했습니다'); ovCloseUi($('#setOverlay')); };
+$('#setSave').onclick=()=>{ applySettingsFromUI(); toast(tr('설정을 저장했습니다','toast_settings_saved')); ovCloseUi($('#setOverlay')); };
 $('#setClose').onclick=()=>{ applySettingsFromUI(); ovCloseUi($('#setOverlay')); };
 
 /* 보관 노트 비밀번호 */
@@ -2402,29 +2469,30 @@ $('#stPinBtn').onclick=()=>{$('#pinNew').value='';$('#pinNew2').value='';ovOpen(
 $('#pinClose').onclick=()=>ovCloseUi($('#pinOverlay'));
 $('#pinSave').onclick=async()=>{
   const a=$('#pinNew').value,b=$('#pinNew2').value;
-  if(a.length<4){toast('4자 이상 입력하세요');return}
-  if(a!==b){toast('두 값이 다릅니다');return}
+  if(a.length<4){toast(L('4자 이상 입력하세요','Enter at least 4 characters'));return}
+  if(a!==b){toast(L('두 값이 다릅니다','The two values differ'))}
   S.settings.pinHash=await sha256(a);save();ovCloseUi($('#pinOverlay'));
-  toast('보관 노트 비밀번호가 설정되었습니다');openSettings();
+  toast(L('보관 노트 비밀번호가 설정되었습니다','Vault password set'));openSettings();
 };
 $('#pinRemove').onclick=async()=>{
-  if(!S.settings.pinHash){toast('설정된 비밀번호가 없습니다');return}
-  const v=await dlg('현재 비밀번호를 입력하세요 (해제 확인용)',{input:true,password:true,okText:'확인'});
+  if(!S.settings.pinHash){toast(L('설정된 비밀번호가 없습니다','No password is set yet'));return}
+  const v=await dlg(L('현재 비밀번호를 입력하세요 (해제 확인용)','Enter the current password to unlock'),{input:true,password:true,okText:L('확인','OK')});
   if(v===null||v===undefined)return;
-  if(await sha256(v)!==S.settings.pinHash){toast('비밀번호가 틀렸습니다');return}
-  S.settings.pinHash=null;save();ovCloseUi($('#pinOverlay'));openSettings();toast('비밀번호가 제거되었습니다');
+  if(await sha256(v)!==S.settings.pinHash){toast(L('비밀번호가 틀렸습니다','Wrong password'));return}
+  S.settings.pinHash=null;save();ovCloseUi($('#pinOverlay'));openSettings();toast(L('비밀번호가 제거되었습니다','Password removed'));
 };
 
 $('#stEmptyTrash').onclick=async()=>{
   const cnt=S.notes.filter(n=>n.deleted).length;
-  if(!cnt){toast('휴지통이 이미 비었습니다');return}
-  if(!await dlg(`휴지통의 노트 ${cnt}개를 영구 삭제할까요?`,{danger:true,okText:'비우기'}))return;
+  if(!cnt){toast(L('휴지통이 이미 비었습니다','Trash is already empty'));return}
+  if(!await dlg(L(`휴지통의 노트 ${cnt}개를 영구 삭제할까요?`,`Permanently delete ${cnt} note(s) from trash?`),{danger:true,okText:L('비우기','Empty')}))return;
   const ids=S.notes.filter(n=>n.deleted).map(n=>n.id);
   S.notes=S.notes.filter(n=>!n.deleted);
   if(SYNC.client&&SYNC.session)SYNC.client.from('notes').delete().in('id',ids).then(()=>{},()=>{});
-  touch();render();toast('휴지통을 비웠습니다');
+  touch();render();toast(L('휴지통을 비웠습니다','Trash emptied'));
 };
 /* ───────── (요구) 백업/복구: 이 기기 백업 목록 + 외부(Google Drive 등) Export/Import ───────── */
+let bkDetail=-1; const bkSel=new Set();
 function buildBackup(){
   return {app:'sk-note',v:4,exportedAt:new Date().toISOString(),
     notes:S.notes,
@@ -2439,26 +2507,60 @@ function localBackups(){ try{return JSON.parse(STORE.getItem('sk.backups')||'[]'
 function saveLocalBackup(data){
   const list=localBackups();
   list.unshift({at:Date.now(),name:backupName(),data});
-  STORE.setItem('sk.backups',JSON.stringify(list.slice(0,12)));
+  const maxBk=12;
+  try{ STORE.setItem('sk.backups',JSON.stringify(list.slice(0,maxBk))); }
+  catch(e){ /* 용량 초과(이미지 등) 시 오래된 것부터 줄이며 재시도 — 새 백업은 반드시 남김 */
+    let l=list;
+    while(l.length>1){ l=l.slice(0,l.length-1); try{ STORE.setItem('sk.backups',JSON.stringify(l)); return; }catch(e2){} }
+    try{ STORE.setItem('sk.backups',JSON.stringify([list[0]])); }catch(e3){}
+  }
 }
 /* 백업 데이터를 실제 노트에 반영(병합) */
-function applyBackup(d){
+/* 백업 데이터를 실제 노트에 반영(병합). onlyIds를 주면 그 노트만 반영(부분 복구). */
+function applyBackup(d, onlyIds){
   if(!d||!d.notes)throw 0;
   let added=0,updated=0,vadded=0;
-  d.notes.forEach(sn=>{if(sn.color>4)sn.color=sn.color%5;
+  const want=id=>!onlyIds||onlyIds.includes(id);
+  d.notes.forEach(sn=>{
+    if(!want(sn.id))return;
+    if(sn.color>4)sn.color=sn.color%5;
     const local=S.notes.find(n=>n.id===sn.id);
     if(!local){S.notes.push(Object.assign({},sn,{dirty:true}));added++}
-    else if((sn.updatedAt||0)>local.updatedAt){Object.assign(local,sn,{dirty:true});updated++}});
-  (d.folders||[]).forEach(sf=>{const lf=S.folders.find(f=>f.id===sf.id);
+    else if((sn.updatedAt||0)>local.updatedAt){Object.assign(local,sn,{dirty:true});updated++}
+  });
+  // 폴더는 '전체 복구'일 때만 동기화 (부분 복구 때는 건드리지 않음)
+  if(!onlyIds)(d.folders||[]).forEach(sf=>{const lf=S.folders.find(f=>f.id===sf.id);
     if(lf)lf.name=sf.name; else S.folders.push({id:sf.id,name:sf.name,createdAt:sf.createdAt,_synced:false})});
   if(Array.isArray(d.vaultNotes)){
-    (d.vaultNotes||[]).forEach(vn=>{if(!VLT.notes.find(n=>n.id===vn.id)){VLT.notes.push(vn);vadded++}});
-    (d.vaultFolders||[]).forEach(vf=>{if(!VLT.folders.find(f=>f.id===vf.id))VLT.folders.push(vf)});
+    (d.vaultNotes||[]).forEach(vn=>{
+      if(!want(vn.id))return;
+      const local=VLT.notes.find(n=>n.id===vn.id);
+      if(!local){VLT.notes.push(vn);vadded++}
+      else if((vn.updatedAt||0)>local.updatedAt){Object.assign(local,vn);vadded++}
+    });
+    if(!onlyIds)(d.vaultFolders||[]).forEach(vf=>{if(!VLT.folders.find(f=>f.id===vf.id))VLT.folders.push(vf)});
     VLT.persist();
   }
   save();touch();render();syncSoon();
   return {added,updated,vadded};
 }
+/* ── v6 자동 백업(스냅샷): 저장/닫기/백그라운드 전환 시 이전 상태를 이 기기에 자동 보관 ── */
+let autoSnapTimer=null;
+function snapSig(){ try{return (S.notes.length+':'+VLT.notes.length+':'+[...S.notes,...VLT.notes].reduce((a,n)=>a+(n.updatedAt||0),0))}catch(e){return 'x'} }
+function autoSnapshot(force){
+  try{
+    const sig=snapSig();
+    const last=STORE.getItem('sk.snapSig');
+    const t=Date.now(), lastT=parseInt(STORE.getItem('sk.snapLast')||'0',10)||0;
+    if(!force && sig===last)return;                 // 내용이 안 바뀌었으면 생략
+    if(t-lastT < 5*60*1000 && !force)return;        // 최소 5분 간격 (쓰기 폭주 방지)
+    saveLocalBackup(buildBackup());
+    STORE.setItem('sk.snapSig',sig); STORE.setItem('sk.snapLast',String(t));
+  }catch(e){}
+}
+function scheduleAutoSnap(){ clearTimeout(autoSnapTimer); autoSnapTimer=setTimeout(()=>autoSnapshot(false),2500); }
+/* 노트가 실제로 저장될 때마다 자동 백업 스케줄 (save/VLT.persist 끝에서 호출) */
+
 /* 💾 백업하기: 이 기기 목록에 저장 + 파일로도 받기 */
 $('#stExport').onclick=()=>{
   const payload=buildBackup();
@@ -2475,31 +2577,29 @@ function downloadBackup(payload){
 $('#stImport').onclick=()=>{openBkList()};
 $('#bkClose').onclick=()=>ovCloseUi($('#bkOverlay'));
 $('#bkClear').onclick=async()=>{
-  if(!await dlg(tr('이 기기에 저장된 백업 목록을 비울까요?\n(노트 자체는 지워지지 않습니다)','bk_clear_q'),{okText:'비우기'}))return;
+  if(!await dlg(tr('이 기기에 저장된 백업 목록을 비울까요?\n(노트 자체는 지워지지 않습니다)','bk_clear_q'),{okText:L('비우기','Empty')}))return;
   STORE.removeItem('sk.backups');openBkList();toast(tr('백업 목록을 비웠습니다','bk_cleared'));
 };
 $('#bkImportFile').onclick=()=>$('#importFile').click();
 function fmtTime(ts){const d=new Date(ts);const p=x=>String(x).padStart(2,'0');
   return `${d.getFullYear()}.${p(d.getMonth()+1)}.${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;}
 function openBkList(){
+  bkDetail=-1; bkSel.clear();
   const list=$('#bkList');list.innerHTML='';
   const bks=localBackups();
   if(!bks.length){
-    list.innerHTML=`<div class="hint">${tr('저장된 백업이 없습니다. "백업하기"를 먼저 눌러 주세요.','bk_empty')}</div>`;
+    const e=document.createElement('div');e.className='hint';
+    e.innerHTML=L('저장된 백업이 없습니다. "백업하기"를 먼저 눌러 주세요. (자동으로도 저장됩니다)','No saved backups yet. Tap "Backup" or edit notes — snapshots are also saved automatically.');
+    list.append(e);
   }
   bks.forEach((b,i)=>{
     const row=document.createElement('div');row.className='setrow';
     const nm=document.createElement('span');
     const nCnt=(b.data.notes||[]).length, vCnt=(b.data.vaultNotes||[]).length;
-    nm.innerHTML=`<b>${fmtTime(b.at)}</b><br><span class="stat">${tr('노트','note')} ${nCnt}${vCnt?` · 🔐 ${vCnt}`:''}</span>`;
-    const btn=document.createElement('button');btn.className='btn primary';btn.textContent=tr('복구','restore');
-    btn.onclick=async()=>{
-      if(!await dlg(tr(`${fmtTime(b.at)} 백업으로 복구할까요?\n(현재 노트에 덮어쓰지 않고 없는 내용을 채웁니다)`,'bk_restore_q'),{okText:'복구'}))return;
-      try{ const r=applyBackup(b.data);
-        ovCloseUi($('#bkOverlay'));
-        toast(IS_KO?`복구 완료: 추가 ${r.added}, 갱신 ${r.updated}, 보관 ${r.vadded}`:`Restored: added ${r.added}, updated ${r.updated}, vault ${r.vadded}`);
-      }catch(e){ toast(tr('올바른 백업이 아닙니다','bk_bad')); }
-    };
+    nm.innerHTML=`<b>${fmtTime(b.at)}</b><br><span class="stat">${L('노트','notes')} ${nCnt}${vCnt?` · 🔐 ${vCnt}`:''}</span>`;
+    const btn=document.createElement('button');btn.className='btn primary';
+    btn.textContent=L('보기 / 복구','View / Restore');
+    btn.onclick=()=>{ bkDetail=i; bkSel.clear(); renderBkDetail(); };
     const del=document.createElement('button');del.className='btn danger';del.textContent='✕';del.style.marginLeft='.3em';
     del.onclick=()=>{ const arr=localBackups();arr.splice(i,1);STORE.setItem('sk.backups',JSON.stringify(arr));openBkList()};
     const wrap=document.createElement('div');wrap.append(btn,del);
@@ -2507,6 +2607,64 @@ function openBkList(){
   });
   ovOpen($('#bkOverlay'));
 }
+function renderBkDetail(){
+  const list=$('#bkList');list.innerHTML='';
+  const arr=localBackups(); if(bkDetail<0||!arr[bkDetail]){openBkList();return;}
+  const b=arr[bkDetail], d=b.data;
+  const norm=(d.notes||[]).map(n=>({id:n.id,title:n.title||'',type:n.type,preview:n.type==='check'?(n.items||[]).slice(0,3).map(i=>i.text).join(' · '):plain(n.content).slice(0,90)}));
+  const vlt=(d.vaultNotes||[]).map(n=>({id:n.id,vault:true,title:n.title||'',type:n.type,preview:n.type==='check'?(n.items||[]).slice(0,3).map(i=>i.text).join(' · '):plain(n.content).slice(0,90)}));
+  const all=[...norm,...vlt];
+  /* 상단 도구줄 */
+  const top=document.createElement('div');top.className='btnrow';top.style.marginBottom='.3em';
+  const back=document.createElement('button');back.className='btn';back.textContent=L('← 목록','← List');
+  back.onclick=()=>openBkList();
+  const sall=document.createElement('button');sall.className='btn';sall.textContent=L('전체 선택','All');
+  sall.onclick=()=>{all.forEach(x=>bkSel.add(x.id));renderBkDetail();};
+  const clr=document.createElement('button');clr.className='btn';clr.textContent=L('해제','None');
+  clr.onclick=()=>{bkSel.clear();renderBkDetail();};
+  const ttl=document.createElement('span');ttl.style.flex='1';ttl.style.fontWeight='700';ttl.style.fontSize='.75em';
+  ttl.textContent=fmtTime(b.at)+' · '+L(`노트 ${all.length}`,'notes '+all.length);
+  top.append(back,ttl,sall,clr);list.append(top);
+  const hint=document.createElement('div');hint.className='hint';hint.style.marginBottom='.4em';
+  hint.innerHTML=L('복구할 노트를 체크한 뒤 아래 버튼을 누르세요. 체크 안 한 노트·기존 내용은 그대로 둡니다.','Check the notes to restore, then use the buttons below. Unchecked notes and current content are kept as-is.');
+  list.append(hint);
+  if(!all.length){const e=document.createElement('div');e.className='hint';e.innerHTML=L('이 백업에는 노트가 없습니다.','This backup has no notes.');list.append(e);}
+  all.forEach(x=>{
+    const row=document.createElement('div');row.className='setrow';row.style.alignItems='flex-start';
+    const cb=document.createElement('input');cb.type='checkbox';cb.style.marginTop='.2em';cb.checked=bkSel.has(x.id);
+    cb.onchange=()=>{ if(cb.checked)bkSel.add(x.id); else bkSel.delete(x.id); };
+    const txt=document.createElement('span');txt.style.flex='1';txt.style.minWidth='0';
+    const ttl2=(x.title||L('제목 없음','No title'));
+    txt.innerHTML=`<span style="font-weight:700">${x.vault?'🔐 ':''}${esc(ttl2)}</span>${x.preview?`<div class="stat">${esc(x.preview)}</div>`:''}`;
+    row.append(cb,txt);list.append(row);
+  });
+  const act=document.createElement('div');act.className='btnrow';act.style.marginTop='.6em';
+  const aAll=document.createElement('button');aAll.className='btn primary';
+  aAll.textContent=L('모두 복구','Restore all');
+  aAll.onclick=()=>doApply(d,null);
+  const aSel=document.createElement('button');aSel.className='btn';
+  aSel.textContent=L('선택한 것만 복구','Restore selected');
+  aSel.onclick=()=>{ if(!bkSel.size){toast(L('복구할 노트를 하나 이상 선택하세요','Select at least one note to restore'));return;} doApply(d,[...bkSel]); };
+  act.append(aAll,aSel);list.append(act);
+  const delRow=document.createElement('div');delRow.className='btnrow';
+  const rem=document.createElement('button');rem.className='btn danger';
+  rem.textContent=L('이 백업 삭제','Delete this backup');
+  rem.onclick=()=>{const arr=localBackups();arr.splice(bkDetail,1);STORE.setItem('sk.backups',JSON.stringify(arr));openBkList();};
+  delRow.append(rem);list.append(delRow);
+}
+async function doApply(d, ids){
+  const msg=ids
+    ? L('선택한 노트를 이 백업 내용으로 복구할까요?\n(기존 노트를 덮지 않고, 백업이 더 새로우면 갱신)','Restore the selected notes from this backup?\n(It won’t erase current notes; newer backup content is applied)')
+    : L('이 백업 전체로 복구할까요?\n(없는 노트가 추가되고, 백업이 더 새로우면 갱신됩니다)','Restore this whole backup?\n(Missing notes are added; newer backup content is applied)');
+  if(!await dlg(msg,{okText:L('복구','Restore')}))return;
+  try{
+    const r=applyBackup(d,ids);
+    ovCloseUi($('#bkOverlay'));
+    toast(L(`복구 완료: 추가 ${r.added} · 갱신 ${r.updated}${r.vadded?` · 보관 ${r.vadded}`:''}`,
+            `Restored: added ${r.added}, updated ${r.updated}${r.vadded?` · vault ${r.vadded}`:''}`));
+  }catch(e){ toast(L('올바른 백업이 아닙니다','Not a valid backup')); }
+}
+
 /* 📤 Export Notes: 외부 저장소(Google Drive 등) 위치를 직접 골라 저장.
    지원 환경(Chrome/Edge·Android 등)은 showSaveFilePicker로 원하는 폴더에 저장,
    지원 안 하면(사파리 등) 일반 다운로드로 폴백. */
@@ -2540,9 +2698,9 @@ $('#importFile').addEventListener('change',e=>{
   r.readAsText(f);e.target.value='';
 });
 $('#stWipe').onclick=async()=>{
-  if(!await dlg('정말 이 기기의 모든 노트·폴더를 삭제할까요?\n(일반·보관 노트 전부 삭제, 서버 데이터는 지워지지 않습니다)',{danger:true,okText:'삭제'}))return;
-  if(!await dlg('다시 한번 확인합니다. 삭제하시겠습니까?',{danger:true,okText:'삭제'}))return;
-  S.notes=[];S.folders=[];VLT.notes=[];VLT.folders=[];VLT.persist();touch();render();toast('초기화되었습니다');
+  if(!await dlg(L('정말 이 기기의 모든 노트·폴더를 삭제할까요?\n(일반·보관 노트 전부, 서버 데이터는 안 지워짐)','Delete all notes and folders on this device?\n(Regular and Vault notes; server data is not deleted)'),{danger:true,okText:L('삭제','Delete')}))return;
+  if(!await dlg(L('다시 한번 확인합니다. 삭제하시겠습니까?','Are you sure? This cannot be undone.'),{danger:true,okText:L('삭제','Delete')}))return;
+  S.notes=[];S.folders=[];VLT.notes=[];VLT.folders=[];VLT.persist();touch();render();toast(L('초기화되었습니다','Everything was cleared'));
 };
 
 /* ═══════════════ 헤더/플로팅 버튼 (요구4) ═══════════════ */
@@ -2578,7 +2736,7 @@ const VLT={
       } /* (요구1) 보관 노트 전용 폴더 — 일반 폴더(sk.folders)와 완전 분리된 sk.vault.folders */
       try{this.folders=JSON.parse(STORE.getItem('sk.vault.folders'))||[]}catch(e){this.folders=[]}
       try{this.settings=Object.assign({},VAULT_DEF,JSON.parse(STORE.getItem('sk.vault.settings'))||{})}catch(e){this.settings=Object.assign({},VAULT_DEF)} },
-  persist(){STORE.setItem('sk.vault',JSON.stringify(this.notes));STORE.setItem('sk.vault.folders',JSON.stringify(this.folders))},
+  persist(){STORE.setItem('sk.vault',JSON.stringify(this.notes));STORE.setItem('sk.vault.folders',JSON.stringify(this.folders));scheduleAutoSnap()},
   persistSettings(){STORE.setItem('sk.vault.settings',JSON.stringify(this.settings))},
   async init(){
     this.load();
@@ -2636,7 +2794,7 @@ const VLT={
           authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required'},
           timeout:60000}});
         STORE.setItem('sk.vcred',this.b64(cred.rawId));
-        toast('지문이 등록되었습니다');
+        toast(L('지문이 등록되었습니다','Fingerprint registered'));
       }else{
         await navigator.credentials.get({publicKey:{
           challenge:crypto.getRandomValues(new Uint8Array(32)),
@@ -2644,7 +2802,7 @@ const VLT={
           userVerification:'required',timeout:60000}});
       }
       this.enter();
-    }catch(e){ toast('지문 인식 실패/취소 — 비밀번호로 해제하세요') }
+    }catch(e){ toast(L('지문 인식 실패/취소 — 비밀번호로 해제하세요','Fingerprint failed or canceled — use your password')) }
   }
 };
 /* (요구2) 심플 암호창: 닫기/지문 버튼 없음 — 확인 버튼 하나. 배경 누르면 닫힘(취소) */
@@ -2654,11 +2812,12 @@ $('#vGatePass').addEventListener('keydown',e=>{if(e.key==='Enter')VLT.unlockPass
 $('#stVaultBtn').onclick=()=>{ovCloseUi($('#setOverlay'));VLT.open()};
 
 /* ═══════════════ 시작 ═══════════════ */
+load();
+VLT.load();
+computeLang();                       /* (v6) 설정의 언어(자동/영어/한국어)를 반영한 뒤 번역 적용 */
 applyI18n();
 /* 버전은 상단 배지(#appVer) 한 곳에서만 관리 — 설정창 버전은 그걸 그대로 표시 */
 $('#stVersion').textContent='SK Notes '+($('#appVer').textContent||'');
-load();
-VLT.load();
 ui.view=S.settings.view||'grid';
 purgeOldTrash();
 render();
@@ -2668,6 +2827,9 @@ setStatus('','');
 scheduleReminders();
 if(SYNC.ready()){SYNC.makeClient()}
 histPush();
+/* (v6) 자동 백업 확정: 탭을 닫거나 화면이 숨겨질 때 바로 스냅샷 저장 */
+addEventListener('pagehide',()=>{ try{autoSnapshot(true);}catch(e){} });
+document.addEventListener('visibilitychange',()=>{ if(document.hidden){ try{autoSnapshot(true);}catch(e){} } });
 /* ═══════════════ PWA ═══════════════ */
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){
   addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{})});
