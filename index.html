@@ -4,6 +4,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>soonenote V6.1</title>
   <meta name="version" content="6.1">
   <meta name="description" content="soonenote V6.1 - 7색 뮤트 파스텔 컬러 메모장 & 체크리스트">
@@ -200,6 +203,24 @@
         renderNotes();
       }
     });
+
+    // Purge old service workers & caches on load to force immediate update on iPhone/Safari
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        for (let reg of registrations) {
+          reg.update();
+        }
+      });
+    }
+    if ('caches' in window) {
+      caches.keys().then(function(names) {
+        for (let name of names) {
+          if (!name.includes('v6.1')) {
+            caches.delete(name);
+          }
+        }
+      });
+    }
 
     renderNotes();
   </script>
