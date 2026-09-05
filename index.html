@@ -1,30 +1,57 @@
 <!DOCTYPE html>
+<!--
+═══════════════════════════════════════════════════════════════
+  soonenote  —  V6.1
+  (이전 이름: SK 노트 / SK Notes — V6.0)
+
+  V6.1 변경 요약
+   · 서비스워커 network-first 로 교체 (배포 즉시 반영)
+   · localStorage 저장 실패 처리 + 이미지 자동 압축
+   · Supabase user_id 필터 + RLS 안내 강화
+   · 본문 HTML 정화(sanitize) — XSS 차단
+   · Supabase 라이브러리 로컬 번들(vendor/supabase.min.js, 2.45.4 고정)
+   · Vault PIN: PBKDF2 20만회 + 솔트, 본문 AES-GCM 암호화
+   · 동기화 디바운스 · 증분 pull
+   · 컬러 팔레트 7색 muted pastel 로 교체
+   · 줄간격 1.0~2.0 감소 정상화 + 길게 누르기 반복
+   · 링크 탭 → 열기/복사 선택
+   · 본문 텍스트 선택 개선
+   · 언어 확장: 한/영/일/중/스페인어
+═══════════════════════════════════════════════════════════════
+-->
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
 <!-- (요구3) 전화기 화면에 딱 맞게 · 자동 확대(핀치 줌 포함) 완전 금지 -->
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#f2f3f5">
-<title>SK 노트</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="theme-color" content="#f5f2ef">
+<title>soonenote</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="mask-icon" href="icons/icon-maskable-512.png" color="#FFD400">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="mask-icon" href="icons/icon-maskable-512.png" color="#D7A49A">
+<!-- (v6.1) Supabase 2.45.4 로컬 번들 — 오프라인/버전고정 -->
+<script src="vendor/supabase.min.js" defer></script>
 <style>
 :root{
-  --bg:#f2f3f5; --bg2:#e9eaee; --card:#ffffff; --text:#212121; --sub:#757575;
-  --line:#c9ccd2; --accent:#ffc107; --accent2:#e8910d; --bar:#ffffff; --chip:#ececec;
-  --danger:#e53935; --ok:#43a047; --shadow:0 1px 3px rgba(0,0,0,.12);
+  /* ══ (v6.1) soonenote 고정 팔레트 — muted pastel / soft luxury ══
+     Ivory #E1DAD3 · Nude #E4C9B6 · Dusty Rose #D7A49A · Sage #B8BBA3
+     Baby Blue #A4B1BA · Lavender #C9C3DD · White #FFFFFF            */
+  --ivory:#E1DAD3; --nude:#E4C9B6; --rose:#D7A49A; --sage:#B8BBA3;
+  --blue:#A4B1BA;  --lav:#C9C3DD;  --white:#FFFFFF;
+
+  --bg:#f5f2ef; --bg2:#efebe7; --card:#ffffff; --text:#3a3430; --sub:#8d857e;
+  --line:#e0d9d3; --accent:#ddb2a9; --accent2:#b88d84; --bar:#fbf9f7; --chip:#ede9e5;
+  --danger:#b98079; --ok:#9aa88c; --shadow:0 1px 3px rgba(90,75,65,.10);
   /* ── 핵심 분리: 앱 UI 글자(--ui, 절대 고정 17pt)와 본문 글자(--note, 14~22pt 가변) ── */
-  --ui:17pt;          /* SK 노트·아이콘·버튼·설정창·메뉴·입력창 제목·도구. 본문 설정과 무관하게 절대 안 변함 */
+  --ui:17pt;          /* 앱 UI·아이콘·버튼·설정창·메뉴·입력창 제목·도구. 본문 설정과 무관하게 절대 안 변함 */
   --note:14pt;        /* 사용자가 입력한 본문(에디터·목록 미리보기·체크리스트). 설정과 노트별 옵션으로만 변함 */
   --notefw:500;       /* 본문 기본 굵기(보통). 너무 굵지도, 너무 가늘지도 않은 중간값 */
   --boxmin:165px;
 }
 html[data-theme="dark"]{
-  --bg:#15161a; --bg2:#1c1e24; --card:#242629; --text:#ececec; --sub:#9aa0a6;
-  --line:#33363c; --bar:#1c1e24; --chip:#2e3138; --accent2:#ffb300;
+  --bg:#1a1817; --bg2:#211f1e; --card:#2a2726; --text:#e9e4e0; --sub:#9d948d;
+  --line:#3a3634; --bar:#211f1e; --chip:#332f2d; --accent:#8f6f68; --accent2:#c39a91;
   --shadow:0 1px 4px rgba(0,0,0,.5);
 }
 /* ── 노트 본문 글자 크기: 10~25pt 중 사용자가 1pt씩 선택 (설정창 스테퍼) ──
@@ -41,6 +68,18 @@ html[data-cols="2"]{--cols:2} html[data-cols="3"]{--cols:3} html[data-cols="4"]{
 
 *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
 html{touch-action:manipulation}          /* (요구3) 더블탭 확대 방지 */
+/* ══ (v6.1 요청4) 본문 텍스트 선택이 잘 되게 ══
+   [문제] html 전체에 touch-action:manipulation 이 걸려 있어 본문에서 길게 누르기·
+          드래그로 텍스트를 잡는 동작을 브라우저가 스크롤/탭으로 가로챘다.
+   [해결] 본문 영역만 touch-action:auto + user-select:text + callout 허용으로 되돌린다. */
+#edBody,#edBody *:not(img),#edTitle,#edItems .itxt{
+  -webkit-user-select:text!important; user-select:text!important;
+  -webkit-touch-callout:default!important;
+  touch-action:auto;
+}
+/* 선택 색상도 팔레트 톤으로 */
+#edBody ::selection,#edBody::selection{background:rgba(215,164,154,.38);color:inherit}
+#edTitle::selection{background:rgba(215,164,154,.38)}
 html{height:100%;overflow:hidden}          /* (요청5) 어떤 화면도 뷰포트 밖으로 커지지 않게 html까지 고정 */
 html,body{margin:0;padding:0;height:100%}
 /* (요구1) 한글 자간 0, 글자 폭 90% (font-stretch) */
@@ -75,8 +114,8 @@ header{
 /* ── (요청1) 폴더바(전체/노트…)는 하단에 그대로 ── */
 #folderNav{
   order:3; bottom:0; z-index:30;
-  /* (요청) 일반 노트 하단바 = 라이트 옐로우. 보관 노트는 JS가 .vault를 붙여 라이트 그린으로 바꿈 */
-  background:#fff3c4;
+  /* (v6.1) 일반 노트 하단바 = Ivory 계열. 보관 노트는 .vault → Sage 계열 */
+  background:#eeebe7;
   box-shadow:0 -1px 3px rgba(0,0,0,.12);
   /* (요청) 일반 노트 하단바 높이를 약 80%로 축소 */
   padding:.16em .5em;
@@ -87,17 +126,18 @@ header{
 /* (요청) 일반 노트: 칩/바도 80% 높이로 콤팩트하게 */
 #folderNav .folderbar{padding:.22em .1em .02em}
 #folderNav .chip{padding:.22em .55em;font-size:.58em;border-radius:.9em}
-html[data-theme="dark"] #folderNav{background:#4d451f}      /* 다크모드 대응 옐로우 */
-#folderNav.vault{background:#dcf3d6;                         /* (요청) 보관 노트 하단바 = 라이트 그린 */
+html[data-theme="dark"] #folderNav{background:#2b2725}      /* 다크: Ivory 톤 */
+#folderNav.vault{background:#dfe0d6;                         /* (v6.1) 보관 노트 하단바 = Sage 계열 */
   padding:.3em .5em; padding-bottom:calc(.3em + env(safe-area-inset-bottom))}
 #folderNav.vault .folderbar{padding:.4em .1em .1em}
 #folderNav.vault .chip{padding:.32em .7em;font-size:.66em;border-radius:1em}
-html[data-theme="dark"] #folderNav.vault{background:#23351f} /* 다크모드 대응 그린 */
+html[data-theme="dark"] #folderNav.vault{background:#2a2c27} /* 다크: Sage 톤 */
 .hrow{display:flex;align-items:center;gap:.3em;min-width:0;flex-wrap:nowrap}
 .logo{font-weight:800;font-size:.72em;color:var(--text);margin-right:.25em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:26%;min-width:0;flex:none}
 /* (요청10) 항상 보이는 버전 배지 → 새 버전이 떴는지 눈으로 확인. 좁은 화면에서는 감춤(아이콘 잘림 방지) */
 .verbadge{font-size:.5em;color:var(--sub);font-weight:700;background:var(--chip);border-radius:.5em;padding:.15em .5em;vertical-align:middle;white-space:nowrap}
-@media(max-width:400px){.verbadge{display:none}}
+/* (v6.1) 갤럭시 S는 CSS 폭 360~412px — 숨기면 정작 폰에서 버전 확인이 안 된다 → 아주 좁을 때만 숨김 */
+@media(max-width:300px){.verbadge{display:none}}
 
 #search{
   flex:1 1 0;min-width:0;background:var(--chip);border:none;border-radius:1.2em;
@@ -117,7 +157,7 @@ html[data-theme="dark"] #folderNav.vault{background:#23351f} /* 다크모드 대
   padding:.32em .7em;font-size:.66em;font-weight:600;white-space:nowrap;transition:transform .1s,background .15s
 }
 .chip:active{transform:scale(.94)}
-.chip.on{background:var(--accent);color:#3d2c00}
+.chip.on{background:var(--accent);color:#4a332e}
 .chip.trash.on{background:var(--danger);color:#fff}
 
 /* ── 노트 목록 (각진 박스, 간격 없음, 1px 메쉬 유지) ── */
@@ -146,7 +186,7 @@ main{order:1;flex:1;padding:0;max-width:1000px;width:100%;margin:0 auto;overflow
 .note:active{transform:scale(.97)}
 .note.sel{outline:3px solid var(--accent);outline-offset:-3px}
 .note .selmark{position:absolute;top:.3em;right:.3em;width:1.4em;height:1.4em;border-radius:50%;
-  background:var(--accent);color:#3d2c00;display:flex;align-items:center;justify-content:center;
+  background:var(--accent);color:#4a332e;display:flex;align-items:center;justify-content:center;
   font-size:.7em;font-weight:900;z-index:2}
 .note .thead{
   background:var(--tc,var(--chip));   /* (요구16) 제목줄 진한 2톤 */
@@ -162,8 +202,8 @@ main{order:1;flex:1;padding:0;max-width:1000px;width:100%;margin:0 auto;overflow
 .empty{color:var(--sub);text-align:center;padding:3em 1em;font-size:.8em}
 .hidden{display:none!important}
 /* (요구5) 검색어 하이라이트 */
-mark{background:#ffe14d;color:#212121;border-radius:2px;padding:0 1px}
-html[data-theme="dark"] mark{background:#c8a000;color:#fff}
+mark{background:#e7cebd;color:#3a3430;border-radius:2px;padding:0 1px}
+html[data-theme="dark"] mark{background:#8a6f62;color:#fff}
 
 /* ── 플로팅 + 버튼 (하단 바 바로 위에 붙음) ── */
 #folderNav{position:relative;flex:none}
@@ -172,7 +212,7 @@ html[data-theme="dark"] mark{background:#c8a000;color:#fff}
   width:1.7em;height:1.7em;padding:0;line-height:1;
   display:flex;align-items:center;justify-content:center;
   border-radius:50%;border:none;background:var(--accent);
-  color:#3d2c00;font-size:1.6em;font-weight:700;box-shadow:0 4px 12px rgba(0,0,0,.3);
+  color:#4a332e;font-size:1.6em;font-weight:700;box-shadow:0 4px 12px rgba(90,75,65,.28);
   transition:transform .15s
 }
 #fab:active,#vFab:active{transform:scale(.9)}
@@ -195,7 +235,7 @@ html[data-theme="dark"] mark{background:#c8a000;color:#fff}
 /* (요청5) 케밥 메뉴 안 '글자 크기(이 노트만)' 선택 */
 .fontpick{display:flex;gap:.25em;flex-wrap:wrap;padding:.25em .9em .55em}
 .fpbtn{background:var(--chip);border:none;color:var(--text);border-radius:.4em;padding:.35em .5em;font-size:.72em;font-weight:700}
-.fpbtn.on{background:var(--accent);color:#3d2c00}
+.fpbtn.on{background:var(--accent);color:#4a332e}
 
 /* ── 모달 공통 (요구15: 부드러운 열림/닫힘) ── */
 .overlay{
@@ -222,7 +262,7 @@ html[data-theme="dark"] mark{background:#c8a000;color:#fff}
   padding:.5em .8em;font-size:.75em;font-weight:600;transition:transform .1s,filter .15s
 }
 .btn:active{transform:scale(.95)}
-.btn.primary{background:var(--accent);color:#3d2c00}
+.btn.primary{background:var(--accent);color:#4a332e}
 .btn.danger{background:var(--danger);color:#fff}
 .btnrow{display:flex;gap:.4em;flex-wrap:wrap;margin-top:.5em}
 
@@ -272,9 +312,9 @@ html[data-theme="dark"] mark{background:#c8a000;color:#fff}
 #edPencil.on{background:none!important;color:var(--accent2)}
 #edPencil svg{transition:transform .12s}
 #edPencil:active svg{transform:translate(.1em,.12em) rotate(6deg)}
-.edtool.on{background:var(--accent);color:#3d2c00}
+.edtool.on{background:var(--accent);color:#4a332e}
 /* (요구8) 사각 컬러박스 — 항상 선택된 색상 채움 */
-#edColorBtn{border:2px solid var(--line);border-radius:.35em;background:var(--curColor,#ffd6e0)!important;width:1.7em;height:1.7em}
+#edColorBtn{border:2px solid var(--line);border-radius:.35em;background:var(--curColor,#f4e6e3)!important;width:1.7em;height:1.7em}
 /* (요구7) 첫째 줄 아래 = 화면 전체 입력영역 */
 .edmain{flex:1;overflow:auto;position:relative;min-height:0}   /* (요청1) 긴 노트도 에디터 안에서만 스크롤 — 아래 도구/항목은 항상 화면 안에 보임 */
 #edBody{
@@ -283,7 +323,26 @@ html[data-theme="dark"] mark{background:#c8a000;color:#fff}
 }
 #edBody:empty:before{content:attr(data-ph);color:var(--sub)}
 #edBody b,#edBody strong{font-weight:800}
-#edBody.viewmode{cursor:default}
+/* (v6.1 요청3) 본문 속 인터넷 주소 = 파란색 + 밑줄. 탭하면 열기/복사 메뉴 */
+#edBody a,#edBody a.nlink{color:#3f6ea8;text-decoration:underline;text-underline-offset:2px;
+  word-break:break-all;cursor:pointer;-webkit-tap-highlight-color:rgba(63,110,168,.18)}
+html[data-theme="dark"] #edBody a,html[data-theme="dark"] #edBody a.nlink{color:#8fb4dd}
+#edBody a:active{background:rgba(63,110,168,.14);border-radius:3px}
+/* 링크 동작 선택 시트 */
+#linkSheet{position:fixed;inset:0;z-index:70;background:rgba(40,32,28,.34);
+  display:flex;align-items:flex-end;justify-content:center;opacity:0;visibility:hidden;transition:opacity .18s}
+#linkSheet.show{opacity:1;visibility:visible}
+#linkSheet .lscard{background:var(--card);width:100%;max-width:520px;border-radius:16px 16px 0 0;
+  padding:.6em .6em calc(.8em + env(safe-area-inset-bottom));transform:translateY(16px);transition:transform .2s;
+  box-shadow:0 -6px 26px rgba(60,45,38,.22)}
+#linkSheet.show .lscard{transform:translateY(0)}
+#linkSheet .lsurl{font-size:.62em;color:var(--sub);padding:.5em .8em .6em;word-break:break-all;
+  border-bottom:1px solid var(--line);margin-bottom:.3em;font-weight:600}
+#linkSheet .lsitem{display:flex;align-items:center;gap:.7em;width:100%;background:none;border:none;
+  color:var(--text);padding:.85em .9em;font-size:.8em;font-weight:600;border-radius:11px;text-align:left}
+#linkSheet .lsitem:active{background:var(--chip)}
+#linkSheet .lsitem .emo{font-size:1.15em;width:1.4em;text-align:center}
+#edBody.viewmode{cursor:text}   /* (v6.1) 보기 모드에서도 텍스트를 잡을 수 있게 */
 #edItems{padding:.4em .7em 2em}
 .itemrow{display:flex;align-items:center;gap:.5em;padding:.4em .2em;border-bottom:1px solid var(--line)}
 .itemrow input[type=checkbox]{width:1.2em;height:1.2em;accent-color:var(--accent);flex:none}
@@ -318,12 +377,12 @@ html[data-theme="dark"] mark{background:#c8a000;color:#fff}
 .tpbtn{background:var(--chip);border:none;color:var(--text);border-radius:.4em;padding:.32em .7em;font-size:.78em;font-weight:700}
 .tpval{min-width:2.6em;text-align:center;font-size:.78em;font-weight:800}
 .tpbiu{background:var(--chip);border:none;color:var(--text);border-radius:.4em;min-width:2.2em;height:2.2em;font-size:.8em;font-weight:800;font-style:normal}
-.tpbiu.on{background:var(--accent);color:#3d2c00}
+.tpbiu.on{background:var(--accent);color:#4a332e}
 
 /* (요청7) 설정 - 글자크기 스테퍼 + 실시간 샘플 */
 .fontstep{display:flex;align-items:center;gap:.35em}
 .fsbtn{background:var(--chip);border:none;color:var(--text);border-radius:.4em;width:2.1em;height:2.1em;font-size:.85em;font-weight:800}
-.fsbtn:active{background:var(--accent);color:#3d2c00}
+.fsbtn:active{background:var(--accent);color:#4a332e}
 .fsval{min-width:2em;text-align:center;font-size:1em;font-weight:800}
 .fsunit{font-size:.6em;color:var(--sub)}
 .fontsample{margin:.4em 0 .6em;padding:.45em .7em;background:var(--card);border:1px dashed var(--line);
@@ -343,7 +402,7 @@ html[data-theme="dark"] mark{background:#c8a000;color:#fff}
 #edBody img.edimg.al-right{float:right;margin:.3em 0 .3em .6em;clear:none}
 #edBody img.edimg.al-block{float:none;margin:.3em 0;clear:both}
 #edBody.editing img.edimg.al-left,#edBody.editing img.edimg.al-right{touch-action:none}
-#imgBar .ib.al-on{background:var(--accent);color:#3d2c00;font-weight:800}
+#imgBar .ib.al-on{background:var(--accent);color:#4a332e;font-weight:800}
 /* (요청3) 이미지 드래그 이동 중 놓을 위치 표시 선 (.edmain이 스크롤 컨테이너 — fixed로 화면 기준 고정) */
 #imgDropMark{position:fixed;z-index:74;height:0;border-top:3px dashed var(--accent);
   pointer-events:none;display:none}
@@ -383,12 +442,12 @@ html[data-theme="dark"] mark{background:#c8a000;color:#fff}
 #edMenu.show{opacity:1;visibility:visible;transform:translateY(0) scale(1)}
 
 /* 선택(삭제) 모드 상단 바 (화면 최상단 고정) */
-#selMode{position:fixed;top:0;left:0;right:0;z-index:40;background:var(--accent);color:#3d2c00;
+#selMode{position:fixed;top:0;left:0;right:0;z-index:40;background:var(--accent);color:#4a332e;
   display:flex;align-items:center;gap:.4em;padding:calc(.5em + env(safe-area-inset-top)) .6em .5em;
   transform:translateY(-110%);transition:transform .22s ease}
 #selMode.show{transform:translateY(0)}
 #selMode .cnt{flex:1;font-weight:800;font-size:.8em}
-#selMode .sbtn{background:rgba(255,255,255,.35);border:none;color:#3d2c00;border-radius:.5em;
+#selMode .sbtn{background:rgba(255,255,255,.35);border:none;color:#4a332e;border-radius:.5em;
   padding:.4em .7em;font-size:.75em;font-weight:700}
 
 /* ── 설정/계정 ── */
@@ -442,8 +501,8 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
 .appver{margin:.7em 0 .2em;font-size:.62em;color:var(--sub);text-align:center;line-height:1.7;border-top:1px solid var(--line);padding-top:.8em}
 /* (요구5) 기본 컬러 선택 스와치 */
 .dfcolors{display:flex;gap:.5em;align-items:center;flex-wrap:wrap}
-.dfcolors .sw{width:1.8em;height:1.8em;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0;flex:none}
-.dfcolors .sw.on{border-color:var(--text);box-shadow:0 0 0 2px var(--card)}
+.dfcolors .sw{width:1.8em;height:1.8em;border-radius:50%;border:1px solid rgba(0,0,0,.10);cursor:pointer;padding:0;flex:none;transition:transform .12s,box-shadow .15s}
+.dfcolors .sw.on{border:2px solid var(--text);transform:scale(1.12);box-shadow:0 0 0 3px rgba(215,164,154,.30)}
 </style>
 </head>
 <body>
@@ -458,7 +517,7 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
 <header>
   <div class="hrow">
     <span class="logo" id="logoText"></span>
-    <span class="verbadge" id="appVer">v6.0</span>
+    <span class="verbadge" id="appVer">v6.1</span>
     <input id="search" type="search" data-i18n-ph="search_ph" placeholder="검색...">
     <span class="syncdot" id="syncDot" title="동기화 상태"></span>
     <button class="iconbtn" id="btnView" data-i18n-title="view_toggle" title="보기 전환">▦</button>
@@ -492,7 +551,17 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
 <!-- ───────── 노트 에디터 (전체화면·테두리 없음) ───────── -->
 <div id="edOverlay">
   <div class="edpanel">
-    <div class="edbar">
+    <!-- (v6.1 요청3) 링크 탭 → 열기 / 복사 / 공유 선택 -->
+<div id="linkSheet" aria-hidden="true">
+  <div class="lscard">
+    <div class="lsurl" id="lsUrl"></div>
+    <button class="lsitem" id="lsOpen"><span class="emo">🌐</span><span data-i18n="link_open">웹사이트 열기</span></button>
+    <button class="lsitem" id="lsCopy"><span class="emo">📋</span><span data-i18n="link_copy">주소 복사하기</span></button>
+    <button class="lsitem" id="lsShare"><span class="emo">📤</span><span data-i18n="link_share">공유하기</span></button>
+    <button class="lsitem" id="lsCancel"><span class="emo">✕</span><span data-i18n="link_cancel">취소</span></button>
+  </div>
+</div>
+<div class="edbar">
       <input id="edTitle" data-i18n-ph="title_ph" placeholder="제목" data-i18n-title="edit_hint" title="누르면 첫째 줄이 제목으로 채워집니다">
       <button class="edtool" id="edSaveBtn" data-i18n-title="save" title="저장">✓</button>
       <button class="edtool undo" id="edUndo" data-i18n-title="undo" title="되돌리기 (Undo)">↶</button>
@@ -558,7 +627,7 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
       <label for="remindTime" data-i18n="rm_time">알릴 시각</label>
       <input type="datetime-local" id="remindTime">
     </div>
-    <div class="hint" data-i18n="rm_hint">앱이 켜져 있을 때 지정 시각에 기기 알림이 뜹니다. (무료 구성이라 앱을 완전히 닫으면 예약 알림은 보장되지 않습니다.)</div>
+    <div class="hint" data-i18n="rm_hint">⚠ 알림은 <b>soonenote가 화면에 켜져 있을 때만</b> 울립니다. 안드로이드는 앱을 닫거나 화면이 꺼지면 타이머를 중지시키므로, 앱을 완전히 닫은 상태의 예약 알림은 <b>보장되지 않습니다</b>. (서버 푸시 알림은 다음 버전에서 예정)</div>
     <div class="btnrow">
       <button class="btn primary" id="remindSave" data-i18n="save">저장</button>
       <button class="btn danger" id="remindClear" data-i18n="rm_clear">알림 해제</button>
@@ -584,7 +653,11 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
         <button class="btn primary" id="acSave" data-i18n="ac_save">저장 · 연결</button>
         <button class="btn" id="acTest" data-i18n="ac_test">연결 테스트</button>
       </div>
+      <div class="btnrow" style="margin-top:.3em">
+        <button class="btn" id="acRls" data-i18n="ac_rls">🔒 보안(RLS) 설정 SQL 보기</button>
+      </div>
       <div class="stat" id="acTestStat"></div>
+      <div class="hint" style="margin-top:.5em" data-i18n="ac_rls_hint">🔒 <b>꼭 확인하세요.</b> Supabase에서 RLS(행 수준 보안)를 켜지 않으면, 앱에 들어 있는 공개 키만으로 누구나 모든 사용자의 노트를 읽고 지울 수 있습니다. 위 버튼의 SQL을 Supabase SQL 편집기에서 한 번 실행하세요.</div>
     </div>
     <div class="setsec" id="acFormSec">
       <h4 data-i18n="ac_login">계정 로그인 (이메일)</h4>
@@ -633,8 +706,11 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
       <div class="setrow"><label data-i18n="language">언어 (Language)</label>
         <select id="stLang">
           <option value="auto" data-i18n="lang_auto">자동 (시스템 언어)</option>
-          <option value="en">English</option>
           <option value="ko">한국어</option>
+          <option value="en">English</option>
+          <option value="ja">日本語</option>
+          <option value="zh">中文（简体）</option>
+          <option value="es">Español</option>
         </select>
       </div>
       <div class="setrow"><label data-i18n="theme">테마</label>
@@ -730,9 +806,8 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
 
     <div class="setsec">
       <div class="appver">
-        <div data-i18n="app_name">SK 노트 — 색상 메모장</div>
-        <div id="stVersion">SK Notes v5.11</div>
-        <div class="hint" style="margin-top:.5em">SK 노트 v5.10 · 사진 배치(가운데·옆으로 글자 감쌈) + 첫 화면 톡=열기·꾹=삭제 + Undo + 하단바 색상(일반 노랑/보관 초록) + 암호창 축소 + 기본 컬러/폰트 + 백업·Export/Import + 시스템 언어 자동</div>
+        <div id="stAppName" style="font-size:1.05em;letter-spacing:.02em">soonenote</div>
+        <div id="stVersion">v6.1</div>
       </div>
     </div>
   </div>
@@ -807,34 +882,60 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
 /* ═══════════════ 저장소 폴백 ═══════════════ */
 const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.removeItem(t);return localStorage}
   catch(e){const m={};return{getItem:k=>(k in m?m[k]:null),setItem:(k,v)=>{m[k]=String(v)},removeItem:k=>{delete m[k]}}}})();
+/* ══════════ (v6.1) 버전은 여기 한 곳에서만 관리 ══════════
+   헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
+   ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
+const APP_NAME='soonenote';
+const APP_VER='6.1';
 const SSTORE=(()=>{try{const t='__cn__';sessionStorage.setItem(t,'1');sessionStorage.removeItem(t);return sessionStorage}
   catch(e){const m={};return{getItem:k=>(k in m?m[k]:null),setItem:(k,v)=>{m[k]=String(v)},removeItem:k=>{delete m[k]}}}})();
 
 /* ═══════════════ 파스텔 5색 (우선순위 순) + 제목줄 진한색 (요구16) ═══════════════ */
 /* (요청3) 노란색(index1)만 유지, 나머지 4색은 더 연하게 / 제목바는 바탕과 차이 적게(약하게) */
-const COLORS =['#ffe1e8','#fff3b0','#dcf3e6','#dcecff','#ece2f7'];
-const HEADS_L=['#ffd0da','#f6e392','#cbebda','#c9e0fb','#ddccf0'];
-const COLORS_D=['#6b4a56','#665e38','#3f5f4a','#3f586d','#584a6d'];
-const HEADS_D =['#7d5a66','#78704a','#4d7159','#4d6780','#6a5a80'];
-const COLOR_NAMES=['핑크','노랑','민트','하늘','라벤더'];
-const COLOR_NAMES_EN=['Pink','Yellow','Mint','Sky','Lavender'];
-const cnName=i=>(IS_KO?COLOR_NAMES[i]:COLOR_NAMES_EN[i])||'';
-const TEXT_COLORS=['#212121','#e53935','#fb8c00','#f9a825','#43a047','#1e88e5','#8e24aa'];
-const HI_COLORS=['#fff59d','#ffccbc','#c8e6c9','#b3e5fc','#e1bee7','transparent'];
+/* ══ (v6.1) soonenote 고정 팔레트 — 7색 muted pastel ══
+   본문(COLORS)  = 기준색을 화이트에 72% 희석 → 거의 화이트에 가까운 파스텔
+   제목(HEADS_L) = 기준색 그대로 또는 10%만 밝게                              */
+const PALETTE_BASE=['#E1DAD3','#E4C9B6','#D7A49A','#B8BBA3','#A4B1BA','#C9C3DD','#FFFFFF'];
+const COLORS  =['#f7f5f3','#f7f0eb','#f4e6e3','#ebece5','#e6e9ec','#f0eef5','#ffffff'];
+const HEADS_L =['#e4ded7','#e7cebd','#dbada4','#bfc2ac','#adb9c1','#cec9e0','#f0eeec'];
+const COLORS_D=['#3f3e3f','#3f3b39','#3d3334','#363835','#32363a','#3a3941','#454548'];
+const HEADS_D =['#5b5959','#5c544f','#584746','#4d4f49','#464b50','#53515c','#656668'];
+const NCOLORS=COLORS.length;                       /* 7 */
+const COLOR_NAMES   =['아이보리','누드','더스티 로즈','세이지','베이비 블루','라벤더','화이트'];
+const COLOR_NAMES_EN=['Ivory','Nude','Dusty Rose','Sage','Baby Blue','Lavender','White'];
+const cnName=i=>((IS_KO?COLOR_NAMES[i]:COLOR_NAMES_EN[i])||'');
+/* 글자색·형광펜도 같은 톤으로 (원색 제거) */
+const TEXT_COLORS=['#3a3430','#8f6259','#8a7358','#6f7460','#5d6b74','#6f6889','#a89f97'];
+const HI_COLORS  =['#f7f0eb','#f4e6e3','#ebece5','#e6e9ec','#f0eef5','transparent'];
 
 const LS={notes:'sk.notes',folders:'sk.folders',settings:'sk.settings'};
 /* (요구10) 앱 언어 = 전화기 시스템 언어(한국어면 한국어, 그 외 영어). + 설정에서 수동 강제(영어/한국어).
    S.settings.lang: 'auto'(시스템 자동) / 'en'(항상 영어) / 'ko'(항상 한국어).
    applyI18n()이 시작 시 1회 data-i18n 요소를 교체, 언어 변경 시 reload()로 재적용한다. */
+/* ══════════ (v6.1) 다국어 — 한국어 · English · 日本語 · 中文 · Español ══════════
+   LANG 이 현재 언어 코드('ko','en','ja','zh','es').
+   번역이 없는 항목은 영어로, 영어도 없으면 한국어 원문으로 자동 대체된다.
+   ★ 언어를 더 늘리려면: SUPPORTED 에 코드 추가 + I18N_X 에 사전 추가 + <select> 에 <option> 추가. */
+const SUPPORTED=['ko','en','ja','zh','es'];
 const SYS_LANG=(navigator.language||navigator.userLanguage||'en').toLowerCase();
-let IS_KO=SYS_LANG.startsWith('ko');
-function computeLang(){              // 반드시 load() 이후에 호출
-  const o=(S&&S.settings&&S.settings.lang)||'auto';
-  if(o==='en')IS_KO=false;
-  else if(o==='ko')IS_KO=true;
-  else IS_KO=SYS_LANG.startsWith('ko');
-  const d=document.documentElement; if(d)d.lang=IS_KO?'ko':'en';
+function detectSysLang(){
+  const l=SYS_LANG;
+  if(l.startsWith('ko'))return 'ko';
+  if(l.startsWith('ja'))return 'ja';
+  if(l.startsWith('zh'))return 'zh';
+  if(l.startsWith('es'))return 'es';
+  return 'en';
 }
+let LANG=detectSysLang();
+let IS_KO=(LANG==='ko');                 /* 기존 코드 호환용 */
+function computeLang(){                  // 반드시 load() 이후에 호출
+  const o=(S&&S.settings&&S.settings.lang)||'auto';
+  LANG=(o!=='auto'&&SUPPORTED.includes(o))?o:detectSysLang();
+  IS_KO=(LANG==='ko');
+  const d=document.documentElement;
+  if(d)d.lang=(LANG==='zh'?'zh-CN':LANG);
+}
+const LANG_NAMES={ko:'한국어',en:'English',ja:'日本語',zh:'中文（简体）',es:'Español'};
 const I18N={
   cancel:{en:'Cancel'},sel_count:{en:' selected'},restore:{en:'Restore'},delete:{en:'Delete'},
   search_ph:{en:'Search...'},view_toggle:{en:'View'},account_sync:{en:'Account · Sync'},trash:{en:'Trash'},
@@ -870,7 +971,7 @@ const I18N={
   bk_clear_q:{en:'Clear the saved backup list on this device?\n(Your notes themselves are not deleted)'},
   bk_cleared:{en:'Backup list cleared'},bk_bad:{en:'Not a valid backup file'},
   data_hint:{en:'⚠ Notes are stored on this phone, in this browser, at this address. If you open a different address or clear browser data, notes may not show. Tap “Backup (save to phone)” once in a while or enable Sync. Even if the app is reinstalled or deleted, the backup file lets you Import everything back.'},
-  app_name:{en:'SK Notes — color notepad'},
+  app_name:{en:'soonenote'},
   settings_title:{en:'⚙️ Settings'},save2:{en:'Save'},
   ac_title:{en:'☁️ Account · Sync'},ac_server:{en:'Server connection (Supabase)'},
   ac_url:{en:'Project URL'},ac_key:{en:'Public key (anon or sb_publishable)'},
@@ -879,9 +980,11 @@ const I18N={
   ac_signup:{en:'Sign up'},ac_reset:{en:'Send reset email'},ac_my:{en:'My account'},
   ac_syncstate:{en:'Sync status'},ac_lastsync:{en:'Last sync'},ac_syncnow:{en:'Sync now'},
   ac_diag:{en:'Diagnose'},ac_logout:{en:'Sign out'},
+  ac_rls:{en:'🔒 Show security (RLS) setup SQL'},
+  ac_rls_hint:{en:'🔒 <b>Important.</b> If Row Level Security is not enabled in Supabase, anyone holding the public key in this app can read and delete every user\'s notes. Run the SQL from the button above once in the Supabase SQL editor.'},
   ac_hint:{en:'⚠️ Sign in with the <b>same email</b> on both devices (PC and phone) to share notes. Different emails won’t sync.'},
   rm_title:{en:'⏰ Reminder'},rm_time:{en:'Time to remind'},
-  rm_hint:{en:'A device notification fires at the set time while the app is open. (Scheduled reminders aren’t guaranteed when the app is fully closed.)'},
+  rm_hint:{en:'⚠ The reminder only fires while soonenote is open on screen. Android may stop timers when the app is closed or the screen is off, so a closed-app reminder is NOT guaranteed. Server push is planned for a future version.'},
   rm_clear:{en:'Clear reminder'},
   folder_ph:{en:'New folder name'},add2:{en:'Add'},
   pin_title:{en:'🔐 Vault password'},pin_new_ph:{en:'New password (4 digits recommended)'},
@@ -903,6 +1006,7 @@ const I18N={
   dlg_pin_set_done:{en:'Password set. Please enter it again.'},dlg_pin_enter:{en:'Enter the password'},
   dlg_pin_wrong:{en:'Wrong password'},
   vault_title:{en:'🔐 Vault'},
+  link_open:{en:'Open website'},link_copy:{en:'Copy link'},link_share:{en:'Share'},link_cancel:{en:'Cancel'},
   /* ── v6 추가 키 (영문/한국어 동적 문구) ── */
   sync_ok:{en:'Synced'},sync_syncing:{en:'Syncing…'},sync_err:{en:'Error'},sync_unset:{en:'Not set'},sync_nolog:{en:'Not signed in'},
   none_yet:{en:'None yet'},today:{en:'Today'},back_hint:{en:'Press back again to exit'},
@@ -929,21 +1033,197 @@ const I18N={
   n_email_pass:{en:'Enter an email and a password (6+ characters)'},login_fail:{en:'Login failed'},login_err:{en:'Login error'},
   empty_vault_backup_q:{en:'Restore with this backup?'},wipe_all:{en:'Delete all'}
 };
-function t(key){ if(IS_KO)return null; const v=I18N[key]; return (v&&v.en)||''; }
+
+/* ══ 일본어 ══ */
+const I18N_JA={
+  cancel:'キャンセル',sel_count:'件選択',restore:'復元',delete:'削除',
+  search_ph:'検索...',view_toggle:'表示',account_sync:'アカウント・同期',trash:'ゴミ箱',
+  settings:'設定',add:'追加',note:'ノート',checklist:'チェックリスト',
+  title_ph:'タイトル',save:'保存',edit_hint:'編集モード',format_t:'書式',
+  img_btn:'タップ=ギャラリー・長押し=カメラ',color_btn:'色',more:'その他',
+  body_ph:'入力してください...',add_item:'＋ 項目を追加',
+  undo:'元に戻す',undone:'取り消しました',
+  sec_screen:'画面',language:'言語 / Language',lang_auto:'自動（システム言語）',
+  theme:'テーマ',auto:'自動',light:'ライト',dark:'ダーク',
+  default_view:'既定の表示',grid:'グリッド',list:'リスト',titles:'タイトルのみ',
+  sort_by:'並び順',sort_color:'色順',sort_updated:'最近編集した順',
+  sort_created:'作成日順',sort_title:'タイトル順',sort_manual:'手動',
+  font_size:'本文の文字サイズ (10〜25pt)',font_preview:'サンプル Abc 123 — プレビュー',
+  font_weight:'本文の太さ',fw_l:'細い (300)',fw_n:'標準 (500) — 推奨',fw_b:'太い (700)',fw_x:'極太 (900)',
+  box_size:'ボックスの大きさ（列数）',box2:'2列',box3:'3列',box4:'4列',
+  note_shape:'ノートの形式',shape_none:'なし',shape_line:'罫線',
+  default_color:'既定のノート色',
+  sec_sync:'同期',sync_status:'状態',sync_notset:'未設定',sync_btn:'☁️ アカウント・同期',
+  sec_vault:'保管ノート',vault_hint:'通常のノートにパスワードは不要です。保管ノートは毎回パスワードを尋ねます。',
+  vault_open:'🔐 保管ノート',open:'開く',vault_pin:'保管ノートのパスワード',pin_set:'設定 / 変更',
+  vault_unlock_time:'ロックを解除しておく時間',vault_always:'毎回尋ねる',
+  sec_data:'データ',btn_backup:'💾 バックアップ（この端末に保存）',btn_restore:'♻️ 復元（保存済みバックアップ）',
+  btn_export_en:'📤 ノートを書き出す',btn_import_en:'📥 ノートを読み込む',
+  btn_wipe:'すべて削除',btn_emptytrash:'ゴミ箱を空にする',
+  bk_title:'♻️ 保存済みバックアップ',bk_empty:'バックアップがありません。まず「バックアップ」を押してください。',
+  bk_from_file:'📂 ファイルから読み込む',bk_clear:'バックアップ一覧を消去',
+  app_name:'soonenote',settings_title:'⚙️ 設定',save2:'保存',
+  ac_title:'☁️ アカウント・同期',ac_server:'サーバー接続 (Supabase)',
+  ac_url:'プロジェクト URL',ac_key:'公開キー (anon または sb_publishable)',
+  ac_save:'保存・接続',ac_test:'接続テスト',ac_login:'ログイン（メール）',
+  ac_email:'メールアドレス',ac_pass:'パスワード（6文字以上）',ac_login_btn:'ログイン',
+  ac_signup:'新規登録',ac_reset:'再設定メールを送る',ac_my:'マイアカウント',
+  ac_syncstate:'同期の状態',ac_lastsync:'最終同期',ac_syncnow:'今すぐ同期',
+  ac_diag:'診断',ac_logout:'ログアウト',
+  rm_title:'⏰ リマインダー',rm_time:'通知する時刻',rm_clear:'リマインダーを解除',
+  folder_ph:'新しいフォルダー名',add2:'追加',
+  pin_title:'🔐 保管ノートのパスワード',pin_new_ph:'新しいパスワード（数字4桁を推奨）',
+  pin_again_ph:'もう一度入力',pin_remove:'解除する',pin_set_btn:'設定 / 変更',pin_set_btn2:'設定',
+  dlg_no:'キャンセル',dlg_ok:'OK',
+  empty_new:'＋ を押して最初のノートを作成',empty_search:'結果がありません',
+  empty_folder:'このフォルダーにノートはありません',empty_trash:'ゴミ箱は空です（30日後に完全削除）',
+  chip_all:'すべて',chip_notes:'ノート',chip_addfolder:'＋ フォルダー',
+  chip_backnormal:'← 通常のノート',folder_mgr:'フォルダー',vault_folder_mgr:'🔐 保管フォルダー',
+  gate_title:'パスワード',gate_ok:'OK',vault_title:'🔐 保管ノート',
+  link_open:'ウェブサイトを開く',link_copy:'リンクをコピー',link_share:'共有',link_cancel:'キャンセル',
+  toast_saved:'保存しました',toast_settings_saved:'設定を保存しました',
+  toast_img_added:'画像を追加しました',toast_trash:'ゴミ箱に移動しました',toast_restored:'復元しました',
+  no_title:'タイトルなし',today:'今日',none_yet:'まだありません',
+  sync_ok:'同期済み',sync_syncing:'同期中…',sync_err:'エラー',sync_unset:'未設定',sync_nolog:'未ログイン'
+};
+/* ══ 中文（简体）══ */
+const I18N_ZH={
+  cancel:'取消',sel_count:' 项已选',restore:'恢复',delete:'删除',
+  search_ph:'搜索...',view_toggle:'视图',account_sync:'账户 · 同步',trash:'回收站',
+  settings:'设置',add:'添加',note:'笔记',checklist:'清单',
+  title_ph:'标题',save:'保存',edit_hint:'编辑模式',format_t:'格式',
+  img_btn:'轻点=相册 · 长按=拍照',color_btn:'颜色',more:'更多',
+  body_ph:'输入内容...',add_item:'＋ 添加项目',
+  undo:'撤销',undone:'已撤销',
+  sec_screen:'显示',language:'语言 / Language',lang_auto:'自动（跟随系统）',
+  theme:'主题',auto:'自动',light:'浅色',dark:'深色',
+  default_view:'默认视图',grid:'网格',list:'列表',titles:'仅标题',
+  sort_by:'排序方式',sort_color:'按颜色',sort_updated:'最近编辑',
+  sort_created:'创建时间',sort_title:'标题',sort_manual:'手动排序',
+  font_size:'正文字号 (10–25pt)',font_preview:'示例 Abc 123 — 预览',
+  font_weight:'正文粗细',fw_l:'细 (300)',fw_n:'标准 (500) — 推荐',fw_b:'粗 (700)',fw_x:'特粗 (900)',
+  box_size:'卡片大小（列数）',box2:'2 列',box3:'3 列',box4:'4 列',
+  note_shape:'笔记样式',shape_none:'无',shape_line:'横线',
+  default_color:'默认笔记颜色',
+  sec_sync:'同步',sync_status:'状态',sync_notset:'未设置',sync_btn:'☁️ 账户 · 同步',
+  sec_vault:'保险箱',vault_hint:'普通笔记无需密码。保险箱每次都会询问密码。',
+  vault_open:'🔐 保险箱',open:'打开',vault_pin:'保险箱密码',pin_set:'设置 / 更改',
+  vault_unlock_time:'保持解锁时长',vault_always:'每次询问',
+  sec_data:'数据',btn_backup:'💾 备份（保存到本机）',btn_restore:'♻️ 恢复（已保存的备份）',
+  btn_export_en:'📤 导出笔记',btn_import_en:'📥 导入笔记',
+  btn_wipe:'全部删除',btn_emptytrash:'清空回收站',
+  bk_title:'♻️ 已保存的备份',bk_empty:'还没有备份。请先点击"备份"。',
+  bk_from_file:'📂 从文件载入',bk_clear:'清除备份列表',
+  app_name:'soonenote',settings_title:'⚙️ 设置',save2:'保存',
+  ac_title:'☁️ 账户 · 同步',ac_server:'服务器连接 (Supabase)',
+  ac_url:'项目 URL',ac_key:'公开密钥 (anon 或 sb_publishable)',
+  ac_save:'保存 · 连接',ac_test:'测试连接',ac_login:'登录（邮箱）',
+  ac_email:'邮箱',ac_pass:'密码（6位以上）',ac_login_btn:'登录',
+  ac_signup:'注册',ac_reset:'发送重置邮件',ac_my:'我的账户',
+  ac_syncstate:'同步状态',ac_lastsync:'上次同步',ac_syncnow:'立即同步',
+  ac_diag:'诊断',ac_logout:'退出登录',
+  rm_title:'⏰ 提醒',rm_time:'提醒时间',rm_clear:'取消提醒',
+  folder_ph:'新文件夹名称',add2:'添加',
+  pin_title:'🔐 保险箱密码',pin_new_ph:'新密码（建议4位数字）',
+  pin_again_ph:'再次输入',pin_remove:'移除（解锁）',pin_set_btn:'设置 / 更改',pin_set_btn2:'设置',
+  dlg_no:'取消',dlg_ok:'确定',
+  empty_new:'点击 ＋ 创建第一条笔记',empty_search:'没有结果',
+  empty_folder:'此文件夹中没有笔记',empty_trash:'回收站是空的（30天后彻底删除）',
+  chip_all:'全部',chip_notes:'笔记',chip_addfolder:'＋ 文件夹',
+  chip_backnormal:'← 普通笔记',folder_mgr:'文件夹',vault_folder_mgr:'🔐 保险箱文件夹',
+  gate_title:'密码',gate_ok:'确定',vault_title:'🔐 保险箱',
+  link_open:'打开网站',link_copy:'复制链接',link_share:'分享',link_cancel:'取消',
+  toast_saved:'已保存',toast_settings_saved:'设置已保存',
+  toast_img_added:'已添加图片',toast_trash:'已移到回收站',toast_restored:'已恢复',
+  no_title:'无标题',today:'今天',none_yet:'暂无',
+  sync_ok:'已同步',sync_syncing:'同步中…',sync_err:'错误',sync_unset:'未设置',sync_nolog:'未登录'
+};
+/* ══ Español ══ */
+const I18N_ES={
+  cancel:'Cancelar',sel_count:' seleccionados',restore:'Restaurar',delete:'Eliminar',
+  search_ph:'Buscar...',view_toggle:'Vista',account_sync:'Cuenta · Sincronización',trash:'Papelera',
+  settings:'Ajustes',add:'Añadir',note:'Nota',checklist:'Lista',
+  title_ph:'Título',save:'Guardar',edit_hint:'Modo edición',format_t:'Formato',
+  img_btn:'Toca = Galería · Mantén = Cámara',color_btn:'Color',more:'Más',
+  body_ph:'Escribe algo...',add_item:'＋ Añadir elemento',
+  undo:'Deshacer',undone:'Deshecho',
+  sec_screen:'Pantalla',language:'Idioma / Language',lang_auto:'Automático (según el sistema)',
+  theme:'Tema',auto:'Automático',light:'Claro',dark:'Oscuro',
+  default_view:'Vista predeterminada',grid:'Cuadrícula',list:'Lista',titles:'Solo títulos',
+  sort_by:'Orden',sort_color:'Por color',sort_updated:'Editadas recientemente',
+  sort_created:'Fecha de creación',sort_title:'Título',sort_manual:'Manual',
+  font_size:'Tamaño de letra (10–25 pt)',font_preview:'Muestra Abc 123 — vista previa',
+  font_weight:'Grosor de letra',fw_l:'Fina (300)',fw_n:'Normal (500) — recomendado',fw_b:'Negrita (700)',fw_x:'Extra (900)',
+  box_size:'Tamaño de tarjeta (columnas)',box2:'2 columnas',box3:'3 columnas',box4:'4 columnas',
+  note_shape:'Estilo de nota',shape_none:'Liso',shape_line:'Con renglones',
+  default_color:'Color predeterminado',
+  sec_sync:'Sincronización',sync_status:'Estado',sync_notset:'Sin configurar',sync_btn:'☁️ Cuenta · Sincronización',
+  sec_vault:'Caja fuerte',vault_hint:'Las notas normales no necesitan contraseña. La caja fuerte la pide siempre.',
+  vault_open:'🔐 Caja fuerte',open:'Abrir',vault_pin:'Contraseña de la caja fuerte',pin_set:'Establecer / Cambiar',
+  vault_unlock_time:'Mantener desbloqueada',vault_always:'Preguntar siempre',
+  sec_data:'Datos',btn_backup:'💾 Copia de seguridad (en este equipo)',btn_restore:'♻️ Restaurar (copias guardadas)',
+  btn_export_en:'📤 Exportar notas',btn_import_en:'📥 Importar notas',
+  btn_wipe:'Eliminar todo',btn_emptytrash:'Vaciar papelera',
+  bk_title:'♻️ Copias guardadas',bk_empty:'Aún no hay copias. Pulsa "Copia de seguridad" primero.',
+  bk_from_file:'📂 Cargar desde archivo',bk_clear:'Borrar lista de copias',
+  app_name:'soonenote',settings_title:'⚙️ Ajustes',save2:'Guardar',
+  ac_title:'☁️ Cuenta · Sincronización',ac_server:'Conexión al servidor (Supabase)',
+  ac_url:'URL del proyecto',ac_key:'Clave pública (anon o sb_publishable)',
+  ac_save:'Guardar · Conectar',ac_test:'Probar conexión',ac_login:'Iniciar sesión (correo)',
+  ac_email:'Correo electrónico',ac_pass:'Contraseña (6+ caracteres)',ac_login_btn:'Iniciar sesión',
+  ac_signup:'Registrarse',ac_reset:'Enviar correo de restablecimiento',ac_my:'Mi cuenta',
+  ac_syncstate:'Estado de sincronización',ac_lastsync:'Última sincronización',ac_syncnow:'Sincronizar ahora',
+  ac_diag:'Diagnosticar',ac_logout:'Cerrar sesión',
+  rm_title:'⏰ Recordatorio',rm_time:'Hora del recordatorio',rm_clear:'Quitar recordatorio',
+  folder_ph:'Nombre de la nueva carpeta',add2:'Añadir',
+  pin_title:'🔐 Contraseña de la caja fuerte',pin_new_ph:'Nueva contraseña (4 dígitos recomendado)',
+  pin_again_ph:'Escríbela otra vez',pin_remove:'Quitar (desbloquear)',pin_set_btn:'Establecer / Cambiar',pin_set_btn2:'Establecer',
+  dlg_no:'Cancelar',dlg_ok:'Aceptar',
+  empty_new:'Pulsa ＋ para crear tu primera nota',empty_search:'Sin resultados',
+  empty_folder:'No hay notas en esta carpeta',empty_trash:'La papelera está vacía (se borra a los 30 días)',
+  chip_all:'Todas',chip_notes:'Notas',chip_addfolder:'＋ Carpeta',
+  chip_backnormal:'← Notas normales',folder_mgr:'Carpetas',vault_folder_mgr:'🔐 Carpetas de la caja fuerte',
+  gate_title:'Contraseña',gate_ok:'Aceptar',vault_title:'🔐 Caja fuerte',
+  link_open:'Abrir sitio web',link_copy:'Copiar enlace',link_share:'Compartir',link_cancel:'Cancelar',
+  toast_saved:'Guardado',toast_settings_saved:'Ajustes guardados',
+  toast_img_added:'Imagen añadida',toast_trash:'Movido a la papelera',toast_restored:'Restaurado',
+  no_title:'Sin título',today:'Hoy',none_yet:'Ninguna',
+  sync_ok:'Sincronizado',sync_syncing:'Sincronizando…',sync_err:'Error',sync_unset:'Sin configurar',sync_nolog:'Sin sesión'
+};
+const I18N_ALL={ja:I18N_JA,zh:I18N_ZH,es:I18N_ES};
+
+/* 키 조회: 현재 언어 → 영어 → (없으면 null=한국어 원문 사용) */
+function t(key){
+  if(LANG==='ko')return null;
+  const d=I18N_ALL[LANG];
+  if(d && d[key])return d[key];
+  const v=I18N[key];
+  return (v&&v.en)||'';
+}
 function tr(ko,key){ const e=t(key); return e!==null&&e!==undefined&&e!==''?e:ko; }
-/* (v6) 동적 문자열을 언어에 맞춰 즉시 선택: L(한국어, English) */
-const L=(ko,en)=>(IS_KO?ko:en);
+/* (v6) 동적 문자열: L(한국어, English) — 일/중/스페인어는 영어로 대체된다.
+   더 정교하게 하려면 L(ko,en,{ja,zh,es}) 처럼 3번째 인자로 넘긴다. */
+const L=(ko,en,more)=>{
+  if(LANG==='ko')return ko;
+  if(more&&more[LANG])return more[LANG];
+  return en;
+};
+const LOCALES={ko:'ko-KR',en:'en-US',ja:'ja-JP',zh:'zh-CN',es:'es-ES'};
+function locale(){ return LOCALES[LANG]||'en-US'; }
 function dts(ts){ // 날짜·시각을 현재 언어로
-  return new Date(ts).toLocaleString(IS_KO?'ko-KR':'en-US');
+  return new Date(ts).toLocaleString(locale());
 }
 function fmtDateL(ts){ // fmtDate와 동일하되 언어 반영
   const d=new Date(ts),n=new Date();const p=x=>String(x).padStart(2,'0');
-  if(d.toDateString()===n.toDateString())return L(`오늘 ${p(d.getHours())}:${p(d.getMinutes())}`,`Today ${p(d.getHours())}:${p(d.getMinutes())}`);
+  if(d.toDateString()===n.toDateString()){
+    const hm=`${p(d.getHours())}:${p(d.getMinutes())}`;
+    return (tr('오늘','today')||'Today')+' '+hm;
+  }
   return `${d.getMonth()+1}/${d.getDate()}`;
 }
 /* data-i18n 속성이 있는 요소의 텍스트를 시스템 언어에 맞게 교체(1회) */
 function applyI18n(){
-  if(IS_KO)return;
+  if(LANG==='ko')return;
   document.querySelectorAll('[data-i18n]').forEach(el=>{
     const k=el.getAttribute('data-i18n'); const e=t(k);
     if(e!==null&&e!==undefined&&e!=='')el.innerHTML=e;   // 일부 값에 <b> 등 마크업 포함
@@ -985,7 +1265,7 @@ function migFont(f){ if(f==null)return '12'; if(FONT_KEYS_PT[f]!=null)return Str
    가벼움 300(Light) · 보통 500(Medium) · 굵게 700(Bold) · 매우굵게 900(Black).
    FONT_WEIGHTS 맵이 '글자 키(l/n/b/x) ↔ 숫자 값' 변환의 유일한 기준. 모든 저장·로드·적용은 이 맵을 거침 */
 const FONT_WEIGHTS={l:'300',n:'500',b:'700',x:'900'};   /* 가벼움·보통·굵게·매우굵게 — 간격이 확실하게 나뉜 새 굵기 */
-const DEF={theme:'auto',view:'grid',sort:'color',font:'12',fontWeight:'n',box:'2',rule:'none',defColor:0,sbUrl:'',sbKey:'',lastSync:0,pinHash:null,lang:'auto'};
+const DEF={theme:'auto',view:'grid',sort:'color',font:'12',fontWeight:'n',box:'2',rule:'none',defColor:0,sbUrl:'',sbKey:'',lastSync:0,lastPull:0,pinHash:null,pinSalt:null,lang:'auto'};
 /* (요청6) 보관 노트 전용 설정 기본값 — 일반 노트 설정과 별도로 저장됨 */
 const VAULT_DEF={theme:'auto',view:'grid',sort:'color',font:'12',fontWeight:'n',box:'2',rule:'none',defColor:0,unlockMinutes:0};
 function load(){
@@ -996,7 +1276,7 @@ function load(){
       STORE.setItem(LS.folders,STORE.getItem('cn.folders')||'[]');
       const o=JSON.parse(STORE.getItem('cn.settings')||'{}');
       const c=JSON.parse(STORE.getItem(LS.settings)||'{}');
-      ['theme','sbUrl','sbKey','pinHash'].forEach(k=>{if(o[k]!=null)c[k]=o[k]});
+      ['theme','sbUrl','sbKey','pinHash','pinSalt'].forEach(k=>{if(o[k]!=null)c[k]=o[k]});
       if(['grid','list','titles'].includes(o.view))c.view=o.view;
       if(['updated','created','title','color','manual'].includes(o.sort))c.sort=o.sort;
       STORE.setItem(LS.settings,JSON.stringify(c));
@@ -1006,7 +1286,7 @@ function load(){
   try{S.notes=JSON.parse(STORE.getItem(LS.notes))||[]}catch(e){S.notes=[]}
   try{S.folders=JSON.parse(STORE.getItem(LS.folders))||[]}catch(e){S.folders=[]}
   try{Object.assign(S.settings,DEF,JSON.parse(STORE.getItem(LS.settings))||{})}catch(e){Object.assign(S.settings,DEF)}
-  S.notes.forEach(n=>{ if(n.color==null)n.color=0; if(n.color>4)n.color=n.color%5; });
+  S.notes.forEach(n=>{ if(n.color==null)n.color=0; if(n.color>=NCOLORS||n.color<0)n.color=((n.color%NCOLORS)+NCOLORS)%NCOLORS; });
   S.settings.font=migFont(S.settings.font);   /* (요청7) 구버전 5단계 → pt, 10~25 클램프 (v5.3) */
   // (요구3) 본문 굵기 4단계, 기본 'n'(보통=500). v5.2: 기본값 'b'로 저장됐던 기기·옛 숫자값을
   //  새 키 체계로 1회 변환 (fwVer=2 마커) — 'b' 저장분은 새 기본 'n'(보통)으로 안전 이관.
@@ -1019,21 +1299,137 @@ function load(){
   // (요청4) 정렬은 색상 우선을 기본으로 강제 (기존 기기의 '최근수정' 설정 1회 교정)
   if(!S.settings._sortFixed){ S.settings.sort='color'; S.settings._sortFixed=true; }
 }
-function save(){ STORE.setItem(LS.notes,JSON.stringify(S.notes)); STORE.setItem(LS.folders,JSON.stringify(S.folders)); STORE.setItem(LS.settings,JSON.stringify(S.settings)); scheduleAutoSnap(); }
+/* (v6.1) 저장 실패(용량 초과 등)를 조용히 넘기지 않는다.
+   localStorage가 꽉 차면 사용자는 저장된 줄 알고 노트를 잃는다 → 즉시 알리고 자동 정리 시도. */
+let _saveWarned=0;
+function save(){
+  try{
+    STORE.setItem(LS.notes,JSON.stringify(S.notes));
+    STORE.setItem(LS.folders,JSON.stringify(S.folders));
+    STORE.setItem(LS.settings,JSON.stringify(S.settings));
+    scheduleAutoSnap();
+    return true;
+  }catch(err){
+    console.error('save failed',err);
+    /* 1차 자동 복구: 오래된 자동 백업부터 지우고 재시도 */
+    if(pruneBackups(1)){
+      try{
+        STORE.setItem(LS.notes,JSON.stringify(S.notes));
+        STORE.setItem(LS.folders,JSON.stringify(S.folders));
+        STORE.setItem(LS.settings,JSON.stringify(S.settings));
+        return true;
+      }catch(e2){}
+    }
+    const now=Date.now();
+    if(now-_saveWarned>8000){
+      _saveWarned=now;
+      toast(L('⚠ 저장 공간이 가득 찼습니다. 사진이 든 오래된 노트나 백업을 지워 주세요.',
+              '⚠ Storage is full. Please delete old notes with photos, or old backups.'));
+    }
+    return false;
+  }
+}
+/* 저장 공간 확보: 오래된 백업 n개 삭제 (성공하면 true) */
+function pruneBackups(n){
+  try{
+    const list=JSON.parse(STORE.getItem('sk.backups')||'[]');
+    if(!list.length)return false;
+    list.sort((a,b)=>(a.at||0)-(b.at||0));
+    list.splice(0,Math.max(1,n||1));
+    STORE.setItem('sk.backups',JSON.stringify(list));
+    return true;
+  }catch(e){return false}
+}
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),2200)}
-function fmtDate(ts){const d=new Date(ts);const n=new Date();const p=x=>String(x).padStart(2,'0');
-  if(d.toDateString()===n.toDateString())return `오늘 ${p(d.getHours())}:${p(d.getMinutes())}`;
-  return `${d.getMonth()+1}/${d.getDate()}`;}
+/* (v6.1) '오늘'이 한국어로 하드코딩돼 영어 모드에서도 한글이 나오던 문제 수정 */
+function fmtDate(ts){return fmtDateL(ts);}
 function plain(html){
   const d=document.createElement('div');
   d.innerHTML=(html||'').replace(/<br\s*\/?>/gi,'\n').replace(/<\/(div|p|li)>/gi,'\n');
   return (d.textContent||'').replace(/\n{3,}/g,'\n\n');
 }
+/* ══════════ (v6.1) HTML 정화(sanitize) — XSS 차단 ══════════
+   본문은 HTML 그대로 저장/표시된다. Supabase에서 내려온 내용이나 Import한
+   백업 파일을 그대로 믿으면 <img onerror=...> 한 줄로 로그인 토큰까지 털린다.
+   → 화면(innerHTML)에 넣기 전에 반드시 sanitizeHTML()을 통과시킨다. */
+const SAN_TAGS=new Set(['B','STRONG','I','EM','U','S','STRIKE','BR','P','DIV','SPAN',
+  'UL','OL','LI','A','IMG','FONT','H1','H2','H3','H4','BLOCKQUOTE','CODE','PRE','SUB','SUP','HR']);
+const SAN_ATTR={
+  '*':['style','class','align','dir'],
+  'A':['href','target','rel','title'],
+  'IMG':['src','alt','width','height'],
+  'FONT':['color','size','face']
+};
+/* style 안에서 허용할 속성만 (url()/expression 등 차단) */
+const SAN_STYLE=new Set(['color','background-color','background','font-size','font-weight',
+  'font-style','font-family','text-decoration','line-height','text-align','width','height',
+  'max-width','margin','margin-left','margin-right','margin-top','margin-bottom',
+  'padding','float','clear','display','vertical-align','letter-spacing']);
+function sanStyle(v){
+  if(!v)return '';
+  return String(v).split(';').map(d=>{
+    const i=d.indexOf(':'); if(i<0)return '';
+    const k=d.slice(0,i).trim().toLowerCase(), val=d.slice(i+1).trim();
+    if(!SAN_STYLE.has(k))return '';
+    if(/url\s*\(|expression|javascript:|@import|behavior/i.test(val))return '';
+    return k+':'+val;
+  }).filter(Boolean).join(';');
+}
+function sanUrl(u,allowData){
+  u=String(u||'').trim().replace(/[\u0000-\u001F\u007F]/g,'');
+  if(/^(https?:|mailto:|tel:)/i.test(u))return u;
+  if(allowData&&/^data:image\/(png|jpe?g|gif|webp|bmp);base64,[A-Za-z0-9+/=\s]+$/i.test(u))return u;
+  if(/^[^a-z]*[a-z0-9+.-]*:/i.test(u))return '';   // javascript:, vbscript:, data:text/html 등 차단
+  return u;                                        // 상대경로는 허용
+}
+function sanitizeHTML(html){
+  if(!html)return '';
+  const tpl=document.createElement('template');
+  tpl.innerHTML=String(html);
+  const walk=root=>{
+    [...root.childNodes].forEach(node=>{
+      if(node.nodeType===8){ node.remove(); return; }              // 주석 제거
+      if(node.nodeType!==1){ return; }                             // 텍스트는 그대로
+      const tag=node.tagName;
+      if(!SAN_TAGS.has(tag)){                                      // 허용 안 된 태그
+        if(tag==='SCRIPT'||tag==='STYLE'||tag==='IFRAME'||tag==='OBJECT'||
+           tag==='EMBED'||tag==='LINK'||tag==='META'||tag==='FORM'){ node.remove(); return; }
+        // 그 외 모르는 태그는 내용만 살려서 풀어헤침
+        const parent=node.parentNode;
+        while(node.firstChild)parent.insertBefore(node.firstChild,node);
+        node.remove();
+        return;
+      }
+      const ok=(SAN_ATTR[tag]||[]).concat(SAN_ATTR['*']);
+      [...node.attributes].forEach(a=>{
+        const nm=a.name.toLowerCase();
+        if(nm.startsWith('on')||!ok.includes(nm)){ node.removeAttribute(a.name); return; }
+        if(nm==='style'){
+          const v=sanStyle(a.value);
+          if(v)node.setAttribute('style',v); else node.removeAttribute('style');
+        }else if(nm==='href'){
+          const v=sanUrl(a.value,false);
+          if(v)node.setAttribute('href',v); else node.removeAttribute('href');
+        }else if(nm==='src'){
+          const v=sanUrl(a.value,true);
+          if(v)node.setAttribute('src',v); else node.remove();
+        }
+      });
+      if(tag==='A'){ node.setAttribute('rel','noopener noreferrer nofollow'); }
+      walk(node);
+    });
+  };
+  walk(tpl.content);
+  return tpl.innerHTML;
+}
+/* 안전하게 innerHTML 설정 */
+function setSafeHTML(el,html){ if(el)el.innerHTML=sanitizeHTML(html); }
+
 /* (요청6) 본문 속 URL을 클릭 가능한 링크로 변환 (보기 모드용) */
 function linkify(html){
-  if(!html)return html;
-  // 이미 <a>로 감싼 부분은 건드리지 않도록 텍스트 노드만 처리
-  const box=document.createElement('div');box.innerHTML=html;
+  if(!html)return '';
+  // (v6.1) 먼저 정화한 뒤 링크화 — 저장된 내용/동기화 내용 모두 신뢰하지 않는다
+  const box=document.createElement('div');box.innerHTML=sanitizeHTML(html);
   const rx=/(https?:\/\/[^\s<]+[^\s<.,;!?)\]}"'])/g;
   const walk=node=>{
     for(const child of [...node.childNodes]){
@@ -1043,7 +1439,7 @@ function linkify(html){
           rx.lastIndex=0;
           const frag=document.createElement('span');
           frag.innerHTML=t.replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]))
-            .replace(rx,u=>`<a href="${u}" target="_blank" rel="noopener">${u}</a>`);
+            .replace(rx,u=>`<a class="nlink" href="${u}" target="_blank" rel="noopener noreferrer">${u}</a>`);
           child.replaceWith(frag);
         }
       }else if(child.nodeType===1 && child.tagName!=='A'){ walk(child); }
@@ -1064,7 +1460,19 @@ function hl(escaped){
 const OVS=[];
 let suppressPop=false, lastBackHint=0;
 function histPush(){ try{history.pushState({sk:1},'')}catch(e){} }
-function histPop(){ if(suppressPop)return; suppressPop=true; try{history.back()}catch(e){}; setTimeout(()=>{suppressPop=false},0) }
+/* (v6.1 버그수정) 예전에는 setTimeout(...,0)으로 suppressPop을 껐는데,
+   popstate 이벤트가 그보다 늦게 도착하는 경우가 있어 '내가 부른 back'을
+   '사용자가 누른 뒤로가기'로 오인했다.
+   → 보관 노트를 열자마자 곧바로 VLT.leave()가 불려 잠금이 풀리자마자 다시 잠기고
+     복호화 키까지 지워지는 문제가 있었다.
+   이제 플래그는 popstate 핸들러가 직접 끄고, 타임아웃은 안전망(300ms)으로만 둔다. */
+function histPop(){
+  if(suppressPop)return;
+  suppressPop=true;
+  try{history.back()}catch(e){}
+  clearTimeout(histPop._t);
+  histPop._t=setTimeout(()=>{suppressPop=false},300);
+}
 function ovOpen(el){ if(el.classList.contains('show'))return; el.classList.add('show'); OVS.push(el); histPush(); }
 function ovCloseUi(el){ const i=OVS.indexOf(el); if(i>-1)OVS.splice(i,1); el.classList.remove('show'); histPop(); }
 function ovCloseTop(){
@@ -1083,7 +1491,7 @@ function ovCloseTop(){
   return false
 }
 window.addEventListener('popstate',()=>{
-  if(suppressPop){suppressPop=false;return}
+  if(suppressPop){ suppressPop=false; clearTimeout(histPop._t); return }
   if(ui.selMode){ exitSel(); histPush(); return }               // 선택모드면 먼저 해제
   if(OVS.length){ ovCloseTop(); return }
   if(ui.vault){ VLT.leave(); histPush(); return }               // 보관 모드면 나가기
@@ -1112,7 +1520,48 @@ function dlg(msg,opt={}){
   });
 }
 
-/* ═══════════════ 해시 ═══════════════ */
+/* ══════════ (v6.1) 보관 노트 비밀번호 — PBKDF2 + 솔트 ══════════
+   기존 sha256('cn:'+pin)은 솔트도 반복도 없어 4자리 숫자면 1만 개, 즉시 뚫린다.
+   → PBKDF2-SHA256 210,000회 + 기기별 랜덤 솔트.
+   구버전 해시(sha256)로 저장된 사용자는 첫 로그인 성공 시 자동으로 새 방식으로 올린다. */
+const PBKDF2_ITER=210000;
+function randB64(n){ return btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(n)))); }
+function b64ToBuf(b){ return Uint8Array.from(atob(b),c=>c.charCodeAt(0)); }
+async function pbkdf2Bits(pin,saltB64,bits){
+  const km=await crypto.subtle.importKey('raw',new TextEncoder().encode(pin),'PBKDF2',false,['deriveBits','deriveKey']);
+  return crypto.subtle.deriveBits(
+    {name:'PBKDF2',salt:b64ToBuf(saltB64),iterations:PBKDF2_ITER,hash:'SHA-256'},km,bits);
+}
+async function pinHash(pin,saltB64){
+  const bits=await pbkdf2Bits(pin,saltB64,256);
+  return [...new Uint8Array(bits)].map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+/* 본문 암호화용 AES-GCM 키 */
+async function pinKey(pin,saltB64){
+  const km=await crypto.subtle.importKey('raw',new TextEncoder().encode(pin),'PBKDF2',false,['deriveKey']);
+  return crypto.subtle.deriveKey(
+    {name:'PBKDF2',salt:b64ToBuf(saltB64),iterations:PBKDF2_ITER,hash:'SHA-256'},
+    km,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+}
+async function aesEncrypt(key,plainText){
+  const iv=crypto.getRandomValues(new Uint8Array(12));
+  const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,new TextEncoder().encode(plainText));
+  return {v:1,iv:btoa(String.fromCharCode(...iv)),ct:btoa(String.fromCharCode(...new Uint8Array(ct)))};
+}
+async function aesDecrypt(key,obj){
+  const iv=b64ToBuf(obj.iv);
+  const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv},key,b64ToBuf(obj.ct));
+  return new TextDecoder().decode(pt);
+}
+/* 타이밍 공격 완화용 상수시간 비교 */
+function eqConst(a,b){
+  a=String(a);b=String(b);
+  if(a.length!==b.length)return false;
+  let d=0; for(let i=0;i<a.length;i++)d|=a.charCodeAt(i)^b.charCodeAt(i);
+  return d===0;
+}
+
+/* ═══════════════ 해시 (구버전 호환용) ═══════════════ */
 async function sha256(str){
   if(crypto&&crypto.subtle){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('cn:'+str));
     return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
@@ -1142,7 +1591,7 @@ function visibleNotes(){
     if(sort==='color')return (a.color||0)-(b.color||0)||b.updatedAt-a.updatedAt;
     if(sort==='updated')return (b.pinned?1:0)-(a.pinned?1:0)||b.updatedAt-a.updatedAt;
     if(sort==='created')return (b.pinned?1:0)-(a.pinned?1:0)||b.createdAt-a.createdAt;
-    if(sort==='title')return (a.title||'').localeCompare(b.title||'','ko');
+    if(sort==='title')return (a.title||'').localeCompare(b.title||'',locale());
     return (b.pinned?1:0)-(a.pinned?1:0)||(a.sortIndex||0)-(b.sortIndex||0);
   });
   return arr;
@@ -1329,7 +1778,7 @@ function scheduleReminders(){
 }
 function fireReminder(id){
   const n=[...S.notes,...VLT.notes].find(x=>x.id===id);if(!n||n.deleted)return;
-  const title='⏰ '+(n.title||'SK 노트');
+  const title='⏰ '+(n.title||APP_NAME);
   const body=n.type==='check'?(n.items||[]).map(i=>(i.done?'☑ ':'☐ ')+i.text).join('  '):plain(n.content).slice(0,90);
   try{
     if('Notification' in window && Notification.permission==='granted'){
@@ -1358,7 +1807,7 @@ function openEditor(id){
   $('#edBody').classList.toggle('hidden',isCheck);
   $('#edItems').classList.toggle('hidden',!isCheck);
   $('#addItemBtn').classList.toggle('hidden',!isCheck);
-  $('#edBody').innerHTML=linkify(n.content||'');
+  $('#edBody').innerHTML=linkify(n.content||'');   /* linkify가 내부에서 sanitize 수행 */
   applyEditorColor(n.color||0);                      // (요청3) 노트 색 적용
   /* (요청1) 노트별 글자 크기 기능 폐지 — 크기는 설정(--note)에서만, 서식은 Type(T) 버튼 */
   applyEditorWeight(n);                              // (요구3) 노트 전용 본문 굵기 적용 (미지정이면 전역값) — v5.1 데드코드 활성화
@@ -1414,7 +1863,7 @@ function applyEdMode(){
   $('.edbar')&&$('.edbar').classList.toggle('editmode',ui.edEdit);
   // (요청6) 보기 모드=링크 활성 / 편집 모드=순수 편집(링크 표시는 유지)
   if(n && n.type==='note'){
-    if(ui.edEdit) $('#edBody').innerHTML=n.content||'';
+    if(ui.edEdit) $('#edBody').innerHTML=linkify(n.content||'');   /* (v6.1) 편집 중에도 링크 파랑 유지 + 정화 */
     else $('#edBody').innerHTML=linkify(n.content||'');
   }
   if(ui.edEdit&&!isCheck)setTimeout(()=>$('#edBody').focus(),50);
@@ -1422,12 +1871,14 @@ function applyEdMode(){
 }
 function updateColorBtn(sel){
   const dark=isDark(); const PAL=dark?COLORS_D:COLORS;
-  $('#edColorBtn').style.setProperty('--curColor',PAL[sel]);
-  $('#edColorBtn').style.background=PAL[sel];
+  const HEADc=isDark()?HEADS_D:HEADS_L;
+  $('#edColorBtn').style.setProperty('--curColor',HEADc[sel]);
+  $('#edColorBtn').style.background=HEADc[sel];
   // 팝오버 스와치
   const pop=$('#edColorPop');pop.innerHTML='';
+  const HEAD2=isDark()?HEADS_D:HEADS_L;
   PAL.forEach((c,i)=>{const b=document.createElement('button');b.className='swatch'+(i===sel?' on':'');
-    b.style.background=c;b.title=cnName(i);
+    b.style.background=HEAD2[i];b.title=cnName(i);b.setAttribute('aria-label',cnName(i));
     b.onclick=()=>{const n=cur();if(!n)return;n.color=i;n.updatedAt=Date.now();n.dirty=true;
       updateColorBtn(i);applyEditorColor(i);                          // (요청1) 색 바꾸면 배경·제목바 즉시 변화
       pop.classList.remove('show');schedSave()};pop.append(b)});
@@ -1444,7 +1895,13 @@ function flushEd(silent){
     return;   // 변경 없음 → 아무 것도 안 함
   }
   n.title=$('#edTitle').value;
-  if(n.type==='note' && ui.edEdit)n.content=$('#edBody').innerHTML;   // (요청6) 편집 중일 때만 본문 저장
+  if(n.type==='note' && ui.edEdit){
+    /* (v6.1) 저장 전 정화 + 화면 전용 상태(선택표시 .sel/.dragging)는 저장하지 않는다 */
+    const tmp=document.createElement('div');
+    tmp.innerHTML=$('#edBody').innerHTML;
+    tmp.querySelectorAll('img.edimg').forEach(im=>im.classList.remove('sel','dragging'));
+    n.content=sanitizeHTML(tmp.innerHTML);
+  }
   n.updatedAt=Date.now();n.dirty=true;persistActive();if(!ui.vault)syncSoon();
   ui._edSnap=edSnapshot();
   if(!silent)toast(tr('저장됨','toast_saved'));
@@ -1557,11 +2014,42 @@ $('#edOverlay').addEventListener('selectstart',e=>{
 });
 
 /* (요청5) 이미지 붙여넣기: 클립보드 그림을 본문에 삽입 */
+/* (v6.1) 사진을 base64 원본 그대로 localStorage에 넣으면 5MB 한도를 금방 넘겨
+   노트 전체가 저장 불가가 된다 → 넣기 전에 긴 변 1280px · JPEG 품질 0.72로 압축. */
+async function compressImage(file,maxSide=1280,quality=0.72){
+  try{
+    const url=URL.createObjectURL(file);
+    const img=await new Promise((res,rej)=>{const im=new Image();im.onload=()=>res(im);im.onerror=rej;im.src=url});
+    let {naturalWidth:w,naturalHeight:h}=img;
+    URL.revokeObjectURL(url);
+    if(!w||!h)throw 0;
+    const scale=Math.min(1,maxSide/Math.max(w,h));
+    const cw=Math.max(1,Math.round(w*scale)), ch=Math.max(1,Math.round(h*scale));
+    const cv=document.createElement('canvas'); cv.width=cw; cv.height=ch;
+    const cx=cv.getContext('2d');
+    cx.fillStyle='#ffffff'; cx.fillRect(0,0,cw,ch);      // 투명 PNG → 흰 배경
+    cx.drawImage(img,0,0,cw,ch);
+    const out=cv.toDataURL('image/jpeg',quality);
+    // 압축이 오히려 커지면 원본 사용
+    return out.length<file.size*1.35?out:null;
+  }catch(e){ return null }
+}
 async function insertImageFile(file){
   if(!file)return;
-  if(file.size>3*1024*1024){toast(L('이미지가 너무 큽니다(3MB 이하로)','Image is too large (max 3MB)'));return}
+  if(file.size>12*1024*1024){toast(L('이미지가 너무 큽니다(12MB 이하로)','Image is too large (max 12MB)'));return}
   if(!ui.edEdit){ui.edEdit=true;applyEdMode();}
-  const dataUrl=await new Promise(res=>{const r=new FileReader();r.onload=()=>res(r.result);r.readAsDataURL(file)});
+  let dataUrl=await compressImage(file);
+  if(!dataUrl){
+    dataUrl=await new Promise(res=>{const r=new FileReader();r.onload=()=>res(r.result);r.readAsDataURL(file)});
+  }
+  // 압축 후에도 2.5MB를 넘으면 더 줄여본다
+  if(dataUrl.length>2.5*1024*1024){
+    const smaller=await compressImage(file,900,0.6);
+    if(smaller)dataUrl=smaller;
+  }
+  if(dataUrl.length>4*1024*1024){
+    toast(L('이 사진은 너무 커서 넣을 수 없습니다','This photo is too large to insert'));return;
+  }
   const img=document.createElement('img'); img.className='edimg'; img.src=dataUrl; img.alt='image';
   img.style.width='100%';
   $('#edBody').focus();
@@ -1804,7 +2292,9 @@ $('#edBody').addEventListener('paste',e=>{
 
 /* 본문 더블탭 = 그 자리 편집 (요구6) */
 function enterEditAtPoint(x,y){
+  const hadSel=(()=>{const s=window.getSelection();return s&&!s.isCollapsed})();
   if(!ui.edEdit){ui.edEdit=true;applyEdMode();}
+  if(hadSel)return;                    /* (v6.1) 이미 선택 중이면 커서를 옮겨 선택을 깨지 않는다 */
   setTimeout(()=>{
     let range=null;
     if(document.caretRangeFromPoint)range=document.caretRangeFromPoint(x,y);
@@ -1813,11 +2303,56 @@ function enterEditAtPoint(x,y){
     $('#edBody').focus();
   },60);
 }
-/* (요청6) 보기 모드에서 링크 클릭 → 새 탭으로 열기 */
+/* ══ (v6.1 요청3) 링크를 톡 치면 '열기 / 복사 / 공유' 선택 시트 ══ */
+let _lsUrl='';
+function openLinkSheet(url){
+  _lsUrl=url;
+  $('#lsUrl').textContent=url;
+  $('#linkSheet').classList.add('show');
+  $('#linkSheet').setAttribute('aria-hidden','false');
+}
+function closeLinkSheet(){
+  $('#linkSheet').classList.remove('show');
+  $('#linkSheet').setAttribute('aria-hidden','true');
+}
+$('#linkSheet').addEventListener('click',e=>{ if(e.target.id==='linkSheet')closeLinkSheet(); });
+$('#lsCancel').onclick=closeLinkSheet;
+$('#lsOpen').onclick=()=>{ closeLinkSheet(); if(_lsUrl)window.open(_lsUrl,'_blank','noopener,noreferrer'); };
+$('#lsCopy').onclick=async()=>{
+  closeLinkSheet();
+  try{
+    if(navigator.clipboard&&navigator.clipboard.writeText){ await navigator.clipboard.writeText(_lsUrl); }
+    else{ const ta=document.createElement('textarea'); ta.value=_lsUrl; ta.style.position='fixed'; ta.style.opacity='0';
+          document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); }
+    toast(L('주소를 복사했습니다','Link copied'));
+  }catch(e){ toast(L('복사할 수 없습니다','Could not copy')) }
+};
+$('#lsShare').onclick=async()=>{
+  closeLinkSheet();
+  try{ if(navigator.share){ await navigator.share({url:_lsUrl}); return; } }catch(e){ return }
+  try{ await navigator.clipboard.writeText(_lsUrl); toast(L('공유를 지원하지 않아 복사했습니다','Sharing unavailable — copied instead')); }catch(e){}
+};
 $('#edBody').addEventListener('click',e=>{
   const a=e.target.closest&&e.target.closest('a');
-  if(a && !ui.edEdit){ e.preventDefault(); window.open(a.href,'_blank','noopener'); }
+  if(!a)return;
+  if(ui.edEdit)return;                 /* 편집 중에는 커서 놓기가 우선 (길게 눌러 메뉴) */
+  e.preventDefault();
+  const href=a.getAttribute('href')||a.href||'';
+  if(!href)return;
+  openLinkSheet(href);
 });
+/* 편집 중에도 링크를 '길게' 누르면 메뉴 */
+let _lnkT=null;
+$('#edBody').addEventListener('pointerdown',e=>{
+  const a=e.target.closest&&e.target.closest('a'); if(!a||!ui.edEdit)return;
+  clearTimeout(_lnkT);
+  _lnkT=setTimeout(()=>{ const h=a.getAttribute('href')||a.href||''; if(h)openLinkSheet(h); },550);
+});
+['pointerup','pointermove','pointercancel'].forEach(ev=>
+  $('#edBody').addEventListener(ev,()=>clearTimeout(_lnkT)));
+
+/* 편집 모드에서도 링크가 파랗게 보이도록 */
+
 $('#edBody').addEventListener('dblclick',e=>{ if(cur()&&cur().type!=='check')enterEditAtPoint(e.clientX,e.clientY); });
 /* (요청3) 이미지 탭 분기: 편집 중=선택(재탭=해제) / 보기 모드에서도 탭하면 바로 선택(편집 진입) —
    ★ 노트를 닫았다 다시 열어도(보기 모드로 열려도) 이미지를 톡 치면 선택되어 이동·삭제·크기조절이 된다. */
@@ -1837,6 +2372,10 @@ $('#edBody').addEventListener('pointerup',e=>{
     }
     return;
   }
+  /* (v6.1 요청4) 텍스트를 드래그해 선택하는 중이면 더블탭 편집진입을 건너뛴다.
+     예전에는 선택하려고 두 번 건드리면 편집모드로 튀면서 선택이 풀렸다. */
+  const sel=window.getSelection();
+  if(sel && !sel.isCollapsed) { lastTap=0; return; }
   const now=Date.now();
   if(!imgTapGuard && now-lastTap<320 && Math.abs(e.clientX-lastX)<25 && Math.abs(e.clientY-lastY)<25){
     if(cur()&&cur().type!=='check')enterEditAtPoint(e.clientX,e.clientY);
@@ -1845,7 +2384,7 @@ $('#edBody').addEventListener('pointerup',e=>{
 });
 
 /* ═══════════════ (요청) Type(T) 버튼 — 선택 텍스트 서식: 크기·볼드·기울임·밑줄·줄간격 (이모티콘 제거) ═══════════════ */
-let typeFs=12, typeLh=1.5;
+let typeFs=12, typeLh=1.5;   /* typeLh 범위는 아래 LH_MIN~LH_MAX(1.0~2.0) */
 function buildTypePop(){
   const p=$('#edTypePop'); if(p._built)return; p._built=true;
   /* 글자 크기 */
@@ -1855,8 +2394,8 @@ function buildTypePop(){
   const val=document.createElement('span');val.className='tpval';val.id='tpFsVal';
   const bp=document.createElement('button');bp.className='tpbtn';bp.textContent='＋';
   r1.append(bm,val,bp);
-  bm.onclick=e=>{e.preventDefault();e.stopPropagation();typeFs=Math.max(8,typeFs-1);applyTypeFontSize()};
-  bp.onclick=e=>{e.preventDefault();e.stopPropagation();typeFs=Math.min(48,typeFs+1);applyTypeFontSize()};
+  holdRepeatFs(bm,-1);
+  holdRepeatFs(bp,+1);
   p.append(r1);
   /* B / I / U */
   const r2=document.createElement('div');r2.className='tprow';r2.innerHTML='<span class="tplab">'+L('서식','Style')+'</span>';
@@ -1873,9 +2412,15 @@ function buildTypePop(){
   const lv=document.createElement('span');lv.className='tpval';lv.id='tpLhVal';
   const lp=document.createElement('button');lp.className='tpbtn';lp.textContent='＋';
   r4.append(lm,lv,lp);
-  lm.onclick=e=>{e.preventDefault();e.stopPropagation();typeLh=Math.max(1,Math.round((typeLh-0.1)*10)/10);applyTypeLh()};
-  lp.onclick=e=>{e.preventDefault();e.stopPropagation();typeLh=Math.min(3,Math.round((typeLh+0.1)*10)/10);applyTypeLh()};
+  /* (v6.1) 탭 = 0.1 단계 / 길게 = 계속 조금씩. 범위 1.0~2.0 */
+  holdRepeat(lm,-LH_STEP);
+  holdRepeat(lp,+LH_STEP);
   p.append(r4);
+  /* 안내 */
+  const tip=document.createElement('div');
+  tip.style.cssText='font-size:.56em;color:var(--sub);padding:.1em .2em .3em;line-height:1.3';
+  tip.textContent=L('줄간격 1.0~2.0 · 길게 누르면 계속 조절','Line spacing 1.0–2.0 · hold to keep adjusting');
+  p.append(tip);
 }
 function typeSelRange(){ const s=window.getSelection(); if(!s.rangeCount)return null;
   const r=s.getRangeAt(0); if(!$('#edBody').contains(r.commonAncestorContainer))return null; return r; }
@@ -1886,14 +2431,100 @@ function applyTypeFontSize(){ const r=typeSelRange(); if(!r||r.collapsed){toast(
   sp.appendChild(frag); r.insertNode(sp);
   const ns=window.getSelection(); ns.removeAllRanges(); const nr=document.createRange(); nr.selectNodeContents(sp); ns.addRange(nr);
   $('#tpFsVal').textContent=typeFs+'pt'; schedSave(); }
-function applyTypeLh(){ const r=typeSelRange(); if(!r||r.collapsed){toast(L('줄간격을 바꿀 텍스트를 먼저 선택하세요','Select text to change line spacing first'));updateTpVals();return}
-  $('#edBody').focus();
-  const frag=r.extractContents(); const sp=document.createElement('span'); sp.style.lineHeight=typeLh;
-  sp.appendChild(frag); r.insertNode(sp);
-  const ns=window.getSelection(); ns.removeAllRanges(); const nr=document.createRange(); nr.selectNodeContents(sp); ns.addRange(nr);
-  $('#tpLhVal').textContent=typeLh; schedSave(); }
+/* ══════════ (v6.1) 줄간격 수정 ══════════
+   [문제] 예전 코드는 누를 때마다 선택 영역을 새 <span style="line-height:...">로 한 겹씩
+          더 감쌌다. line-height는 바깥 span이 아니라 '가장 안쪽' 값이 이기므로,
+          한 번 크게 만든 뒤에는 아무리 줄여도 되돌아오지 않았다(= 줄이기 불가).
+   [해결] ① 새로 감싸지 않고, 선택에 걸린 '블록(줄)' 요소를 찾아 line-height를 직접 덮어쓴다.
+          ② 안쪽에 남아 있는 line-height는 전부 제거해 충돌을 없앤다.
+          ③ 범위는 1.0 ~ 2.0, 0.1 단위.                                              */
+const LH_MIN=1.0, LH_MAX=2.0, LH_STEP=0.1;
+const lhClamp=v=>Math.min(LH_MAX,Math.max(LH_MIN,Math.round(v*10)/10));
+
+/* 선택 영역에 걸친 블록(줄) 단위 요소들 */
+function lhTargets(r){
+  const body=$('#edBody');
+  const BLOCK=/^(DIV|P|LI|H1|H2|H3|H4|BLOCKQUOTE|PRE)$/;
+  const blockOf=node=>{
+    let el=node.nodeType===1?node:node.parentElement;
+    while(el&&el!==body&&!BLOCK.test(el.tagName))el=el.parentElement;
+    return (el&&el!==body)?el:null;
+  };
+  const out=new Set();
+  const a=blockOf(r.startContainer), b=blockOf(r.endContainer);
+  if(a)out.add(a); if(b)out.add(b);
+  // 사이에 있는 블록도 모두 포함
+  body.querySelectorAll('div,p,li,h1,h2,h3,h4,blockquote,pre').forEach(el=>{
+    if(r.intersectsNode&&r.intersectsNode(el))out.add(el);
+  });
+  // 블록이 하나도 없으면(본문이 순수 텍스트+<br>) 본문 전체에 적용
+  if(!out.size)out.add(body);
+  return [...out];
+}
+function applyTypeLh(){
+  const r=typeSelRange();
+  const body=$('#edBody');
+  let targets;
+  if(!r||r.collapsed){
+    /* (v6.1) 선택이 없으면 커서가 있는 줄에 적용 — 선택 안 했다고 아무 일도 안 하던 불편 해소 */
+    if(r){ targets=lhTargets(r); }
+    else { targets=[body]; }
+  }else{
+    targets=lhTargets(r);
+  }
+  targets.forEach(el=>{
+    el.style.lineHeight=String(typeLh);
+    /* 안쪽에 박혀 있는 line-height 제거 → 바깥 값이 확실히 먹는다 (줄이기가 되는 핵심) */
+    el.querySelectorAll('[style*="line-height"]').forEach(k=>{ k.style.lineHeight=''; if(!k.getAttribute('style'))k.removeAttribute('style'); });
+  });
+  $('#tpLhVal').textContent=typeLh.toFixed(1);
+  schedSave();
+}
+/* 현재 커서/선택 위치의 실제 줄간격을 읽어와 표시값을 맞춘다 */
+function readCurrentLh(){
+  const r=typeSelRange(); const body=$('#edBody'); if(!body)return;
+  const el=(r?lhTargets(r)[0]:body)||body;
+  const cs=getComputedStyle(el);
+  const fs=parseFloat(cs.fontSize)||16;
+  let lh=cs.lineHeight;
+  let v = (lh==='normal') ? 1.4 : (parseFloat(lh)/fs);
+  if(isFinite(v)) typeLh=lhClamp(v);
+}
+/* (v6.1 요청) 버튼을 '꾹 누르면' 조금씩 계속 변한다 (탭 = 1단계) */
+function holdRepeat(btn,step){
+  let t1=null,t2=null,fired=false;
+  const doStep=()=>{ typeLh=lhClamp(typeLh+step); applyTypeLh(); };
+  const start=e=>{
+    e.preventDefault(); e.stopPropagation();
+    fired=false;
+    doStep();                                   // 즉시 한 단계
+    t1=setTimeout(()=>{                         // 0.45초 이상 누르고 있으면 반복 시작
+      fired=true;
+      t2=setInterval(doStep,110);
+    },450);
+  };
+  const stop=()=>{ clearTimeout(t1); clearInterval(t2); t1=t2=null; };
+  btn.addEventListener('pointerdown',start);
+  ['pointerup','pointerleave','pointercancel'].forEach(ev=>btn.addEventListener(ev,stop));
+  btn.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();});   // 중복 방지
+}
+/* 글자 크기 버튼도 같은 방식으로 길게 누르기 지원 */
+function holdRepeatFs(btn,step){
+  let t1=null,t2=null;
+  const doStep=()=>{ typeFs=Math.max(8,Math.min(48,typeFs+step)); applyTypeFontSize(); };
+  const start=e=>{ e.preventDefault(); e.stopPropagation(); doStep();
+    t1=setTimeout(()=>{ t2=setInterval(doStep,110); },450); };
+  const stop=()=>{ clearTimeout(t1); clearInterval(t2); t1=t2=null; };
+  btn.addEventListener('pointerdown',start);
+  ['pointerup','pointerleave','pointercancel'].forEach(ev=>btn.addEventListener(ev,stop));
+  btn.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();});
+}
 function execTypeCmd(cmd){ $('#edBody').focus(); document.execCommand(cmd,false,null); schedSave(); }
-function updateTpVals(){ $('#tpFsVal').textContent=typeFs+'pt'; $('#tpLhVal').textContent=typeLh; }
+function updateTpVals(){
+  readCurrentLh();                                   /* (v6.1) 실제 값을 읽어와 표시 */
+  $('#tpFsVal').textContent=typeFs+'pt';
+  $('#tpLhVal').textContent=typeLh.toFixed(1);
+}
 $('#edTypeBtn').onclick=e=>{e.stopPropagation();buildTypePop();updateTpVals();
   $('#edColorPop').classList.remove('show');$('#edMenu').classList.remove('show');$('#edTypePop').classList.toggle('show')};
 $('#edTypePop').onclick=e=>e.stopPropagation();
@@ -1982,7 +2613,7 @@ function moveFromVault(n){
 }
 async function shareNote(n){
   const text=(n.title?n.title+'\n\n':'')+(n.type==='check'?(n.items||[]).map(i=>(i.done?'☑ ':'☐ ')+i.text).join('\n'):plain(n.content));
-  try{ if(navigator.share){await navigator.share({title:n.title||'SK 노트',text});return} }catch(e){return}
+  try{ if(navigator.share){await navigator.share({title:n.title||APP_NAME,text});return} }catch(e){return}
   try{ await navigator.clipboard.writeText(text); toast(L('클립보드에 복사했습니다','Copied to clipboard')); }catch(e){ toast(L('공유를 지원하지 않는 환경입니다','Sharing not supported here')); }
 }
 async function moveNoteFolder(n){
@@ -2125,6 +2756,23 @@ function syncHint(m){
     return m+L('\n→ 네트워크 연결/URL을 확인하세요. 저장한 URL과 키가 맞는지 확인하세요.','\n→ Check your network and URL. Also confirm the saved URL and key are correct.');
   return m;
 }
+/* (v6.1) 공개 키인지 검사 — service_role / sb_secret 는 절대 앱에 넣으면 안 된다 */
+function checkPublicKey(k){
+  if(!k)return{ok:false,msg:L('공개 키를 입력하세요','Enter the public key')};
+  if(/^sb_secret_/i.test(k))
+    return{ok:false,msg:L('❌ 비밀 키(sb_secret…)입니다! 절대 앱에 넣지 마세요. anon 또는 sb_publishable 키를 쓰세요.',
+                          '❌ That is a SECRET key (sb_secret…). Never put it in the app. Use the anon / sb_publishable key.')};
+  try{
+    const parts=k.split('.');
+    if(parts.length===3){
+      const body=JSON.parse(atob(parts[1].replace(/-/g,'+').replace(/_/g,'/')));
+      if(body&&body.role==='service_role')
+        return{ok:false,msg:L('❌ service_role(비밀) 키입니다! 절대 앱에 넣지 마세요. anon 키를 쓰세요.',
+                              '❌ That is the service_role (secret) key. Never put it in the app. Use the anon key.')};
+    }
+  }catch(e){}
+  return{ok:true,msg:''};
+}
 const SYNC={
   client:null, channel:null, uid:null, session:null, busy:false,
   cfg(){return{url:(S.settings.sbUrl||'').trim(),key:(S.settings.sbKey||'').trim()}},
@@ -2159,11 +2807,14 @@ const SYNC={
   toRow(n){return{id:n.id,user_id:this.uid,folder:n.folder||'',color:n.color||0,type:n.type||'note',
     title:n.title||'',content:n.content||'',items:n.items||[],pinned:!!n.pinned,locked:false,
     sort_index:n.sortIndex||0,created_at:n.createdAt||Date.now(),updated_at:n.updatedAt||Date.now(),deleted:!!n.deleted}},
-  fromRow(r){return{id:r.id,folder:r.folder||'',color:(r.color||0)%5,type:r.type||'note',title:r.title||'',
+  fromRow(r){return{id:r.id,folder:r.folder||'',color:((r.color||0)%NCOLORS+NCOLORS)%NCOLORS,type:r.type||'note',title:r.title||'',
     content:r.content||'',items:r.items||[],pinned:!!r.pinned,remindAt:r.remind_at||0,sortIndex:r.sort_index||0,
     createdAt:r.created_at||0,updatedAt:r.updated_at||0,deleted:!!r.deleted}},
   async pushDirty(){
-    const c=this.client; if(!c||!this.session||this.busy)return;
+    const c=this.client; if(!c||!this.session)return;
+    /* (v6.1) busy면 조용히 건너뛰지 않고 '나중에 다시'를 예약한다.
+       예전에는 그냥 return이라 방금 고친 노트가 업로드를 통째로 놓칠 수 있었다. */
+    if(this.busy){ this.pending=true; return; }
     const dirty=S.notes.filter(n=>n.dirty);
     const folders=S.folders.filter(f=>!f._synced);
     if(!dirty.length&&!folders.length){ if(this.session) setStatus('ok'); return }
@@ -2183,14 +2834,20 @@ const SYNC={
       setStatus('ok');
     }catch(e){ setStatus('err',L('동기화 실패: ','Sync failed: ')+syncHint(e.message||e)) }
     this.busy=false;
+    if(this.pending){ this.pending=false; setTimeout(()=>this.pushDirty(),400); }
   },
   async pullAll(){
     const c=this.client; if(!c||!this.session)return;
     this.busy=true;setStatus('syncing');
     try{
+      /* (v6.1) ① user_id 필터 — RLS가 잘못 설정돼 있어도 남의 노트를 받지 않는다.
+                 ② 증분 pull — 매번 5000건 전체를 받지 않고 마지막 동기화 이후 것만.  */
+      const since=(S.settings.lastPull||0);
+      let nq=c.from('notes').select('*').eq('user_id',this.uid).order('updated_at',{ascending:false}).limit(5000);
+      if(since>0) nq=nq.gt('updated_at',since-60000);   // 시계 오차 1분 여유
       const [nr,fr]=await Promise.all([
-        c.from('notes').select('*').limit(5000),
-        c.from('folders').select('*').limit(500)
+        nq,
+        c.from('folders').select('*').eq('user_id',this.uid).limit(500)
       ]);
       if(nr.error)throw nr.error;
       const cutoff=Date.now()-30*864e5;
@@ -2207,7 +2864,10 @@ const SYNC={
         else S.folders.push({id:r.id,name:r.name,createdAt:r.created_at,_synced:true});
       });
       S.notes=S.notes.filter(n=>!(n.deleted&&n.updatedAt<cutoff));
-      c.from('notes').delete().eq('deleted',true).lt('updated_at',cutoff).then(()=>{},()=>{});
+      /* (v6.1) 오래된 삭제 노트 정리는 '내 것만'. 원래는 user_id 조건이 없어서
+         모든 기기가 전체 테이블을 지우려 들었다. 서버 cron으로 옮기는 것이 이상적. */
+      c.from('notes').delete().eq('user_id',this.uid).eq('deleted',true).lt('updated_at',cutoff).then(()=>{},()=>{});
+      S.settings.lastPull=Date.now();
       S.settings.lastSync=Date.now();save();scheduleReminders();
       if(!$('#edOverlay').classList.contains('show'))render();
       setStatus('ok');
@@ -2216,8 +2876,9 @@ const SYNC={
   },
   subscribe(){
     const c=this.client; if(!c||this.channel)return;
-    this.channel=c.channel('sk-realtime')
-      .on('postgres_changes',{event:'*',schema:'public',table:'notes'},p=>{
+    const flt='user_id=eq.'+this.uid;                 /* (v6.1) 내 행만 구독 */
+    this.channel=c.channel('sk-realtime-'+this.uid)
+      .on('postgres_changes',{event:'*',schema:'public',table:'notes',filter:flt},p=>{
         if(p.eventType==='DELETE'){ const id=p.old&&p.old.id; S.notes=S.notes.filter(n=>n.id!==id);save();
           if(!$('#edOverlay').classList.contains('show'))render(); return }
         const r=p.new;if(!r)return;
@@ -2228,7 +2889,7 @@ const SYNC={
         save();
         if(!$('#edOverlay').classList.contains('show'))render();
       })
-      .on('postgres_changes',{event:'*',schema:'public',table:'folders'},p=>{
+      .on('postgres_changes',{event:'*',schema:'public',table:'folders',filter:flt},p=>{
         if(p.eventType==='DELETE'){S.folders=S.folders.filter(f=>f.id!==(p.old&&p.old.id))}
         else if(p.new&&!S.folders.find(f=>f.id===p.new.id))S.folders.push({id:p.new.id,name:p.new.name,createdAt:p.new.created_at,_synced:true});
         save();
@@ -2236,21 +2897,38 @@ const SYNC={
       })
       .subscribe();
   },
-  hardDelete(id){ if(this.client&&this.session) this.client.from('notes').delete().eq('id',id).then(()=>{},()=>{}) },
-  deleteFolder(id){ if(this.client&&this.session) this.client.from('folders').delete().eq('id',id).then(()=>{},()=>{}) },
+  hardDelete(id){ if(this.client&&this.session&&this.uid) this.client.from('notes').delete().eq('user_id',this.uid).eq('id',id).then(()=>{},()=>{}) },
+  deleteFolder(id){ if(this.client&&this.session&&this.uid) this.client.from('folders').delete().eq('user_id',this.uid).eq('id',id).then(()=>{},()=>{}) },
   async test(){
     if(!this.libOk())return{ok:false,msg:L('라이브러리 로드 실패(오프라인?)','Sync library not loaded (offline?)')};
     if(!this.cfg().url||!this.cfg().key)return{ok:false,msg:L('URL과 공개 키를 먼저 저장하세요','Save the project URL and key first')};
     const c=this.makeClient();if(!c)return{ok:false,msg:L('클라이언트 생성 실패 (URL 확인)','Could not create client (check URL)')};
     const {error}=await c.from('notes').select('id',{head:true,count:'exact'});
-    if(error)return{ok:false,msg:error.message};
+    if(error)return{ok:false,msg:syncHint(error.message)};
+    /* (v6.1) 로그인하지 않았는데도 행이 읽힌다면 RLS가 꺼져 있다는 뜻 → 경고 */
+    if(!this.session){
+      const {data,error:e2}=await c.from('notes').select('id').limit(1);
+      if(!e2&&data&&data.length){
+        return{ok:false,msg:L('⚠ 보안 경고: 로그인하지 않았는데 노트가 읽힙니다.\nSupabase에서 RLS(Row Level Security)가 꺼져 있습니다.\n지금 상태로는 공개 키만 있으면 누구나 모든 노트를 읽고 지울 수 있습니다.\n설정 → 계정 → \'RLS 설정 SQL 보기\'를 실행하세요.',
+                              '⚠ SECURITY: notes are readable while signed out.\nRow Level Security is OFF in Supabase.\nAnyone with the public key could read or delete every note.\nRun the SQL from Settings → Account → \'Show RLS setup SQL\'.')};
+      }
+    }
     return{ok:true,msg:L('연결 성공 ✅ (테이블 OK)','Connection OK ✅ (table OK)')};
   }
 };
 let syncTimer=null;
 function syncSoon(){clearTimeout(syncTimer);syncTimer=setTimeout(()=>SYNC.pushDirty(),2500)}
-/* (요청7) 올리기+내려받기 둘 다 하는 완전 동기화 */
-async function syncNow(){ if(!SYNC.session)return; await SYNC.pushDirty(); await SYNC.pullAll(); }
+/* (요청7) 올리기+내려받기 둘 다 하는 완전 동기화
+   (v6.1) 화면 켜기/포커스/온라인/타이머가 동시에 겹쳐 3~4번 도는 문제 → 디바운스 */
+let _lastFullSync=0,_syncRunning=false;
+async function syncNow(force){
+  if(!SYNC.session)return;
+  const now=Date.now();
+  if(!force && (_syncRunning || now-_lastFullSync<5000))return;   // 5초 안에는 한 번만
+  _syncRunning=true; _lastFullSync=now;
+  try{ await SYNC.pushDirty(); await SYNC.pullAll(); }
+  finally{ _syncRunning=false; }
+}
 function setStatus(st,txt){
   const d=$('#syncDot');d.className='syncdot '+(st||'');
   d.title=L('동기화 상태','Sync status');
@@ -2262,8 +2940,9 @@ function setStatus(st,txt){
   const ba=$('#btnAccount'); if(ba)ba.classList.toggle('on',st==='ok');
 }
 /* (요청7) 주기 동기화: 올리기+내려받기 둘 다 (기존엔 올리기만 해서 상대 노트를 못 받아왔음) */
-setInterval(()=>{if(SYNC.session&&!document.hidden)syncNow()},20000);
-window.addEventListener('online',()=>syncNow());
+/* (v6.1) 20초 → 60초. 모바일 데이터·배터리 절약 */
+setInterval(()=>{if(SYNC.session&&!document.hidden)syncNow()},60000);
+window.addEventListener('online',()=>syncNow(true));
 /* 앱을 다시 볼 때(탭 전환/화면 켜기)마다 즉시 내려받기 */
 document.addEventListener('visibilitychange',()=>{ if(!document.hidden && SYNC.session) syncNow(); });
 /* (요청) 노트 앱을 켜면 자동 동기화: 앱 시작 시점 + 창 포커스 복귀 시 즉시 한 번 실행 */
@@ -2290,14 +2969,57 @@ function openAccount(){
 if($('#btnAccount'))$('#btnAccount').onclick=openAccount;   /* (요청) 구름 버튼은 상단바에서 제거됨 — 설정에서 진입 */
 $('#acClose').onclick=()=>ovCloseUi($('#acOverlay'));
 $('#acSave').onclick=()=>{
-  S.settings.sbUrl=$('#acUrl').value.trim();
-  S.settings.sbKey=$('#acKey').value.trim();
+  const _u=$('#acUrl').value.trim(), _k=$('#acKey').value.trim();
+  /* (v6.1) service_role(비밀) 키를 넣으면 전 세계에 DB 관리자 권한을 공개하는 셈 → 차단 */
+  const kchk=checkPublicKey(_k);
+  if(!kchk.ok){ $('#acAuthStat').textContent=kchk.msg; toast(kchk.msg); return; }
+  S.settings.sbUrl=_u;
+  S.settings.sbKey=_k;
   save();SYNC.reset();
   if(SYNC.ready()){SYNC.makeClient();toast(L('저장했습니다. 이제 로그인하세요','Saved. Now sign in'))}
   else if(!SYNC.libOk())toast(L('저장했지만 오프라인 상태입니다(라이브러리 로드 안 됨)','Saved, but offline (sync library not loaded)'));
   else toast(L('URL과 키를 확인하세요','Check the URL and key'));
 };
+/* (v6.1) RLS 설정 SQL — 초보자가 복사해서 Supabase SQL 편집기에 붙여넣기만 하면 된다 */
+const RLS_SQL=`-- soonenote 보안 설정 (Supabase → SQL Editor 에서 한 번 실행)
+-- 1) 행 수준 보안 켜기
+alter table public.notes   enable row level security;
+alter table public.folders enable row level security;
+
+-- 2) 기존 정책 정리(있으면)
+drop policy if exists "own notes"   on public.notes;
+drop policy if exists "own folders" on public.folders;
+
+-- 3) '자기 행만' 읽기/쓰기/수정/삭제 허용
+create policy "own notes" on public.notes
+  for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+create policy "own folders" on public.folders
+  for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+-- 4) 속도용 인덱스 (선택)
+create index if not exists notes_user_updated_idx
+  on public.notes (user_id, updated_at desc);
+create index if not exists folders_user_idx
+  on public.folders (user_id);`;
+
+$('#acRls').onclick=async()=>{
+  let copied=false;
+  try{ await navigator.clipboard.writeText(RLS_SQL); copied=true; }catch(e){}
+  await dlg(
+    (copied? L('✅ SQL을 클립보드에 복사했습니다.\n\n','✅ SQL copied to clipboard.\n\n') : '')
+    + L('Supabase → SQL Editor 에 붙여넣고 실행하세요:\n\n','Paste this into Supabase → SQL Editor and run it:\n\n')
+    + RLS_SQL,
+    {okText:L('닫기','Close')}
+  );
+};
 $('#acTest').onclick=async()=>{
+  { const _k2=$('#acKey').value.trim(), c2=checkPublicKey(_k2);
+    if(!c2.ok){ $('#acAuthStat').textContent=c2.msg; toast(c2.msg); return; } }
   S.settings.sbUrl=$('#acUrl').value.trim();S.settings.sbKey=$('#acKey').value.trim();save();
   SYNC.reset();$('#acTestStat').textContent=L('테스트 중...','Testing…');
   const r=await SYNC.test();
@@ -2418,11 +3140,16 @@ function openSettings(){
 function buildDefColor(){
   const box=$('#stDefColor'); if(!box)return; box.innerHTML='';
   const sc=curSettings();
-  const dark=isDark(); const PAL=dark?COLORS_D:COLORS;
+  const dark=isDark(); const PAL=dark?COLORS_D:COLORS, HEAD=dark?HEADS_D:HEADS_L;
   const cur=(sc.defColor==null?0:sc.defColor);
+  /* (v6.1) 본문색은 거의 흰색이라 구분이 안 된다 → 스와치는 제목줄 톤으로 보여준다 */
   PAL.forEach((c,i)=>{
     const b=document.createElement('button');b.type='button';b.className='sw'+(i===cur?' on':'');
-    b.style.background=c;b.title='';b.onclick=()=>{ sc.defColor=i; if(ui.vault)VLT.persistSettings(); else save();
+    b.style.background=HEAD[i];
+    b.style.borderColor='rgba(0,0,0,.10)';
+    b.title=cnName(i);
+    b.setAttribute('aria-label',cnName(i));
+    b.onclick=()=>{ sc.defColor=i; if(ui.vault)VLT.persistSettings(); else save();
       buildDefColor(); toast(tr('기본 컬러를 저장했습니다','def_color_saved')); };
     box.append(b);
   });
@@ -2467,19 +3194,49 @@ $('#setClose').onclick=()=>{ applySettingsFromUI(); ovCloseUi($('#setOverlay'));
 /* 보관 노트 비밀번호 */
 $('#stPinBtn').onclick=()=>{$('#pinNew').value='';$('#pinNew2').value='';ovOpen($('#pinOverlay'))};
 $('#pinClose').onclick=()=>ovCloseUi($('#pinOverlay'));
+/* (v6.1) 비밀번호 설정 = PBKDF2 해시 + 랜덤 솔트 저장. 보관 노트는 그 즉시 AES 암호화된다. */
+async function setVaultPin(pin,silent){
+  const salt=randB64(16);
+  const h=await pinHash(pin,salt);
+  S.settings.pinSalt=salt; S.settings.pinHash=h; save();
+  /* 이미 열려 있던(또는 평문이던) 보관 노트를 새 키로 다시 암호화 */
+  try{ VLT.key=await pinKey(pin,salt); VLT.persist(); }catch(e){}
+  if(!silent)toast(L('보관 노트 비밀번호가 설정되었습니다','Vault password set'));
+}
 $('#pinSave').onclick=async()=>{
   const a=$('#pinNew').value,b=$('#pinNew2').value;
   if(a.length<4){toast(L('4자 이상 입력하세요','Enter at least 4 characters'));return}
-  if(a!==b){toast(L('두 값이 다릅니다','The two values differ'))}
-  S.settings.pinHash=await sha256(a);save();ovCloseUi($('#pinOverlay'));
-  toast(L('보관 노트 비밀번호가 설정되었습니다','Vault password set'));openSettings();
+  if(a!==b){toast(L('두 값이 다릅니다','The two values differ'));return}   /* (v6.1) 달라도 저장되던 버그 수정 */
+  /* 비밀번호를 바꾸는 경우: 기존 암호문을 먼저 풀어둬야 내용을 잃지 않는다 */
+  if(S.settings.pinHash && VLT.encrypted && !VLT.key){
+    const old=await dlg(L('현재 비밀번호를 입력하세요 (내용을 옮기기 위해 필요합니다)','Enter your current password (needed to move the contents)'),{input:true,password:true,okText:L('확인','OK')});
+    if(old===null||old===undefined)return;
+    const okOld=S.settings.pinSalt? eqConst(await pinHash(old,S.settings.pinSalt),S.settings.pinHash)
+                                  : eqConst(await sha256(old),S.settings.pinHash);
+    if(!okOld){toast(L('비밀번호가 틀렸습니다','Wrong password'));return}
+    const k=await pinKey(old,S.settings.pinSalt||'');
+    if(S.settings.pinSalt && !(await VLT.decryptInto(k))){toast(L('내용을 열 수 없습니다','Could not decrypt'));return}
+  }
+  await setVaultPin(a);
+  ovCloseUi($('#pinOverlay'));openSettings();
 };
 $('#pinRemove').onclick=async()=>{
   if(!S.settings.pinHash){toast(L('설정된 비밀번호가 없습니다','No password is set yet'));return}
   const v=await dlg(L('현재 비밀번호를 입력하세요 (해제 확인용)','Enter the current password to unlock'),{input:true,password:true,okText:L('확인','OK')});
   if(v===null||v===undefined)return;
-  if(await sha256(v)!==S.settings.pinHash){toast(L('비밀번호가 틀렸습니다','Wrong password'));return}
-  S.settings.pinHash=null;save();ovCloseUi($('#pinOverlay'));openSettings();toast(L('비밀번호가 제거되었습니다','Password removed'));
+  const ok=S.settings.pinSalt? eqConst(await pinHash(v,S.settings.pinSalt),S.settings.pinHash)
+                             : eqConst(await sha256(v),S.settings.pinHash);
+  if(!ok){toast(L('비밀번호가 틀렸습니다','Wrong password'));return}
+  /* 비밀번호를 없애면 암호화도 풀어야 다음에 읽을 수 있다 */
+  if(S.settings.pinSalt&&VLT.encrypted&&!VLT.key){
+    const k=await pinKey(v,S.settings.pinSalt);
+    await VLT.decryptInto(k);
+  }
+  VLT.key=null; VLT.encrypted=false;
+  try{ STORE.setItem('sk.vault',JSON.stringify(VLT.notes)); }catch(e){}
+  S.settings.pinHash=null; S.settings.pinSalt=null; save();
+  ovCloseUi($('#pinOverlay'));openSettings();
+  toast(L('비밀번호가 제거되었습니다 (보관 노트 암호화도 해제됨)','Password removed (vault is no longer encrypted)'));
 };
 
 $('#stEmptyTrash').onclick=async()=>{
@@ -2523,7 +3280,7 @@ function applyBackup(d, onlyIds){
   const want=id=>!onlyIds||onlyIds.includes(id);
   d.notes.forEach(sn=>{
     if(!want(sn.id))return;
-    if(sn.color>4)sn.color=sn.color%5;
+    if(sn.color>=NCOLORS||sn.color<0)sn.color=((sn.color%NCOLORS)+NCOLORS)%NCOLORS;
     const local=S.notes.find(n=>n.id===sn.id);
     if(!local){S.notes.push(Object.assign({},sn,{dirty:true}));added++}
     else if((sn.updatedAt||0)>local.updatedAt){Object.assign(local,sn,{dirty:true});updated++}
@@ -2675,7 +3432,7 @@ $('#stExportEn').onclick=async()=>{
   try{
     if(window.showSaveFilePicker){
       const handle=await window.showSaveFilePicker({suggestedName:name,
-        types:[{description:'SK Notes backup',accept:{'application/json':['.json']}}]});
+        types:[{description:'soonenote backup',accept:{'application/json':['.json']}}]});
       const w=await handle.createWritable();await w.write(json);await w.close();
       saveLocalBackup(payload);
       toast(IS_KO?'선택한 위치(Google Drive 등)에 저장했습니다':'Saved to the chosen location');
@@ -2732,11 +3489,49 @@ $('#btnTrash').onclick=()=>{ui.trash=!ui.trash;exitSel();render()};
 /* ═══════════════ 보관 노트 (Vault) — 진입 시마다 비밀번호 (요구11) ═══════════════ */
 const VLT={
   notes:[], folders:[], bio:false, settings:{}, openUntil:0,
-  load(){ try{this.notes=JSON.parse(STORE.getItem('sk.vault'))||[]}catch(e){this.notes=[]
-      } /* (요구1) 보관 노트 전용 폴더 — 일반 폴더(sk.folders)와 완전 분리된 sk.vault.folders */
-      try{this.folders=JSON.parse(STORE.getItem('sk.vault.folders'))||[]}catch(e){this.folders=[]}
-      try{this.settings=Object.assign({},VAULT_DEF,JSON.parse(STORE.getItem('sk.vault.settings'))||{})}catch(e){this.settings=Object.assign({},VAULT_DEF)} },
-  persist(){STORE.setItem('sk.vault',JSON.stringify(this.notes));STORE.setItem('sk.vault.folders',JSON.stringify(this.folders));scheduleAutoSnap()},
+  key:null,          /* (v6.1) 잠금 해제 시에만 메모리에 존재하는 AES 키 */
+  encrypted:false,   /* 저장소가 암호화 형식인지 */
+  load(){
+    /* (v6.1) 암호화 형식이면 잠금 해제 전에는 내용을 읽지 않는다 (평문 노출 방지) */
+    const raw=STORE.getItem('sk.vault');
+    this.encrypted=false; this.notes=[];
+    if(raw){
+      try{
+        const o=JSON.parse(raw);
+        if(o&&o.__enc===1){ this.encrypted=true; this._blob=o; }   // 잠글 때까지 대기
+        else if(Array.isArray(o)) this.notes=o;                     // 구버전 평문
+      }catch(e){ this.notes=[]; }
+    }
+    /* (요구1) 보관 노트 전용 폴더 — 일반 폴더(sk.folders)와 완전 분리된 sk.vault.folders */
+    try{this.folders=JSON.parse(STORE.getItem('sk.vault.folders'))||[]}catch(e){this.folders=[]}
+    try{this.settings=Object.assign({},VAULT_DEF,JSON.parse(STORE.getItem('sk.vault.settings'))||{})}catch(e){this.settings=Object.assign({},VAULT_DEF)}
+  },
+  /* 잠금 해제 후 호출 — 암호문을 풀어 this.notes 채움 */
+  async decryptInto(key){
+    this.key=key;
+    if(!this.encrypted||!this._blob){ return true; }
+    try{
+      const json=await aesDecrypt(key,this._blob);
+      this.notes=JSON.parse(json)||[];
+      return true;
+    }catch(e){ return false; }
+  },
+  persist(){
+    /* 키가 있으면 암호화 저장, 없으면(비밀번호 미설정) 기존처럼 평문 */
+    if(this.key){
+      const plain=JSON.stringify(this.notes);
+      aesEncrypt(this.key,plain).then(o=>{
+        o.__enc=1;
+        try{ STORE.setItem('sk.vault',JSON.stringify(o)); this.encrypted=true; this._blob=o; }
+        catch(e){ toast(L('보관 노트 저장 실패(공간 부족)','Vault save failed (storage full)')); }
+      }).catch(()=>{});
+    }else{
+      try{ STORE.setItem('sk.vault',JSON.stringify(this.notes)); }
+      catch(e){ toast(L('보관 노트 저장 실패(공간 부족)','Vault save failed (storage full)')); }
+    }
+    try{ STORE.setItem('sk.vault.folders',JSON.stringify(this.folders)); }catch(e){}
+    scheduleAutoSnap();
+  },
   persistSettings(){STORE.setItem('sk.vault.settings',JSON.stringify(this.settings))},
   async init(){
     this.load();
@@ -2756,14 +3551,17 @@ const VLT={
   },
   /* (요구10) 별도 화면 없이 일반 화면을 '보관 모드'로 전환 → 디자인/동작 완전 동일 */
   enter(){
-    ovCloseUi($('#vGate'));
+    /* (v6.1) vGate가 ovOpen으로 열린 경우에만 history를 되돌린다 */
+    const g=$('#vGate');
+    if(OVS.indexOf(g)>-1) ovCloseUi(g); else g.classList.remove('show');
     ui.vault=true; ui.trash=false; ui.folder=''; ui.nofolder=false; ui.search=''; $('#search').value='';
     ui.view=this.settings.view||'grid';                       // (요청6) 보관 노트 전용 보기
     // (요청7) 이번에 성공적으로 들어온 시각 기준으로 '암호 없이 열리는 시간' 시작
     if((this.settings.unlockMinutes||0)>0) this.openUntil=Date.now()+this.settings.unlockMinutes*60000;
     exitSel(); render();
   },
-  leave(){ ui.vault=false; ui.view=S.settings.view||'grid'; ui.folder=''; ui.nofolder=false; ui.trash=false; exitSel(); render(); toast(tr('보관 노트를 잠갔습니다','toast_vault_locked')); },
+  leave(){ this.key=null;   /* (v6.1) 나갈 때 메모리에서 키 삭제 */
+    ui.vault=false; ui.view=S.settings.view||'grid'; ui.folder=''; ui.nofolder=false; ui.trash=false; exitSel(); render(); toast(tr('보관 노트를 잠갔습니다','toast_vault_locked')); },
   async unlockPass(){
     if(!S.settings.pinHash){
       const a=await dlg(tr('보관 노트에 사용할 비밀번호를 새로 만드세요:\n(숫자 4자리 권장)','dlg_pin_new'),{input:true,password:true,okText:tr('설정','dlg_pin_set')});
@@ -2772,14 +3570,37 @@ const VLT={
       const b=await dlg(tr('한 번 더 입력하세요:','dlg_pin_again'),{input:true,password:true,okText:tr('확인','gate_ok')});
       if(b===null||b===undefined)return;
       if(a!==b){toast(tr('두 값이 다릅니다. 다시 시도하세요','dlg_pin_mismatch'));return}
-      S.settings.pinHash=await sha256(a);save();
+      await setVaultPin(a);
       toast(tr('비밀번호가 설정되었습니다. 다시 입력해 주세요','dlg_pin_set_done'));return;
     }
     const v=$('#vGatePass').value;
     if(!v){toast(tr('비밀번호를 입력하세요','dlg_pin_enter'));return}
-    if(await sha256(v)===S.settings.pinHash){ this.enter(); }
-    else{toast(tr('비밀번호가 틀렸습니다','dlg_pin_wrong'));$('#vGatePass').value=''}
+    /* (v6.1) 무차별 대입 완화: 5회 실패마다 대기 */
+    if(this.failCount>=5 && Date.now()<this.lockUntil){
+      const sec=Math.ceil((this.lockUntil-Date.now())/1000);
+      toast(L(`너무 여러 번 틀렸습니다. ${sec}초 후 다시 시도하세요.`,`Too many attempts. Try again in ${sec}s.`));return;
+    }
+    let ok=false;
+    if(S.settings.pinSalt){                       // 새 방식(PBKDF2)
+      ok=eqConst(await pinHash(v,S.settings.pinSalt),S.settings.pinHash);
+    }else{                                        // 구버전(sha256) → 성공하면 자동 업그레이드
+      ok=eqConst(await sha256(v),S.settings.pinHash);
+      if(ok){ await setVaultPin(v,true); }
+    }
+    if(ok){
+      this.failCount=0;
+      const key=await pinKey(v,S.settings.pinSalt);
+      const good=await this.decryptInto(key);
+      if(!good){ toast(L('보관 노트를 열 수 없습니다(데이터 손상)','Could not decrypt the vault (data damaged)')); return; }
+      if(!this.encrypted) this.persist();          // 평문이었다면 즉시 암호화 저장
+      this.enter();
+    }else{
+      this.failCount=(this.failCount||0)+1;
+      if(this.failCount>=5) this.lockUntil=Date.now()+Math.min(300000,5000*Math.pow(2,this.failCount-5));
+      toast(tr('비밀번호가 틀렸습니다','dlg_pin_wrong'));$('#vGatePass').value='';
+    }
   },
+  failCount:0, lockUntil:0,
   b64(buf){return btoa(String.fromCharCode(...new Uint8Array(buf)))},
   unb64(s){return Uint8Array.from(atob(s),c=>c.charCodeAt(0))},
   async unlockBio(){
@@ -2788,8 +3609,8 @@ const VLT={
       if(!saved){
         const cred=await navigator.credentials.create({publicKey:{
           challenge:crypto.getRandomValues(new Uint8Array(32)),
-          rp:{name:'SK 노트'},
-          user:{id:new TextEncoder().encode('sk-user'),name:'sk',displayName:'SK 노트 사용자'},
+          rp:{name:'soonenote'},
+          user:{id:new TextEncoder().encode('sk-user'),name:'sk',displayName:'soonenote user'},
           pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],
           authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required'},
           timeout:60000}});
@@ -2800,6 +3621,12 @@ const VLT={
           challenge:crypto.getRandomValues(new Uint8Array(32)),
           allowCredentials:[{type:'public-key',id:this.unb64(saved)}],
           userVerification:'required',timeout:60000}});
+      }
+      /* (v6.1) 지문은 '화면 잠금 해제'일 뿐, 암호문을 풀 키를 만들어 주지 못한다.
+         암호화된 보관 노트는 반드시 비밀번호가 한 번 필요하다. */
+      if(this.encrypted&&!this.key){
+        toast(L('보관 노트가 암호화되어 있어 처음 한 번은 비밀번호가 필요합니다','The vault is encrypted — your password is required once'));
+        return;
       }
       this.enter();
     }catch(e){ toast(L('지문 인식 실패/취소 — 비밀번호로 해제하세요','Fingerprint failed or canceled — use your password')) }
@@ -2816,8 +3643,11 @@ load();
 VLT.load();
 computeLang();                       /* (v6) 설정의 언어(자동/영어/한국어)를 반영한 뒤 번역 적용 */
 applyI18n();
-/* 버전은 상단 배지(#appVer) 한 곳에서만 관리 — 설정창 버전은 그걸 그대로 표시 */
-$('#stVersion').textContent='SK Notes '+($('#appVer').textContent||'');
+/* (v6.1) 버전 표기 일원화: APP_VER 하나가 배지·설정창을 모두 채운다 */
+$('#appVer').textContent='v'+APP_VER;
+$('#stVersion').textContent='v'+APP_VER;
+$('#stAppName')&&($('#stAppName').textContent=APP_NAME);
+document.title=APP_NAME;
 ui.view=S.settings.view||'grid';
 purgeOldTrash();
 render();
@@ -2832,7 +3662,27 @@ addEventListener('pagehide',()=>{ try{autoSnapshot(true);}catch(e){} });
 document.addEventListener('visibilitychange',()=>{ if(document.hidden){ try{autoSnapshot(true);}catch(e){} } });
 /* ═══════════════ PWA ═══════════════ */
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){
-  addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{})});
+  addEventListener('load',()=>{
+    navigator.serviceWorker.register('sw.js').then(reg=>{
+      /* (v6.1) 새 버전이 대기 중이면 바로 넘겨받게 한다 */
+      if(reg.waiting)reg.waiting.postMessage('SKIP_WAITING');
+      reg.addEventListener('updatefound',()=>{
+        const nw=reg.installing; if(!nw)return;
+        nw.addEventListener('statechange',()=>{
+          if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage('SKIP_WAITING');
+        });
+      });
+      /* 앱을 다시 볼 때마다 새 버전 확인 */
+      document.addEventListener('visibilitychange',()=>{ if(!document.hidden)reg.update().catch(()=>{}); });
+    }).catch(()=>{});
+  });
+  /* (v6.1) 새 서비스워커가 제어권을 잡으면 한 번만 새로고침 →
+     예전 화면 + 새 코드가 섞이는 문제를 막는다. */
+  let _swRefreshed=false;
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{
+    if(_swRefreshed)return; _swRefreshed=true;
+    location.reload();
+  });
 }
 </script>
 </body>
