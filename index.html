@@ -14,6 +14,9 @@
      5 languages (100 total). Recently seen ones are not repeated.
    · Badge and card colors shift with the time of day
    · Respects the system "reduce motion" setting
+   · Sync library now self-heals: if vendor/supabase.min.js is missing
+     (e.g. the folder was not uploaded), it is fetched from a CDN
+     automatically. Local file is still preferred so offline keeps working.
 
   V6.2 changes  (2026-09)
    1. Removed the version badge from the top bar (version now in Settings)
@@ -54,7 +57,8 @@
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="mask-icon" href="icons/icon-maskable-512.png" color="#D7A49A">
 <!-- (v6.1) Supabase 2.45.4 로컬 번들 — 오프라인/버전고정 -->
-<script src="vendor/supabase.min.js" defer></script>
+<!-- (v6.1) Supabase 로컬 번들. 없으면 아래 JS가 인터넷에서 자동으로 받아옵니다 -->
+<script src="vendor/supabase.min.js" defer onerror="window.__sbLocalFailed=1"></script>
 <style>
 :root{
   /* ══ (v6.1) soonenote 고정 팔레트 — muted pastel / soft luxury ══
@@ -169,6 +173,13 @@ html[data-theme="dark"] #folderNav.vault{background:#2a2c27} /* 다크: Sage 톤
 }
 html[data-theme="dark"] #acLibWarn{
   background:#3a2a29;border-color:#6b4340;border-left-color:#d2685f;color:#f2cdc9;
+}
+/* 자동 복구 시도 중에는 경고색이 아니라 중립색 */
+#acLibWarn.loading{
+  background:#f1eee9;border-color:#e0d9d1;border-left-color:#b9b0a6;color:#6f665f;
+}
+html[data-theme="dark"] #acLibWarn.loading{
+  background:#2f2c2a;border-color:#474240;border-left-color:#7b736c;color:#cfc7c0;
 }
 
 /* ══════════ (v6.3) S 배지 — 몽환 연출 ══════════
@@ -3620,8 +3631,8 @@ const SYNC={
       const r=await fetch('./vendor/supabase.min.js',{method:'GET',cache:'no-store'});
       if(r.status===404){
         return{ok:false,code:404,msg:L(
-          '❌ vendor/supabase.min.js 파일이 서버에 없습니다.\n\nGitHub에 올릴 때 vendor 폴더가 빠졌습니다.\n압축파일 안의 vendor 폴더를 index.html 과 같은 위치에 올린 뒤,\n1~2분 기다렸다가 앱을 새로고침하세요.',
-          '❌ vendor/supabase.min.js is missing on the server.\n\nThe vendor folder was not uploaded to GitHub.\nUpload the vendor folder next to index.html,\nwait 1-2 minutes, then reload the app.')};
+          '❌ 동기화 라이브러리를 불러오지 못했습니다.\n\n인터넷 연결을 확인하고 다시 시도해 주세요.\n계속 안 되면 GitHub에 vendor 폴더를 함께 올리면 해결됩니다.',
+          '❌ Could not load the sync library.\n\nCheck your internet connection and try again.\nIf it keeps failing, upload the vendor folder to GitHub as well.')};
       }
       if(!r.ok){
         return{ok:false,code:r.status,msg:L(
@@ -3761,6 +3772,7 @@ const SYNC={
   hardDelete(id){ if(this.client&&this.session&&this.uid) this.client.from('notes').delete().eq('user_id',this.uid).eq('id',id).then(()=>{},()=>{}) },
   deleteFolder(id){ if(this.client&&this.session&&this.uid) this.client.from('folders').delete().eq('user_id',this.uid).eq('id',id).then(()=>{},()=>{}) },
   async test(){
+    if(!this.libOk()) await ensureSyncLib();          /* (v6.3) 없으면 자동으로 받아온다 */
     if(!this.libOk()){ const d=await this.libDiagnose(); return{ok:false,msg:d.msg}; }
     if(!this.cfg().url||!this.cfg().key)return{ok:false,msg:L('URL과 공개 키를 먼저 저장하세요','Save the project URL and key first')};
     const c=this.makeClient();if(!c)return{ok:false,msg:L('클라이언트 생성 실패 (URL 확인)','Could not create client (check URL)')};
@@ -3880,6 +3892,13 @@ function openAccount(){
 async function checkSyncLib(){
   const box=$('#acLibWarn'); if(!box)return;
   if(SYNC.libOk()){ box.style.display='none'; return; }
+  /* (v6.3) 먼저 조용히 자동 복구를 시도한다 */
+  box.textContent=L('동기화 라이브러리를 불러오는 중…','Loading sync library…');
+  box.style.display='block';
+  box.classList.add('loading');
+  await ensureSyncLib();
+  box.classList.remove('loading');
+  if(SYNC.libOk()){ box.style.display='none'; return; }
   const d=await SYNC.libDiagnose();
   if(d.ok){ box.style.display='none'; return; }
   box.textContent=d.msg;
@@ -3887,7 +3906,7 @@ async function checkSyncLib(){
 }
 if($('#btnAccount'))$('#btnAccount').onclick=openAccount;   /* (요청) 구름 버튼은 상단바에서 제거됨 — 설정에서 진입 */
 $('#acClose').onclick=()=>ovCloseUi($('#acOverlay'));
-$('#acSave').onclick=()=>{
+$('#acSave').onclick=async()=>{
   const _u=$('#acUrl').value.trim(), _k=$('#acKey').value.trim();
   /* (v6.1) service_role(비밀) 키를 넣으면 전 세계에 DB 관리자 권한을 공개하는 셈 → 차단 */
   const kchk=checkPublicKey(_k);
@@ -3895,8 +3914,10 @@ $('#acSave').onclick=()=>{
   S.settings.sbUrl=_u;
   S.settings.sbKey=_k;
   save();SYNC.reset();
+  /* (v6.3) 라이브러리가 없으면 먼저 자동으로 받아온다 */
+  if(!SYNC.libOk()){ await ensureSyncLib(); checkSyncLib(); }
   if(SYNC.ready()){SYNC.makeClient();toast(L('저장했습니다. 이제 로그인하세요','Saved. Now sign in'))}
-  else if(!SYNC.libOk())toast(L('저장했지만 오프라인 상태입니다(라이브러리 로드 안 됨)','Saved, but offline (sync library not loaded)'));
+  else if(!SYNC.libOk())toast(L('저장했습니다. 동기화 라이브러리를 아직 못 불러왔습니다 — 인터넷 연결을 확인하세요','Saved. The sync library could not be loaded yet — check your internet connection'));
   else toast(L('URL과 키를 확인하세요','Check the URL and key'));
 };
 /* (v6.1) RLS 설정 SQL — 초보자가 복사해서 Supabase SQL 편집기에 붙여넣기만 하면 된다 */
@@ -3945,10 +3966,14 @@ $('#acTest').onclick=async()=>{
     if(!c2.ok){ $('#acAuthStat').textContent=c2.msg; toast(c2.msg); return; } }
   S.settings.sbUrl=$('#acUrl').value.trim();S.settings.sbKey=$('#acKey').value.trim();save();
   SYNC.reset();$('#acTestStat').textContent=L('테스트 중...','Testing…');
+  $('#acTestStat').style.whiteSpace='pre-line';
   const r=await SYNC.test();
   $('#acTestStat').textContent=r.msg;
+  /* (v6.3) 라이브러리가 복구됐으면 위 경고 배너를 지운다 (같은 말이 두 번 보이지 않게) */
+  const w=$('#acLibWarn'); if(w&&SYNC.libOk()) w.style.display='none';
 };
 $('#acLogin').onclick=async()=>{
+  if(!SYNC.libOk()){ $('#acAuthStat').textContent=L('준비 중…','Preparing…'); await ensureSyncLib(); checkSyncLib(); }
   const c=SYNC.makeClient();
   if(!c){$('#acAuthStat').textContent=L('먼저 서버 연결을 저장하세요','Save a server URL and key first');return}
   const email=$('#acEmail').value.trim(),pass=$('#acPass').value;
@@ -4728,6 +4753,47 @@ const CHEERS={
     ]
   }
 };
+
+/* ══════════ (v6.3) 동기화 라이브러리 자동 복구 ══════════
+   vendor/supabase.min.js 가 없어도(= GitHub에 폴더를 안 올렸어도)
+   인터넷에서 같은 버전을 자동으로 받아와 동기화가 되게 한다.
+   · 로컬 파일이 있으면 그대로 사용 (오프라인에서도 동작)
+   · 없을 때만 CDN 두 곳을 차례로 시도
+   · 둘 다 실패하면 그때만 사용자에게 안내                              */
+const SB_VER='2.45.4';
+const SB_CDNS=[
+  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@'+SB_VER+'/dist/umd/supabase.js',
+  'https://unpkg.com/@supabase/supabase-js@'+SB_VER+'/dist/umd/supabase.js'
+];
+let _sbLoading=null, _sbFrom='';
+function loadScriptOnce(url,timeout){
+  return new Promise((res,rej)=>{
+    const el=document.createElement('script');
+    el.src=url; el.async=true;
+    const t=setTimeout(()=>{ el.remove(); rej(new Error('timeout')); }, timeout||12000);
+    el.onload =()=>{ clearTimeout(t); res(true); };
+    el.onerror=()=>{ clearTimeout(t); el.remove(); rej(new Error('load error')); };
+    document.head.appendChild(el);
+  });
+}
+/* 라이브러리를 확보한다. 이미 있으면 즉시 true */
+function ensureSyncLib(){
+  if(SYNC.libOk()){ if(!_sbFrom)_sbFrom='local'; return Promise.resolve(true); }
+  if(_sbLoading) return _sbLoading;
+  _sbLoading=(async()=>{
+    for(const url of SB_CDNS){
+      try{
+        await loadScriptOnce(url);
+        if(SYNC.libOk()){ _sbFrom='cdn'; return true; }
+      }catch(e){ /* 다음 후보 */ }
+    }
+    _sbLoading=null;      // 다음에 다시 시도할 수 있게
+    return SYNC.libOk();
+  })();
+  return _sbLoading;
+}
+/* 앱을 켜면 조용히 미리 확보해 둔다 (로컬에 있으면 아무 일도 안 함) */
+setTimeout(()=>{ if(!SYNC.libOk()) ensureSyncLib(); }, 1200);
 
 /* ══════════ (v6.3) S 배지 동작 ══════════ */
 
