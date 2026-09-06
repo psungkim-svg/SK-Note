@@ -117,3 +117,53 @@ RLS를 켜면 서버가 "이 사람은 자기 노트만" 이라고 막아 줍니
 
 ## 확인
 다시 **Test connection** 을 눌러 정상이면 완료입니다.
+
+
+---
+
+# ⚠️ "라이브러리 로드 실패" 가 뜬다면
+
+## 원인
+**`vendor` 폴더를 GitHub에 안 올리셨기 때문입니다.**
+
+동기화 기능은 `vendor/supabase.min.js` 파일이 있어야 동작합니다.
+이 파일이 없으면 서버가 404(파일 없음)를 돌려주고, 앱은 동기화를 켤 수 없습니다.
+
+## 해결 (2분)
+
+1. 내려받은 압축을 풀면 이런 구조입니다.
+
+```
+index.html
+sw.js
+manifest.webmanifest
+vendor/  ← ★ 이 폴더
+   supabase.min.js
+icons/   ← ★ 이 폴더
+   icon-192.png
+   icon-512.png
+   icon-maskable-512.png
+```
+
+2. GitHub 저장소 → **Add file** → **Upload files**
+3. **폴더째 통째로 드래그** 하세요.
+   파일을 하나씩 고르면 `vendor` 와 `icons` 가 빠집니다.
+4. **Commit changes** → Vercel 자동 배포 1~2분 대기
+5. 앱을 새로고침
+
+## 확인 방법
+
+브라우저 주소창에 아래 주소를 직접 쳐보세요.
+(`내주소` 부분은 실제 배포 주소로 바꾸세요)
+
+```
+https://내주소/vendor/supabase.min.js
+```
+
+- **알 수 없는 글자가 잔뜩 나오면** → 정상입니다
+- **404 / Not Found 가 나오면** → 아직 안 올라간 것입니다
+
+## V6.3부터는 앱이 직접 알려줍니다
+
+Settings → Account · Sync 를 열면
+파일이 없을 때 **빨간 상자로 원인과 해결법**이 바로 표시됩니다.

@@ -160,6 +160,17 @@ html[data-theme="dark"] #folderNav.vault{background:#2a2c27} /* 다크: Sage 톤
 /* (요청10) 항상 보이는 버전 배지 → 새 버전이 떴는지 눈으로 확인. 좁은 화면에서는 감춤(아이콘 잘림 방지) */
 /* ══ (v6.2 요청1) 상단바 버전 배지 제거 — 버전은 설정 맨 아래에서 확인 ══ */
 
+/* (v6.3) 동기화 라이브러리 누락 경고 배너 */
+#acLibWarn{
+  background:#fdeceb;border:1px solid #f0c4c0;border-left:4px solid #d2685f;
+  color:#7d3b36;border-radius:10px;padding:.85em .95em;margin:0 0 1em;
+  font-size:.7em;font-weight:700;line-height:1.65;white-space:pre-line;
+  letter-spacing:normal;font-stretch:normal;
+}
+html[data-theme="dark"] #acLibWarn{
+  background:#3a2a29;border-color:#6b4340;border-left-color:#d2685f;color:#f2cdc9;
+}
+
 /* ══════════ (v6.3) S 배지 — 몽환 연출 ══════════
    구성: ① 숨쉬는 오라 ② 별가루 ③ 유리 카드 ④ 한 글자씩 ⑤ 시간대별 색
    ★ 애니메이션은 모두 transform/opacity만 사용 → 배터리 부담 최소화
@@ -828,6 +839,8 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
     <h3><span data-i18n="ac_title">☁️ Account · Sync</span> <button class="iconbtn" id="acClose">✕</button></h3>
     <div class="setsec" id="acCfgSec">
       <h4 data-i18n="ac_server">Server connection (Supabase)</h4>
+      <!-- (v6.3) 동기화 라이브러리 누락 경고 -->
+      <div id="acLibWarn" style="display:none"></div>
       <div class="field">
         <label for="acUrl" data-i18n="ac_url">Project URL</label>
         <input type="text" id="acUrl" placeholder="https://xxxx.supabase.co" autocomplete="off">
@@ -3599,6 +3612,32 @@ const SYNC={
   client:null, channel:null, uid:null, session:null, busy:false,
   cfg(){return{url:(S.settings.sbUrl||'').trim(),key:(S.settings.sbKey||'').trim()}},
   libOk(){return typeof window.supabase!=='undefined'&&!!window.supabase.createClient},
+  /* (v6.3) 라이브러리가 없을 때 '왜' 없는지 확인해서 정확히 안내한다.
+     가장 흔한 원인: GitHub에 vendor 폴더를 같이 올리지 않아 404 */
+  async libDiagnose(){
+    if(this.libOk())return{ok:true};
+    try{
+      const r=await fetch('./vendor/supabase.min.js',{method:'GET',cache:'no-store'});
+      if(r.status===404){
+        return{ok:false,code:404,msg:L(
+          '❌ vendor/supabase.min.js 파일이 서버에 없습니다.\n\nGitHub에 올릴 때 vendor 폴더가 빠졌습니다.\n압축파일 안의 vendor 폴더를 index.html 과 같은 위치에 올린 뒤,\n1~2분 기다렸다가 앱을 새로고침하세요.',
+          '❌ vendor/supabase.min.js is missing on the server.\n\nThe vendor folder was not uploaded to GitHub.\nUpload the vendor folder next to index.html,\nwait 1-2 minutes, then reload the app.')};
+      }
+      if(!r.ok){
+        return{ok:false,code:r.status,msg:L(
+          '❌ 동기화 라이브러리를 불러오지 못했습니다 (오류 '+r.status+').\n잠시 후 다시 시도하세요.',
+          '❌ Could not load the sync library (HTTP '+r.status+').\nPlease try again shortly.')};
+      }
+      /* 파일은 있는데 실행이 안 된 경우 = 아직 로딩 중이거나 캐시가 깨짐 */
+      return{ok:false,code:'stale',msg:L(
+        '❌ 라이브러리 파일은 있는데 아직 준비되지 않았습니다.\n앱을 완전히 닫았다가 다시 열어 보세요.',
+        '❌ The library file exists but is not ready yet.\nPlease fully close and reopen the app.')};
+    }catch(e){
+      return{ok:false,code:'offline',msg:L(
+        '❌ 인터넷에 연결되어 있지 않습니다.\nWi-Fi 또는 데이터를 켜고 다시 시도하세요.',
+        '❌ You appear to be offline.\nTurn on Wi-Fi or mobile data and try again.')};
+    }
+  },
   ready(){return this.libOk()&&this.cfg().url&&this.cfg().key},
   makeClient(){
     if(!this.ready())return null;
@@ -3722,7 +3761,7 @@ const SYNC={
   hardDelete(id){ if(this.client&&this.session&&this.uid) this.client.from('notes').delete().eq('user_id',this.uid).eq('id',id).then(()=>{},()=>{}) },
   deleteFolder(id){ if(this.client&&this.session&&this.uid) this.client.from('folders').delete().eq('user_id',this.uid).eq('id',id).then(()=>{},()=>{}) },
   async test(){
-    if(!this.libOk())return{ok:false,msg:L('라이브러리 로드 실패(오프라인?)','Sync library not loaded (offline?)')};
+    if(!this.libOk()){ const d=await this.libDiagnose(); return{ok:false,msg:d.msg}; }
     if(!this.cfg().url||!this.cfg().key)return{ok:false,msg:L('URL과 공개 키를 먼저 저장하세요','Save the project URL and key first')};
     const c=this.makeClient();if(!c)return{ok:false,msg:L('클라이언트 생성 실패 (URL 확인)','Could not create client (check URL)')};
     const {error}=await c.from('notes').select('id',{head:true,count:'exact'});
@@ -3834,6 +3873,17 @@ function openAccount(){
   $('#acAuthStat').textContent='';
   updateAccountUI();
   ovOpen($('#acOverlay'));
+  /* (v6.3) 라이브러리가 없으면 '연결 테스트'를 누르기 전에 미리 알려준다 */
+  checkSyncLib();
+}
+/* (v6.3) 동기화 라이브러리 상태를 점검해 경고 배너를 켠다/끈다 */
+async function checkSyncLib(){
+  const box=$('#acLibWarn'); if(!box)return;
+  if(SYNC.libOk()){ box.style.display='none'; return; }
+  const d=await SYNC.libDiagnose();
+  if(d.ok){ box.style.display='none'; return; }
+  box.textContent=d.msg;
+  box.style.display='block';
 }
 if($('#btnAccount'))$('#btnAccount').onclick=openAccount;   /* (요청) 구름 버튼은 상단바에서 제거됨 — 설정에서 진입 */
 $('#acClose').onclick=()=>ovCloseUi($('#acOverlay'));
