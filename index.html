@@ -1,8 +1,21 @@
 <!DOCTYPE html>
 <!--
 ═══════════════════════════════════════════════════════════════
-  soonenote  —  V6.3
-  (V6.0 → V6.1 → V6.2 → V6.3)
+  soonenote  —  V6.4
+  (V6.0 → V6.1 → V6.2 → V6.3 → V6.4)
+
+  V6.4 changes  (2026-09)
+   1. The + button is 80% size and nudged 2mm right / 1mm down
+   2. Manual ordering now works by FINGER DRAG (it was desktop-mouse only
+      before, so it simply did nothing on a phone). Long-press a card to pick
+      it up. Cards slide smoothly (FLIP) instead of jumping. Checklist rows,
+      image moves and screen transitions are animated too.
+   3. Trash is now clearly distinct: a red banner at the top, a checkbox on
+      every card, and Select all / Deselect all in the top bar.
+   4. Palette reordered to Dusty Rose, Nude, Sage, Baby Blue, Lavender,
+      Ivory, White. Existing notes keep their real colour (auto-migrated).
+   5. The pencil now sits on a white circle so it stands out on any card
+      colour; the colour box next to it is 85% size.
 
   V6.3 changes  (2026-09)
    · S badge reworked into a "dreamy" experience:
@@ -24,6 +37,8 @@
      so a fresh install could stay empty. It now pulls everything.
    · FIX: server errors with a blank message showed nothing; the app now
      explains the likely cause (URL / key / paused project / missing table).
+   · FIX: signing in did not survive an app restart. The saved session is
+     now restored on startup (this bug existed since V6.0).
 
   V6.2 changes  (2026-09)
    1. Removed the version badge from the top bar (version now in Settings)
@@ -170,6 +185,101 @@ html[data-theme="dark"] #folderNav.vault{background:#2a2c27} /* 다크: Sage 톤
 .logo{font-weight:800;font-size:.72em;color:var(--text);margin-right:.25em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:26%;min-width:0;flex:none}
 /* (요청10) 항상 보이는 버전 배지 → 새 버전이 떴는지 눈으로 확인. 좁은 화면에서는 감춤(아이콘 잘림 방지) */
 /* ══ (v6.2 요청1) 상단바 버전 배지 제거 — 버전은 설정 맨 아래에서 확인 ══ */
+
+/* ══════════ (v6.4) 부드러운 움직임 ══════════
+   [문제] 수동 정렬(Manual order)이 HTML5 draggable 이라 폰 터치에서 아예 안 됐고,
+          순서가 바뀔 때 화면이 툭툭 끊겼다.
+   [해결] 손가락으로 끌 수 있게 바꾸고, 자리 이동을 애니메이션으로 보여준다. */
+.note.dragging{
+  opacity:.92;
+  transform:scale(1.06);
+  box-shadow:0 14px 34px rgba(90,70,60,.34);
+  z-index:50;
+  cursor:grabbing;
+  transition:none;              /* 손가락을 따라올 땐 지연이 없어야 한다 */
+}
+.note.slide{ transition:transform .26s cubic-bezier(.2,.8,.3,1) }
+.note.dropTarget{ outline:2px dashed var(--accent); outline-offset:-3px }
+/* 정렬 가능 상태임을 알려주는 손잡이 */
+.note.sortable::after{
+  content:'⠿';
+  position:absolute;left:.3em;bottom:.2em;
+  font-size:.8em;color:rgba(90,70,60,.32);
+  pointer-events:none;letter-spacing:-1px;
+}
+html[data-theme="dark"] .note.sortable::after{color:rgba(255,255,255,.28)}
+/* 새로 추가된 카드가 살짝 나타남 */
+@keyframes noteIn{from{opacity:0;transform:translateY(6px) scale(.97)}to{opacity:1;transform:none}}
+.note.justAdded{animation:noteIn .28s cubic-bezier(.2,1,.4,1)}
+
+/* 화면 전환(설정·계정·폴더 등)도 조금 더 부드럽게 */
+.ov{transition:opacity .24s ease, visibility .24s}
+.ov .sheet{transition:transform .3s cubic-bezier(.2,1,.35,1), opacity .24s}
+
+/* 체크리스트 항목 위·아래 이동 */
+.itemrow{transition:transform .22s cubic-bezier(.2,.8,.3,1), opacity .2s}
+.itemrow.moving{background:rgba(215,164,154,.14);border-radius:.4em}
+
+/* 편집기 안 이미지 이동 */
+#edBody img.edimg{transition:box-shadow .18s, transform .18s}
+#edBody img.edimg.dragging{
+  opacity:.85;transform:scale(1.03);
+  box-shadow:0 10px 26px rgba(90,70,60,.4);transition:none;
+}
+
+@media (prefers-reduced-motion: reduce){
+  .note.slide,.itemrow,#edBody img.edimg{transition:none!important}
+  .note.justAdded{animation:none!important}
+}
+
+/* ══════════ (v6.4) 휴지통 화면 ══════════
+   [문제] 휴지통을 눌렀는데 일반 노트 목록과 똑같아 보여 구분이 안 됐다.
+   [해결] 위에 붉은 띠를 깔고, 카드마다 체크박스를 보여준다. */
+#trashBanner{
+  display:flex;align-items:center;gap:.5em;
+  transition:margin-top .22s ease;
+  background:linear-gradient(135deg,#e8d5d2,#dbc0bc);
+  color:#6b4640;padding:.5em .8em;
+  font-size:.72em;font-weight:800;letter-spacing:.02em;
+  border-bottom:1px solid rgba(107,70,64,.2);
+  flex:none;
+}
+#trashBanner.hidden{display:none}
+#trashBanner .tbIcon{font-size:1.15em}
+#trashBanner .tbText{flex:1;min-width:0}
+#trashBanner .tbExit{
+  border:none;background:rgba(255,255,255,.55);color:#6b4640;
+  width:1.7em;height:1.7em;border-radius:50%;font-size:1em;font-weight:800;
+  cursor:pointer;flex:none;line-height:1;
+}
+#trashBanner .tbExit:active{transform:scale(.9)}
+html[data-theme="dark"] #trashBanner{
+  background:linear-gradient(135deg,#4a3634,#3d2c2a);color:#e9cdc8;
+  border-bottom-color:rgba(255,255,255,.12);
+}
+/* 휴지통일 때 목록 전체에 옅은 붉은 기운 */
+#grid.trashing{background:rgba(215,164,154,.06)}
+
+/* 카드 체크박스 (휴지통·선택모드) */
+.note .selbox{
+  position:absolute;top:.35em;right:.35em;z-index:4;
+  width:1.45em;height:1.45em;border-radius:.32em;
+  border:2px solid rgba(90,70,60,.4);background:rgba(255,255,255,.95);
+  display:flex;align-items:center;justify-content:center;
+  font-size:.9em;font-weight:900;color:transparent;line-height:1;
+  box-shadow:0 1px 3px rgba(90,70,60,.2);
+  transition:background .15s,border-color .15s,color .15s,transform .15s;
+}
+.note.sel .selbox{
+  background:var(--accent);border-color:var(--accent);color:#4a332e;
+  transform:scale(1.06);
+}
+html[data-theme="dark"] .note .selbox{
+  background:rgba(40,38,36,.92);border-color:rgba(255,255,255,.32);
+}
+html[data-theme="dark"] .note.sel .selbox{background:var(--accent);border-color:var(--accent);color:#241a17}
+/* 체크박스가 제목을 가리지 않게 */
+.note.haschk .thead .ttl{padding-right:1.9em}
 
 /* (v6.3) 동기화 라이브러리 누락 경고 배너 */
 #acLibWarn{
@@ -389,14 +499,17 @@ html[data-theme="dark"] mark{background:#8a6f62;color:#fff}
 /* ── 플로팅 + 버튼 (하단 바 바로 위에 붙음) ── */
 #folderNav{position:relative;flex:none}
 #fab,#vFab{
+  /* (v6.4) 크기 80%로 축소 + 아래로 1mm · 오른쪽으로 2mm 이동 */
   position:absolute;right:.7em;bottom:100%;margin-bottom:.5em;z-index:31;
   width:1.7em;height:1.7em;padding:0;line-height:1;
   display:flex;align-items:center;justify-content:center;
   border-radius:50%;border:none;background:var(--accent);
   color:#4a332e;font-size:1.6em;font-weight:700;box-shadow:0 4px 12px rgba(90,75,65,.28);
+  transform:translate(2mm,1mm) scale(.8);
+  transform-origin:center;
   transition:transform .15s
 }
-#fab:active,#vFab:active{transform:scale(.9)}
+#fab:active,#vFab:active{transform:translate(2mm,1mm) scale(.72)}   /* 눌림 = 0.8 x 0.9 */
 
 /* (요구4) + → 추가 메뉴 */
 #addMenu{position:fixed;inset:0;z-index:45;background:rgba(0,0,0,.35);
@@ -479,9 +592,9 @@ html[data-theme="dark"] mark{background:#8a6f62;color:#fff}
 .edbar:not(.editmode) #edSaveBtn,.edbar:not(.editmode) #edUndo,.edbar:not(.editmode) #edTypeBtn,.edbar:not(.editmode) #edImgBtn{display:none}
 .edbar.editmode #edPencil,.edbar.editmode #edColorBtn{display:none}
 /* 보기 모드: 연필 110% 확대, 칼라박스 90% 축소 */
-.edbar:not(.editmode) #edPencil{font-size:1.1em}
+.edbar:not(.editmode) #edPencil{font-size:1.25em}   /* (v6.4) 더 잘 보이게 */
 .edbar:not(.editmode) #edPencil svg{width:1.5em;height:1.5em}   /* (v6.2) 컬러 연필을 조금 크게 */
-.edbar:not(.editmode) #edColorBtn{width:1.85em;height:1.85em}   /* (v6.2) 흰 테두리가 보이도록 축소하지 않음 */
+.edbar:not(.editmode) #edColorBtn{width:1.57em;height:1.57em}   /* (v6.4) 85%로 축소 */
 /* 편집 모드: Undo 120% 확대, T 볼드체 */
 .edbar.editmode #edUndo{font-size:1.14em;font-weight:800}
 #edTypeBtn{font-weight:800}
@@ -489,9 +602,26 @@ html[data-theme="dark"] mark{background:#8a6f62;color:#fff}
 #btnTrash{font-size:.78em;padding:.32em}
 .edtool:active{background:var(--chip);transform:translateY(1px) scale(.9);box-shadow:inset 0 2px 4px rgba(0,0,0,.2)}   /* (요청3) 눌리는 모양이 확실히 보이게 */
 /* (요청3) 연필: 박스 없이 연필만. 연필심(끝)은 왼쪽. 편집 ON=노란 연필(박스 없음), 누르면 '들어가는' 눌림 */
-#edPencil{background:none!important;border:none;padding:.25em}
-#edPencil.on{background:none!important}
-#edPencil svg{transition:transform .14s}
+/* (v6.4) 연필이 배경에 묻혀 잘 안 보이던 문제 →
+   흰 원 배경 + 윤곽선 + 그림자를 줘서 어떤 카드 색 위에서도 또렷하게 */
+#edPencil{
+  background:rgba(255,255,255,.92)!important;
+  border:1px solid rgba(90,70,60,.18);
+  border-radius:50%;
+  padding:.22em;
+  box-shadow:0 1px 4px rgba(90,70,60,.22);
+}
+#edPencil.on{
+  background:#fff!important;
+  border-color:rgba(90,70,60,.3);
+  box-shadow:0 2px 7px rgba(90,70,60,.34);
+}
+#edPencil svg{transition:transform .14s;filter:drop-shadow(0 1px 1.5px rgba(80,60,50,.35))}
+html[data-theme="dark"] #edPencil{
+  background:rgba(245,242,238,.94)!important;
+  border-color:rgba(0,0,0,.35);
+  box-shadow:0 1px 5px rgba(0,0,0,.5);
+}
 #edPencil:active svg{transform:translate(.08em,.1em) rotate(-8deg) scale(.94)}
 /* 편집 모드일 때 연필이 살짝 기울어 '쓰는 중'임을 표시 */
 #edPencil.on svg{transform:rotate(-12deg) scale(1.06);filter:drop-shadow(0 1px 2px rgba(120,90,80,.35))}
@@ -501,7 +631,9 @@ html[data-theme="dark"] mark{background:#8a6f62;color:#fff}
 #edColorBtn{
   border:3px solid #ffffff;border-radius:.4em;
   background:var(--curColor,#f4e6e3)!important;
-  width:1.85em;height:1.85em;padding:0;
+  /* (v6.4) 85% 축소 — 테두리까지 포함한 실제 크기 기준 */
+  box-sizing:border-box;
+  width:1.57em;height:1.57em;padding:0;
   box-shadow:0 0 0 1px rgba(90,70,60,.28), 0 1px 3px rgba(90,70,60,.20);
   transition:transform .12s, box-shadow .15s;
 }
@@ -635,12 +767,23 @@ html[data-theme="dark"] #edBody a,html[data-theme="dark"] #edBody a.nlink{color:
 
 /* 선택(삭제) 모드 상단 바 (화면 최상단 고정) */
 #selMode{position:fixed;top:0;left:0;right:0;z-index:40;background:var(--accent);color:#4a332e;
-  display:flex;align-items:center;gap:.4em;padding:calc(.5em + env(safe-area-inset-top)) .6em .5em;
-  transform:translateY(-110%);transition:transform .22s ease}
+  display:flex;align-items:center;gap:.3em;padding:calc(.45em + env(safe-area-inset-top)) .5em .45em;
+  transform:translateY(-110%);transition:transform .22s ease;
+  /* (v6.4) 좁은 폰에서 '영구삭제' 같은 긴 버튼이 잘리던 문제 → 넘치면 가로 스크롤 */
+  overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+#selMode::-webkit-scrollbar{display:none}
 #selMode.show{transform:translateY(0)}
-#selMode .cnt{flex:1;font-weight:800;font-size:.8em}
+#selMode .cnt{flex:1;font-weight:800;font-size:.72em;white-space:nowrap;min-width:2.2em;text-align:center;
+  padding:0 .1em;overflow:hidden;text-overflow:ellipsis}
+/* 휴지통 모드: 버튼을 오른쪽으로 몰고 여백을 균등하게 */
+#selMode.trashbar{justify-content:space-between}
+/* (v6.4) 아주 좁은 화면에서는 버튼 글자를 숨기고 아이콘만 */
+@media(max-width:400px){
+  #selMode .sbtn .lbl{display:none}
+  #selMode .sbtn{padding:.42em .55em;font-size:.82em}
+}
 #selMode .sbtn{background:rgba(255,255,255,.35);border:none;color:#4a332e;border-radius:.5em;
-  padding:.4em .7em;font-size:.75em;font-weight:700}
+  padding:.4em .6em;font-size:.72em;font-weight:700;white-space:nowrap;flex:none}
 
 /* ── 설정/계정 ── */
 .setsec{background:var(--card);border:1px solid var(--line);border-radius:.6em;padding:.6em;margin-bottom:.5em}
@@ -701,10 +844,11 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
 <body>
 
 <div id="selMode">
-  <button class="sbtn" id="selCancel">✕ <span data-i18n="cancel">Cancel</span></button>
+  <button class="sbtn" id="selCancel">✕ <span class="lbl" data-i18n="cancel">Cancel</span></button>
+  <button class="sbtn" id="selAll">☑ <span class="lbl" data-i18n="select_all">All</span></button>
   <span class="cnt" id="selCount">0<span data-i18n="sel_count"> selected</span></span>
-  <button class="sbtn" id="selRestore" style="display:none">↩︎ <span data-i18n="restore">Restore</span></button>
-  <button class="sbtn" id="selDelete">🗑️ <span data-i18n="delete">Delete</span></button>
+  <button class="sbtn" id="selRestore" style="display:none">↩︎ <span class="lbl" data-i18n="restore">Restore</span></button>
+  <button class="sbtn" id="selDelete">🗑️ <span class="lbl" data-i18n="delete">Delete</span></button>
 </div>
 
 <header>
@@ -720,6 +864,13 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
     <button class="iconbtn" id="btnSettings" data-i18n-title="Settings" title="Settings">⚙️</button>
   </div>
 </header>
+
+<!-- (v6.4) 휴지통 화면임을 분명히 알려주는 띠 -->
+<div id="trashBanner" class="hidden">
+  <span class="tbIcon">🗑️</span>
+  <span class="tbText" id="tbText">Trash</span>
+  <button class="tbExit" id="tbExit">✕</button>
+</div>
 
 <main>
   <div id="grid"></div>
@@ -1105,7 +1256,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='soonenote';
-const APP_VER='6.3';
+const APP_VER='6.4';
 const SSTORE=(()=>{try{const t='__cn__';sessionStorage.setItem(t,'1');sessionStorage.removeItem(t);return sessionStorage}
   catch(e){const m={};return{getItem:k=>(k in m?m[k]:null),setItem:(k,v)=>{m[k]=String(v)},removeItem:k=>{delete m[k]}}}})();
 
@@ -1114,14 +1265,14 @@ const SSTORE=(()=>{try{const t='__cn__';sessionStorage.setItem(t,'1');sessionSto
 /* ══ (v6.1) soonenote 고정 팔레트 — 7색 muted pastel ══
    본문(COLORS)  = 기준색을 화이트에 72% 희석 → 거의 화이트에 가까운 파스텔
    제목(HEADS_L) = 기준색 그대로 또는 10%만 밝게                              */
-const PALETTE_BASE=['#E1DAD3','#E4C9B6','#D7A49A','#B8BBA3','#A4B1BA','#C9C3DD','#FFFFFF'];
-const COLORS  =['#f7f5f3','#f7f0eb','#f4e6e3','#ebece5','#e6e9ec','#f0eef5','#ffffff'];
-const HEADS_L =['#e4ded7','#e7cebd','#dbada4','#bfc2ac','#adb9c1','#cec9e0','#f0eeec'];
-const COLORS_D=['#3f3e3f','#3f3b39','#3d3334','#363835','#32363a','#3a3941','#454548'];
-const HEADS_D =['#5b5959','#5c544f','#584746','#4d4f49','#464b50','#53515c','#656668'];
+const PALETTE_BASE=['#D7A49A','#E4C9B6','#B8BBA3','#A4B1BA','#C9C3DD','#E1DAD3','#FFFFFF'];
+const COLORS  =['#f4e6e3','#f7f0eb','#ebece5','#e6e9ec','#f0eef5','#f7f5f3','#ffffff'];
+const HEADS_L =['#dbada4','#e7cebd','#bfc2ac','#adb9c1','#cec9e0','#e4ded7','#f0eeec'];
+const COLORS_D=['#3d3334','#3f3b39','#363835','#32363a','#3a3941','#3f3e3f','#454548'];
+const HEADS_D =['#584746','#5c544f','#4d4f49','#464b50','#53515c','#5b5959','#656668'];
 const NCOLORS=COLORS.length;                       /* 7 */
-const COLOR_NAMES   =['아이보리','누드','더스티 로즈','세이지','베이비 블루','라벤더','화이트'];
-const COLOR_NAMES_EN=['Ivory','Nude','Dusty Rose','Sage','Baby Blue','Lavender','White'];
+const COLOR_NAMES   =['더스티 로즈','누드','세이지','베이비 블루','라벤더','아이보리','화이트'];
+const COLOR_NAMES_EN=['Dusty Rose','Nude','Sage','Baby Blue','Lavender','Ivory','White'];
 const cnName=i=>((IS_KO?COLOR_NAMES[i]:COLOR_NAMES_EN[i])||'');
 /* 글자색·형광펜도 같은 톤으로 (원색 제거) */
 const TEXT_COLORS=['#3a3430','#8f6259','#8a7358','#6f7460','#5d6b74','#6f6889','#a89f97'];
@@ -2047,6 +2198,18 @@ function load(){
   try{S.folders=JSON.parse(STORE.getItem(LS.folders))||[]}catch(e){S.folders=[]}
   try{Object.assign(S.settings,DEF,JSON.parse(STORE.getItem(LS.settings))||{})}catch(e){Object.assign(S.settings,DEF)}
   S.notes.forEach(n=>{ if(n.color==null)n.color=0; if(n.color>=NCOLORS||n.color<0)n.color=((n.color%NCOLORS)+NCOLORS)%NCOLORS; });
+  /* ══ (v6.4) 팔레트 순서 변경 마이그레이션 ══
+     팔레트를 3,2,4,5,6,1,7 순서로 바꿨다. 색 자체는 그대로지만 '번호'가 달라지므로
+     이미 저장된 노트의 색 번호를 새 위치로 옮겨 준다. (한 번만 실행)
+     예전 0(아이보리)→새 5,  예전 2(더스티로즈)→새 0 …                        */
+  if(!S.settings.palVer || S.settings.palVer<2){
+    const MAP=[5,1,0,2,3,4,6];   // 예전번호 → 새번호
+    S.notes.forEach(n=>{ const c=n.color; if(c>=0&&c<MAP.length) n.color=MAP[c]; });
+    try{ if(VLT&&VLT.notes) VLT.notes.forEach(n=>{ const c=n.color; if(c>=0&&c<MAP.length) n.color=MAP[c]; }); }catch(_){}
+    const dc=S.settings.defColor;
+    if(dc!=null && dc>=0 && dc<MAP.length) S.settings.defColor=MAP[dc];
+    S.settings.palVer=2;
+  }
   S.settings.font=migFont(S.settings.font);   /* (요청7) 구버전 5단계 → pt, 10~25 클램프 (v5.3) */
   // (요구3) 본문 굵기 4단계, 기본 'n'(보통=500). v5.2: 기본값 'b'로 저장됐던 기기·옛 숫자값을
   //  새 키 체계로 1회 변환 (fwVer=2 마커) — 'b' 저장분은 새 기본 'n'(보통)으로 안전 이관.
@@ -2469,12 +2632,31 @@ function render(){
   }
   $('#btnTrash').classList.toggle('on',ui.trash);
 
-  const g=$('#grid');const effView=ui.trash?'list':ui.view;g.className=effView==='grid'?'':effView;g.innerHTML='';
+  /* (v6.4) 휴지통이면 상단 띠를 보여주고 목록에 표시를 남긴다 */
+  const tb=$('#trashBanner');
+  if(tb){
+    tb.classList.toggle('hidden',!ui.trash);
+    /* (v6.4) 선택바(고정)가 배너를 덮지 않도록 그 높이만큼 내려준다 */
+    const sb=$('#selMode');
+    const barShown=ui.selMode||ui.trash;
+    tb.style.marginTop=barShown&&sb?(sb.offsetHeight+'px'):'0';
+    if(ui.trash){
+      const cnt=NOTES().filter(n=>n.deleted).length;
+      const nsel=ui.selected.size;
+      $('#tbText').textContent=L(
+        '휴지통 '+cnt+'개'+(nsel?' · '+nsel+'개 선택됨':'')+' · 30일 후 자동 삭제',
+        'Trash · '+cnt+' item(s)'+(nsel?' · '+nsel+' selected':'')+' · auto-deleted after 30 days');
+    }
+  }
+  const g=$('#grid');const effView=ui.trash?'list':ui.view;
+  g.className=(effView==='grid'?'':effView)+(ui.trash?' trashing':'');
+  g.innerHTML='';
   const arr=visibleNotes();
   $('#emptyMsg').classList.toggle('hidden',arr.length>0);
   $('#emptyMsg').textContent=ui.trash?tr('Trash is empty (deleted notes are removed after 30 days)','empty_trash'):(ui.search?tr('No results','empty_search'):(ui.folder?tr('No notes in this folder','empty_folder'):tr('Tap ＋ to create your first note','empty_new')));
   arr.forEach(n=>{
     const el=document.createElement('div');el.className='note'+(ui.selected.has(n.id)?' sel':'');
+    el.dataset.id=n.id;                       /* (v6.4) 순서 저장에 필요 */
     el.style.setProperty('--nc',PAL[n.color||0]); el.style.setProperty('--tc',HEAD[n.color||0]);
     const folder=FOLDERS().find(f=>f.id===n.folder);
     let body='';
@@ -2491,8 +2673,11 @@ function render(){
     }
     /* (요청6) 카드 미리보기는 모든 노트 동일하게 고정 — 노트별 굵기/크기를 미리보기에 반영하지 않음 */
     const hasRemind=n.remindAt&&n.remindAt>Date.now();
+    /* (v6.4) 휴지통이거나 선택 모드면 체크박스를 보여준다 */
+    const showChk=ui.trash||ui.selMode;
+    if(showChk)el.classList.add('haschk');
     el.innerHTML=`
-      ${ui.selMode&&ui.selected.has(n.id)?'<span class="selmark">✓</span>':''}
+      ${showChk?`<span class="selbox">✓</span>`:''}
       <div class="thead">
         <div class="ttl">${hl(esc(n.title))||L('제목 없음','No title')}</div>
         <span class="badges">${n.pinned?'📌':''}${hasRemind?'⏰':''}${n.type==='check'?'☑️':''}</span>
@@ -2516,7 +2701,17 @@ function attachNoteHandlers(el,n){
     return;
   }
   if(ui.selMode){ el.onclick=()=>toggleSel(n.id); }
-  else{ el.onclick=()=>openEditor(n.id); }
+  else{ el.onclick=()=>{ if(el._justDragged)return; openEditor(n.id); }; }
+
+  /* (v6.4) '수동 정렬' 모드에서는 길게 누르기 = 순서 바꾸기.
+     예전에는 선택모드 진입(500ms)과 끌기(400ms)가 동시에 걸려 서로 방해했다. */
+  const sortMode=(curSettings().sort==='manual'&&!ui.selMode&&!ui.trash);
+  if(sortMode){
+    el.classList.add('sortable');
+    enableTouchSort(el,n);
+    return;                       // 선택모드 롱프레스는 달지 않는다
+  }
+
   // 길게 누르면 선택 모드
   let pressT=null;
   const start=()=>{ pressT=setTimeout(()=>{ if(!ui.selMode)enterSel(); toggleSel(n.id); },500); };
@@ -2525,12 +2720,146 @@ function attachNoteHandlers(el,n){
   el.addEventListener('pointerup',cancel);
   el.addEventListener('pointermove',cancel);
   el.addEventListener('pointercancel',cancel);
-  if(curSettings().sort==='manual'&&!ui.selMode){el.draggable=true;
-    el.ondragstart=e=>{ui.dragId=n.id;e.dataTransfer.effectAllowed='move'};
-    el.ondragover=e=>{e.preventDefault();el.style.outline='2px dashed var(--accent)'};
-    el.ondragleave=()=>el.style.outline='';
-    el.ondrop=e=>{e.preventDefault();el.style.outline='';dropBefore(n.id)};
-  }
+}
+
+/* ══════════════ (v6.4) 손가락으로 끌어 순서 바꾸기 ══════════════
+   예전에는 HTML5 draggable 을 썼는데, 이건 데스크톱 마우스 전용이라
+   폰에서는 '수동 정렬'이 아예 동작하지 않았다.
+   이제 pointer 이벤트로 직접 구현하고, 자리 이동은 FLIP 방식으로 부드럽게 보여준다. */
+let _sortState=null;
+
+function enableTouchSort(el,n){
+  let holdT=null, started=false;
+  let sx=0, sy=0;
+
+  const begin=(e)=>{
+    if(e.button!==undefined&&e.button!==0)return;
+    sx=e.clientX; sy=e.clientY;
+    clearTimeout(holdT);
+    /* 400ms 길게 누르면 '집어 올린다' — 그냥 탭하면 노트가 열린다 */
+    holdT=setTimeout(()=>{
+      started=true;
+      startDrag(el,n,sx,sy);
+      if(navigator.vibrate)try{navigator.vibrate(18)}catch(_){}
+    },400);
+  };
+  const moveCheck=(e)=>{
+    if(started)return;
+    /* 아직 집어 올리기 전에 '많이' 움직이면 = 스크롤하려는 것 → 취소.
+       (v6.4) 손가락은 가만히 있어도 미세하게 흔들리므로 여유를 둔다 */
+    if(Math.abs(e.clientX-sx)>14||Math.abs(e.clientY-sy)>14) clearTimeout(holdT);
+  };
+  const end=()=>{ clearTimeout(holdT); started=false; };
+
+  el.addEventListener('pointerdown',begin);
+  el.addEventListener('pointermove',moveCheck);
+  el.addEventListener('pointerup',end);
+  el.addEventListener('pointercancel',end);
+}
+
+function startDrag(el,n,sx,sy){
+  const g=$('#grid');
+  const r=el.getBoundingClientRect();
+  _sortState={id:n.id,el,offX:sx-r.left,offY:sy-r.top,w:r.width,h:r.height};
+
+  el.classList.add('dragging');
+  el.style.position='fixed';
+  el.style.width=r.width+'px';
+  el.style.height=r.height+'px';
+  el.style.left=r.left+'px';
+  el.style.top=r.top+'px';
+  el.style.pointerEvents='none';
+
+  /* 빈 자리를 유지할 자리표시자 */
+  const ph=document.createElement('div');
+  ph.className='note';
+  ph.style.visibility='hidden';
+  ph.style.aspectRatio=getComputedStyle(el).aspectRatio||'1/1';
+  _sortState.ph=ph;
+  el.after(ph);
+
+  const onMove=(e)=>{
+    e.preventDefault();
+    el.style.left=(e.clientX-_sortState.offX)+'px';
+    el.style.top =(e.clientY-_sortState.offY)+'px';
+    /* 지금 손가락 아래에 있는 다른 카드 찾기 */
+    const cards=[...g.querySelectorAll('.note')].filter(c=>c!==el&&c!==ph);
+    let target=null;
+    for(const c of cards){
+      const cr=c.getBoundingClientRect();
+      if(e.clientX>=cr.left&&e.clientX<=cr.right&&e.clientY>=cr.top&&e.clientY<=cr.bottom){ target=c; break; }
+    }
+    cards.forEach(c=>c.classList.remove('dropTarget'));
+    if(target){
+      target.classList.add('dropTarget');
+      /* 자리표시자를 그 카드 앞/뒤로 옮긴다 → 주변 카드가 스르륵 밀린다 */
+      const tr=target.getBoundingClientRect();
+      const after=(e.clientX>tr.left+tr.width/2);
+      flipMove(g,()=>{ after?target.after(ph):target.before(ph); });
+    }
+    /* 화면 끝에서 자동 스크롤 */
+    const m=$('main');
+    if(m){
+      const mr=m.getBoundingClientRect();
+      if(e.clientY<mr.top+50) m.scrollTop-=12;
+      else if(e.clientY>mr.bottom-50) m.scrollTop+=12;
+    }
+  };
+
+  const onUp=()=>{
+    document.removeEventListener('pointermove',onMove);
+    document.removeEventListener('pointerup',onUp);
+    document.removeEventListener('pointercancel',onUp);
+    g.querySelectorAll('.dropTarget').forEach(c=>c.classList.remove('dropTarget'));
+
+    /* 자리표시자 위치 = 최종 순서 */
+    const order=[...g.children].map(c=>c===ph?n.id:c.dataset.id).filter(Boolean);
+    el.classList.remove('dragging');
+    el.style.cssText='';
+    ph.remove();
+    _sortState=null;
+    /* 손을 뗀 직후의 click 으로 노트가 열리지 않게 잠깐 막는다 */
+    el._justDragged=true;
+    setTimeout(()=>{ el._justDragged=false; },350);
+    commitOrder(order);
+  };
+
+  document.addEventListener('pointermove',onMove,{passive:false});
+  document.addEventListener('pointerup',onUp);
+  document.addEventListener('pointercancel',onUp);
+}
+
+/* FLIP — 자리가 바뀌는 카드들이 툭 튀지 않고 미끄러지듯 이동 */
+function flipMove(container,mutate){
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches){ mutate(); return; }
+  const kids=[...container.children];
+  const before=new Map(kids.map(k=>[k,k.getBoundingClientRect()]));
+  mutate();
+  kids.forEach(k=>{
+    const b=before.get(k); if(!b)return;
+    const a=k.getBoundingClientRect();
+    const dx=b.left-a.left, dy=b.top-a.top;
+    if(!dx&&!dy)return;
+    k.classList.remove('slide');
+    k.style.transform=`translate(${dx}px,${dy}px)`;
+    requestAnimationFrame(()=>{
+      k.classList.add('slide');
+      k.style.transform='';
+    });
+  });
+}
+
+/* 바뀐 순서를 저장 */
+function commitOrder(ids){
+  const coll=NOTES();
+  let changed=false;
+  ids.forEach((id,i)=>{
+    const n=coll.find(x=>x.id===id);
+    if(n&&n.sortIndex!==i){ n.sortIndex=i; n.dirty=true; n.updatedAt=Date.now(); changed=true; }
+  });
+  if(!changed)return;
+  touch(); persistActive(); render();
+  if(!ui.vault) syncSoon();
 }
 function enterSel(){ ui.selMode=true; $('#selMode').classList.add('show'); histPush(); }   /* (v6.2 요청5) */
 function exitSel(fromBack){
@@ -2541,12 +2870,55 @@ function exitSel(fromBack){
 function toggleSel(id){ if(ui.selected.has(id))ui.selected.delete(id); else ui.selected.add(id);
   if(ui.selected.size===0){ exitSel(); } render(); }
 function updateSelBar(){
-  $('#selMode').classList.toggle('show',ui.selMode);
-  $('#selCount').textContent=ui.selected.size+L('개 선택',' selected');
+  /* (v6.4) 휴지통에서는 아무것도 안 골랐어도 상단 바를 띄워
+     '전체 선택'을 바로 쓸 수 있게 한다 */
+  const show=ui.selMode||ui.trash;
+  $('#selMode').classList.toggle('show',show);
+  $('#selMode').classList.toggle('trashbar',!!ui.trash);
+  const cntEl=$('#selCount');
+  cntEl.textContent=ui.selected.size+L('개 선택',' selected');
+  /* (v6.4) 휴지통에서는 개수를 배너에 표시하므로 상단바에서는 숨겨 자리를 넓힌다 */
+  cntEl.style.display=ui.trash?'none':'';
+  cntEl.style.flex=ui.trash?'0':'1';
   $('#selRestore').style.display=ui.trash?'':'none';
-  $('#selDelete').textContent=ui.trash?L('🗑️ 영구삭제','🗑️ Delete forever'):L('🗑️ 삭제','🗑️ Delete');
+  $('#selDelete').innerHTML='🗑️ <span class="lbl">'+(ui.trash?L('영구삭제','Delete forever'):L('삭제','Delete'))+'</span>';
+  const none=ui.selected.size===0;
+  $('#selRestore').disabled=none; $('#selDelete').disabled=none;
+  $('#selRestore').style.opacity=none?'.45':'';
+  $('#selDelete').style.opacity=none?'.45':'';
+  /* 전체 선택 / 전체 해제 토글 */
+  const total=visibleNotes().length;
+  const allSel=total>0&&ui.selected.size>=total;
+  const sa=$('#selAll');
+  if(sa){
+    sa.innerHTML=(allSel?'☐':'☑')+' <span class="lbl">'+(allSel?L('전체 해제','None'):L('전체 선택','All'))+'</span>';
+    sa.style.display=total>0?'':'none';
+  }
+  /* 취소 버튼: 휴지통에서는 '휴지통 나가기'로 동작 */
+  const sc=$('#selCancel');
+  if(sc)sc.innerHTML='✕ <span class="lbl">'+(ui.trash?L('나가기','Exit'):L('취소','Cancel'))+'</span>';
 }
-$('#selCancel').onclick=()=>{exitSel();render()};
+$('#selCancel').onclick=()=>{
+  /* (v6.4) 휴지통에서는 '나가기' = 일반 노트로 돌아가기 */
+  if(ui.trash){ ui.trash=false; exitSel(); render(); return; }
+  exitSel(); render();
+};
+/* (v6.4) 전체 선택 / 전체 해제 */
+$('#selAll').onclick=()=>{
+  const arr=visibleNotes();
+  if(!arr.length)return;
+  const allSel=ui.selected.size>=arr.length;
+  if(allSel){
+    ui.selected.clear();
+    if(!ui.trash) exitSel();
+  }else{
+    if(!ui.selMode&&!ui.trash) enterSel();
+    arr.forEach(n=>ui.selected.add(n.id));
+  }
+  render();
+};
+/* (v6.4) 휴지통 배너의 ✕ = 일반 노트로 */
+$('#tbExit').onclick=()=>{ ui.trash=false; exitSel(); render(); };
 $('#selDelete').onclick=async()=>{
   const ids=[...ui.selected]; if(!ids.length)return;
   const coll=NOTES();
@@ -3543,12 +3915,21 @@ function renderItems(n){
     tx.placeholder=L('항목 입력','Type an item');
     tx.addEventListener('input',()=>{it.text=tx.value;schedSave()});
     tx.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addItemAt(idx+1)}});
+    /* (v6.4) 항목이 위·아래로 미끄러지듯 이동 */
     const up=document.createElement('button');up.className='mv';up.textContent='↑';
-    up.onclick=()=>{if(idx>0){[n.items[idx-1],n.items[idx]]=[n.items[idx],n.items[idx-1]];schedSave();renderItems(n)}};
+    up.onclick=()=>{if(idx>0){
+      flipMove(box,()=>{[n.items[idx-1],n.items[idx]]=[n.items[idx],n.items[idx-1]];renderItems(n)});
+      schedSave();}};
     const dn=document.createElement('button');dn.className='mv';dn.textContent='↓';
-    dn.onclick=()=>{if(idx<n.items.length-1){[n.items[idx+1],n.items[idx]]=[n.items[idx],n.items[idx+1]];schedSave();renderItems(n)}};
+    dn.onclick=()=>{if(idx<n.items.length-1){
+      flipMove(box,()=>{[n.items[idx+1],n.items[idx]]=[n.items[idx],n.items[idx+1]];renderItems(n)});
+      schedSave();}};
     const del=document.createElement('button');del.className='mv';del.textContent='✕';
-    del.onclick=()=>{n.items.splice(idx,1);schedSave();renderItems(n)};
+    del.onclick=()=>{
+      row.style.transition='opacity .18s, transform .18s';
+      row.style.opacity='0'; row.style.transform='translateX(-12px)';
+      setTimeout(()=>{n.items.splice(idx,1);schedSave();renderItems(n)},170);
+    };
     row.append(cb,tx,up,dn,del);box.append(row);
   });
 }
@@ -3685,6 +4066,31 @@ const SYNC={
   },
   reset(){ if(this.channel){try{this.channel.unsubscribe()}catch(e){} this.channel=null}
     this.client=null;this.session=null;this.uid=null; },
+  /* ══ (v6.3 버그수정) 앱을 껐다 켜면 로그인이 풀리던 문제 ══
+     Supabase는 persistSession:true 로 토큰을 저장해 두지만,
+     앱이 시작될 때 getSession() 을 한 번 불러 '복원'해 주어야 한다.
+     예전에는 makeClient() 만 호출하고 끝내서, 매번 다시 로그인해야 했다. */
+  async restore(){
+    /* 서버 주소·키가 없으면 애초에 할 일이 없다 */
+    if(!this.cfg().url||!this.cfg().key)return false;
+    /* ★ 라이브러리는 defer 로 늦게 뜬다. 준비될 때까지 기다린 뒤 복원한다.
+       (이 대기가 없어서 '앱을 켜면 로그아웃'되어 있었다) */
+    if(!this.libOk()){
+      try{ await ensureSyncLib(); }catch(_){}
+    }
+    if(!this.libOk())return false;
+    const c=this.makeClient();
+    if(!c)return false;
+    try{
+      const {data}=await c.auth.getSession();
+      if(data&&data.session){
+        this.onAuth('RESTORED',data.session);   // 세션 복원 + 자동 동기화 시작
+        return true;
+      }
+    }catch(e){}
+    setStatus('',L('미로그인','Not signed in'));
+    return false;
+  },
   onAuth(ev,session){
     this.session=session||null;
     if(ev==='PASSWORD_RECOVERY'){ setTimeout(()=>doPasswordRecovery(),200); }
@@ -5003,7 +5409,14 @@ VLT.init();
 applyViewBtn();
 setStatus('','');
 scheduleReminders();
-if(SYNC.ready()){SYNC.makeClient()}
+/* (v6.3) 저장된 로그인 정보를 복원한다 → 앱을 껐다 켜도 다시 로그인할 필요 없음.
+   supabase 스크립트가 defer 로 늦게 로드되므로 load 이후에 시도한다. */
+function bootRestoreSession(){
+  if(!S.settings.sbUrl||!S.settings.sbKey)return;
+  SYNC.restore().catch(()=>{});
+}
+if(document.readyState==='complete') setTimeout(bootRestoreSession,0);
+else addEventListener('load',()=>setTimeout(bootRestoreSession,0));
 histPush();
 /* (v6) 자동 백업 확정: 탭을 닫거나 화면이 숨겨질 때 바로 스냅샷 저장 */
 addEventListener('pagehide',()=>{ try{autoSnapshot(true);}catch(e){} });
