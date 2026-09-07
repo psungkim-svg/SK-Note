@@ -1,7 +1,8 @@
+<!-- v6.5 -->
 <!DOCTYPE html>
 <!--
 ═══════════════════════════════════════════════════════════════
-  soonenote  —  V6.4
+  soonenote  —  V6.5
   (V6.0 → V6.1 → V6.2 → V6.3 → V6.4)
 
   V6.4 changes  (2026-09)
@@ -676,15 +677,6 @@ html[data-theme="dark"] #edBody a,html[data-theme="dark"] #edBody a.nlink{color:
 #addItemBtn{margin:.6em 1em;width:calc(100% - 2em)}
 
 /* (요구8) 선택 시 뜨는 서식(볼드 등) 플로팅 툴바 */
-#selBar{position:fixed;z-index:95;display:flex;gap:.15em;background:var(--card);   /* (요청) 상단 고정 + 높은 z-index */
-  border:1px solid var(--line);border-radius:.6em;box-shadow:0 4px 16px rgba(0,0,0,.25);
-  padding:.25em;opacity:0;visibility:hidden;transform:translateY(6px);transition:opacity .15s,transform .15s;
-  max-width:calc(100vw - 12px);flex-wrap:wrap}
-#selBar.show{opacity:1;visibility:visible;transform:translateY(0)}
-#selBar .tb{background:var(--chip);border:none;color:var(--text);border-radius:.4em;
-  min-width:1.9em;height:1.9em;font-size:.78em;font-weight:700}
-#selBar .tb.b{font-weight:900}#selBar .tb.i{font-style:italic}
-#selBar .tb.u{text-decoration:underline}#selBar .tb.s{text-decoration:line-through}
 .palpop{position:absolute;z-index:70;background:var(--card);border:1px solid var(--line);
   border-radius:.5em;box-shadow:var(--shadow);padding:.4em;display:flex;gap:.25em;flex-wrap:wrap;width:11em}
 .palpop button{width:1.4em;height:1.4em;border-radius:50%;border:1px solid rgba(0,0,0,.15)}
@@ -981,10 +973,7 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
 <!-- (v6.2 요청2) 텍스트 선택 시 뜨던 서식 툴바(가·기·밑·취 + 🎨🖍️🧹) 제거.
      서식은 상단 도구줄의 T 버튼에서 그대로 사용할 수 있습니다.
      팔레트 요소는 T 팝오버가 참조하므로 화면 밖에 숨겨서 유지합니다. -->
-<div id="selBar" style="display:none!important" aria-hidden="true">
-  <span class="palpop hidden" id="palColor"></span>
-  <span class="palpop hidden" id="palHi"></span>
-</div>
+
 
 <!-- 알림 설정 -->
 <div class="overlay" id="remindOverlay">
@@ -1054,7 +1043,9 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
         <button class="btn primary" id="acSyncNow" data-i18n="ac_syncnow">Sync now</button>
         <button class="btn" id="acDiag" data-i18n="ac_diag">Diagnose</button>
         <button class="btn danger" id="acLogout" data-i18n="ac_logout">Sign out</button>
+        <button class="btn danger" id="acDeleteAccount">Delete account</button>
       </div>
+      <div class="hint">Deleting your account permanently removes your synced notes, folders, and sign-in account. Local Vault data is not uploaded and must be deleted separately from Settings.</div>
       <div class="hint" data-i18n="ac_hint">⚠️ Sign in with the <b>same email</b> on both devices (PC and phone) to share notes. Different emails won’t sync.</div>
     </div>
   </div>
@@ -1256,7 +1247,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='soonenote';
-const APP_VER='6.4';
+const APP_VER='6.5';
 const SSTORE=(()=>{try{const t='__cn__';sessionStorage.setItem(t,'1');sessionStorage.removeItem(t);return sessionStorage}
   catch(e){const m={};return{getItem:k=>(k in m?m[k]:null),setItem:(k,v)=>{m[k]=String(v)},removeItem:k=>{delete m[k]}}}})();
 
@@ -3750,41 +3741,6 @@ $('#edTypeBtn').onclick=e=>{e.stopPropagation();buildTypePop();updateTpVals();
 };
 $('#edTypePop').onclick=e=>e.stopPropagation();
 
-/* ── (요구8) 특정 단어 선택 → 볼드 등 서식 툴바 ── */
-const selBar=$('#selBar');
-/* (v6.2 요청2) 선택 서식 툴바를 더 이상 띄우지 않는다 */
-const SELBAR_ENABLED=false;
-function showSelBar(){
-  if(!SELBAR_ENABLED){ hideSelBar(); return; }   /* (v6.2 요청2) 항상 숨김 */
-  const sel=window.getSelection();
-  if(!ui.edEdit||!sel||sel.isCollapsed||!sel.rangeCount){hideSelBar();return}
-  const r=sel.getRangeAt(0);
-  if(!$('#edBody').contains(r.commonAncestorContainer)){hideSelBar();return}
-  selBar.classList.add('show');
-  /* (요청) 서식 바는 항상 화면 상단(제목/도구줄 바로 아래)에 고정 —
-     OS의 복사/잘라내기 메뉴(선택 지점 위)와 겹치지 않게 함 */
-  const bw=selBar.offsetWidth||260, bh=selBar.offsetHeight||40;
-  const edb=document.querySelector('.edbar');
-  const anchor=edb?edb.getBoundingClientRect().bottom+6:8;
-  const top=Math.max(6,anchor);
-  let left=(innerWidth-bw)/2; left=Math.max(6,Math.min(left,innerWidth-bw-6));
-  selBar.style.left=left+'px'; selBar.style.top=top+'px';
-}
-function hideSelBar(){selBar.classList.remove('show');$('#palColor').classList.add('hidden');$('#palHi').classList.add('hidden')}
-document.addEventListener('selectionchange',()=>{ if($('#edOverlay').classList.contains('show'))setTimeout(showSelBar,10) });
-$$('#selBar [data-cmd]').forEach(b=>b.onclick=e=>{e.preventDefault();e.stopPropagation();document.execCommand(b.dataset.cmd,false,null);schedSave();showSelBar()});
-/* (v6.2 요청2) sbColor/sbHi 버튼은 제거됐다 — 아래 핸들러는 존재할 때만 연결 */
-function buildPal(el,colors,cmd){
-  el.innerHTML='';colors.forEach(c=>{const b=document.createElement('button');b.style.background=c==='transparent'?'#fff':c;
-    if(c==='transparent'){b.textContent='🚫';b.style.fontSize='.5em'}
-    b.onclick=ev=>{ev.stopPropagation();document.execCommand(cmd,false,c);el.classList.add('hidden');schedSave()};
-    el.append(b)});
-}
-buildPal($('#palColor'),TEXT_COLORS,'foreColor');
-buildPal($('#palHi'),HI_COLORS,'hiliteColor');
-if($('#sbColor'))$('#sbColor').onclick=e=>{e.stopPropagation();$('#palHi').classList.add('hidden');$('#palColor').classList.toggle('hidden')};
-if($('#sbHi'))$('#sbHi').onclick=e=>{e.stopPropagation();$('#palColor').classList.add('hidden');$('#palHi').classList.toggle('hidden')};
-
 /* ── (요구6) 케밥(세로 점3개) 메뉴 ── */
 function buildKebab(){
   const n=cur();if(!n)return;
@@ -4473,6 +4429,28 @@ $('#acLogout').onclick=async()=>{
   if(SYNC.client)await SYNC.client.auth.signOut();
   SYNC.reset();updateAccountUI();setStatus('',L('미로그인','Not signed in'));toast(L('로그아웃했습니다','Signed out'));
 };
+$('#acDeleteAccount').onclick=async()=>{
+  if(!SYNC.client||!SYNC.session){toast(L('먼저 로그인하세요','Sign in first'));return;}
+  const ok=await dlg(L('계정과 서버의 모든 동기화 노트·폴더를 영구 삭제할까요? 이 작업은 되돌릴 수 없습니다.','Permanently delete your account and all synced notes and folders? This cannot be undone.'),{danger:true,okText:L('계정 삭제','Delete account')});
+  if(!ok)return;
+  const typed=await dlg(L('확인을 위해 DELETE를 입력하세요.','Type DELETE to confirm.'),{input:true,okText:L('삭제','Delete')});
+  if(typed!=='DELETE'){toast(L('취소되었습니다','Canceled'));return;}
+  $('#acAuthStat').textContent=L('계정 삭제 중…','Deleting account…');
+  try{
+    const {error}=await SYNC.client.functions.invoke('delete-account');
+    if(error)throw error;
+    try{await SYNC.client.auth.signOut()}catch(_){}
+    SYNC.reset();
+    S.notes=[];S.folders=[];
+    S.settings.lastSync=0;S.settings.lastPull=0;
+    save();render();updateAccountUI();setStatus('','');
+    toast(L('계정과 동기화 데이터가 삭제되었습니다','Account and synced data deleted'));
+    ovCloseUi($('#acOverlay'));
+  }catch(e){
+    $('#acAuthStat').style.whiteSpace='pre-line';
+    $('#acAuthStat').textContent=L('삭제 실패: 서버에 delete-account Edge Function을 배포했는지 확인하세요.\n','Deletion failed. Confirm that the delete-account Edge Function is deployed.\n')+(e.message||e);
+  }
+};
 $('#acSyncNow').onclick=async()=>{ await SYNC.pushDirty(); await SYNC.pullAll(); updateAccountUI(); toast(L('동기화 완료','Sync complete')); };
 $('#acDiag').onclick=async()=>{
   const st=$('#acAuthStat');st.style.whiteSpace='pre-line';
@@ -4636,11 +4614,19 @@ $('#stEmptyTrash').onclick=async()=>{
 };
 /* ───────── (요구) 백업/복구: 이 기기 백업 목록 + 외부(Google Drive 등) Export/Import ───────── */
 let bkDetail=-1; const bkSel=new Set();
-function buildBackup(){
-  return {app:'sk-note',v:4,exportedAt:new Date().toISOString(),
+async function buildBackup(){
+  let vaultEncrypted=null;
+  if(VLT.key){
+    vaultEncrypted=await aesEncrypt(VLT.key,JSON.stringify(VLT.notes||[]));
+    vaultEncrypted.__enc=1;
+  }else{
+    try{const raw=JSON.parse(STORE.getItem('sk.vault')||'null');if(raw&&raw.__enc===1)vaultEncrypted=raw;}catch(_){}
+  }
+  return {app:'sk-note',v:5,exportedAt:new Date().toISOString(),
     notes:S.notes,
     folders:S.folders.map(f=>({id:f.id,name:f.name,createdAt:f.createdAt})),
-    vaultNotes:VLT.notes||[],
+    vaultEncrypted,
+    vaultKeyInfo:vaultEncrypted?{pinHash:S.settings.pinHash||null,pinSalt:S.settings.pinSalt||null}:null,
     vaultFolders:(VLT.folders||[]).map(f=>({id:f.id,name:f.name,createdAt:f.createdAt}))};
 }
 function backupName(){ const d=new Date(); const p=x=>String(x).padStart(2,'0');
@@ -4690,14 +4676,14 @@ function applyBackup(d, onlyIds){
 /* ── v6 자동 백업(스냅샷): 저장/닫기/백그라운드 전환 시 이전 상태를 이 기기에 자동 보관 ── */
 let autoSnapTimer=null;
 function snapSig(){ try{return (S.notes.length+':'+VLT.notes.length+':'+[...S.notes,...VLT.notes].reduce((a,n)=>a+(n.updatedAt||0),0))}catch(e){return 'x'} }
-function autoSnapshot(force){
+async function autoSnapshot(force){
   try{
     const sig=snapSig();
     const last=STORE.getItem('sk.snapSig');
     const t=Date.now(), lastT=parseInt(STORE.getItem('sk.snapLast')||'0',10)||0;
     if(!force && sig===last)return;                 // 내용이 안 바뀌었으면 생략
     if(t-lastT < 5*60*1000 && !force)return;        // 최소 5분 간격 (쓰기 폭주 방지)
-    saveLocalBackup(buildBackup());
+    saveLocalBackup(await buildBackup());
     STORE.setItem('sk.snapSig',sig); STORE.setItem('sk.snapLast',String(t));
   }catch(e){}
 }
@@ -4705,8 +4691,8 @@ function scheduleAutoSnap(){ clearTimeout(autoSnapTimer); autoSnapTimer=setTimeo
 /* 노트가 실제로 저장될 때마다 자동 백업 스케줄 (save/VLT.persist 끝에서 호출) */
 
 /* 💾 백업하기: 이 기기 목록에 저장 + 파일로도 받기 */
-$('#stExport').onclick=()=>{
-  const payload=buildBackup();
+$('#stExport').onclick=async()=>{
+  const payload=await buildBackup();
   saveLocalBackup(payload);                                   // (요구) 이 기기 백업 목록에 저장
   downloadBackup(payload);                                     // 파일로도 저장(폴백)
   toast(tr('Backup saved (normal + vault notes included)','toast_backup'));
@@ -4738,8 +4724,8 @@ function openBkList(){
   bks.forEach((b,i)=>{
     const row=document.createElement('div');row.className='setrow';
     const nm=document.createElement('span');
-    const nCnt=(b.data.notes||[]).length, vCnt=(b.data.vaultNotes||[]).length;
-    nm.innerHTML=`<b>${fmtTime(b.at)}</b><br><span class="stat">${L('노트','notes')} ${nCnt}${vCnt?` · 🔐 ${vCnt}`:''}</span>`;
+    const nCnt=(b.data.notes||[]).length, vCnt=(b.data.vaultNotes||[]).length, hasEnc=!!b.data.vaultEncrypted;
+    nm.innerHTML=`<b>${fmtTime(b.at)}</b><br><span class="stat">${L('노트','notes')} ${nCnt}${vCnt?` · 🔐 ${vCnt}`:''}${hasEnc?' · 🔐 encrypted Vault':''}</span>`;
     const btn=document.createElement('button');btn.className='btn primary';
     btn.textContent=L('보기 / 복구','View / Restore');
     btn.onclick=()=>{ bkDetail=i; bkSel.clear(); renderBkDetail(); };
@@ -4757,6 +4743,21 @@ function renderBkDetail(){
   const norm=(d.notes||[]).map(n=>({id:n.id,title:n.title||'',type:n.type,preview:n.type==='check'?(n.items||[]).slice(0,3).map(i=>i.text).join(' · '):plain(n.content).slice(0,90)}));
   const vlt=(d.vaultNotes||[]).map(n=>({id:n.id,vault:true,title:n.title||'',type:n.type,preview:n.type==='check'?(n.items||[]).slice(0,3).map(i=>i.text).join(' · '):plain(n.content).slice(0,90)}));
   const all=[...norm,...vlt];
+  if(d.vaultEncrypted){
+    const vr=document.createElement('div');vr.className='setrow';
+    const vt=document.createElement('span');vt.textContent=L('암호화된 Vault 백업 포함','Encrypted Vault backup included');
+    const vb=document.createElement('button');vb.className='btn danger';vb.textContent=L('Vault 복원','Restore Vault');
+    vb.onclick=async()=>{
+      if(!await dlg(L('현재 기기의 Vault를 이 암호화 백업으로 교체할까요? 기존 Vault는 덮어씁니다.','Replace this device’s Vault with the encrypted backup? The current Vault will be overwritten.'),{danger:true,okText:L('복원','Restore')}))return;
+      STORE.setItem('sk.vault',JSON.stringify(d.vaultEncrypted));
+      STORE.setItem('sk.vault.folders',JSON.stringify(d.vaultFolders||[]));
+      if(d.vaultKeyInfo&&d.vaultKeyInfo.pinHash&&d.vaultKeyInfo.pinSalt){
+        S.settings.pinHash=d.vaultKeyInfo.pinHash;S.settings.pinSalt=d.vaultKeyInfo.pinSalt;save();
+      }else{toast(L('이 백업에는 Vault 키 정보가 없어 다른 기기에서 열리지 않을 수 있습니다.','This backup lacks Vault key metadata and may not unlock on another device.'));}
+      VLT.key=null;VLT.load();if(ui.vault)VLT.leave();
+      toast(L('암호화된 Vault를 복원했습니다. 비밀번호로 열어 주세요.','Encrypted Vault restored. Unlock it with its password.'));
+    };vr.append(vt,vb);list.append(vr);
+  }
   /* 상단 도구줄 */
   const top=document.createElement('div');top.className='btnrow';top.style.marginBottom='.3em';
   const back=document.createElement('button');back.className='btn';back.textContent=L('← 목록','← List');
@@ -4812,7 +4813,7 @@ async function doApply(d, ids){
    지원 환경(Chrome/Edge·Android 등)은 showSaveFilePicker로 원하는 폴더에 저장,
    지원 안 하면(사파리 등) 일반 다운로드로 폴백. */
 $('#stExportEn').onclick=async()=>{
-  const payload=buildBackup();
+  const payload=await buildBackup();
   const json=JSON.stringify(payload,null,2);
   const name=backupName();
   try{

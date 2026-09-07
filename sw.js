@@ -1,7 +1,7 @@
 /* soonenote — Service Worker (오프라인 지원)
    v6.1 수정: HTML은 네트워크 우선(network-first) → 새 버전 배포 시 즉시 반영.
    나머지 정적 파일만 캐시 우선(cache-first). */
-const VERSION = '6.4';
+const VERSION = '6.5';
 const CACHE = 'soonenote-v' + VERSION;
 const ASSETS = [
   './', './index.html', './manifest.webmanifest',
