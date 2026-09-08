@@ -1,9 +1,40 @@
-<!-- v6.5 -->
 <!DOCTYPE html>
 <!--
 ═══════════════════════════════════════════════════════════════
-  soonenote  —  V6.5
-  (V6.0 → V6.1 → V6.2 → V6.3 → V6.4)
+  soonenote  —  V6.6
+  (V6.0 → ... → V6.5 → V6.6)
+
+  V6.6 changes  (2026-09)
+   ** FIX: "notes would not open" **
+      When a new service worker took control, the app called location.reload()
+      immediately - even while the user was in the middle of opening or
+      editing a note. The screen reloaded, so the note appeared not to open,
+      and unsaved text could be lost.
+      The reload is now deferred until the user is idle (not editing, nothing
+      open) and the draft is flushed first.
+   · Trash checkbox is bigger and much bolder; restore arrow enlarged again
+   · Verified offline: the app opens, and notes can be read, edited and
+     created with no internet; changes upload automatically when back online.
+
+  V6.5 changes  (2026-09)
+   1. + button moved 1mm further down
+   2. FIX: manual reorder still did nothing on a real phone. The card was
+      picked up but the browser fired pointercancel the moment the finger
+      moved, because touch-action was not disabled on the dragged card.
+      Now uses pointer capture + touch-action:none + touchmove fallback.
+   3. Restore arrow in the trash bar is much larger and bolder
+   4. Palette: Sage and Baby Blue swapped (3rd <-> 4th)
+   5. Pencil: white circle removed, icon darkened and enlarged to 105%
+   6. The T (format) panel can now be dragged by its top handle, so it no
+      longer covers the text you are editing. Position is remembered.
+   7. FIX (important): shrinking the font size did nothing. Each change
+      wrapped the selection in ANOTHER span, and in CSS the innermost
+      font-size wins - so 24pt -> 10pt still rendered at 24pt. Inner
+      font-size declarations are now stripped before re-wrapping.
+   8. Removed leftover dead code: .selmark, #vFab, .justAdded, .itemrow.moving,
+      .ov (typo for .overlay), dropBefore(), atPoint(), ui.dragId,
+      sbColor/sbHi handlers. Also connected syncDotInfo(), which was written
+      in V6.2 but never wired to the sync dot.
 
   V6.4 changes  (2026-09)
    1. The + button is 80% size and nudged 2mm right / 1mm down
@@ -192,6 +223,9 @@ html[data-theme="dark"] #folderNav.vault{background:#2a2c27} /* 다크: Sage 톤
           순서가 바뀔 때 화면이 툭툭 끊겼다.
    [해결] 손가락으로 끌 수 있게 바꾸고, 자리 이동을 애니메이션으로 보여준다. */
 .note.dragging{
+  /* ★ 이게 없으면 브라우저가 '스크롤하려나 보다' 하고 pointercancel 을 보내
+     끌기가 즉시 끊긴다. 반드시 필요. */
+  touch-action:none;
   opacity:.92;
   transform:scale(1.06);
   box-shadow:0 14px 34px rgba(90,70,60,.34);
@@ -211,15 +245,14 @@ html[data-theme="dark"] #folderNav.vault{background:#2a2c27} /* 다크: Sage 톤
 html[data-theme="dark"] .note.sortable::after{color:rgba(255,255,255,.28)}
 /* 새로 추가된 카드가 살짝 나타남 */
 @keyframes noteIn{from{opacity:0;transform:translateY(6px) scale(.97)}to{opacity:1;transform:none}}
-.note.justAdded{animation:noteIn .28s cubic-bezier(.2,1,.4,1)}
 
 /* 화면 전환(설정·계정·폴더 등)도 조금 더 부드럽게 */
-.ov{transition:opacity .24s ease, visibility .24s}
-.ov .sheet{transition:transform .3s cubic-bezier(.2,1,.35,1), opacity .24s}
+
+/* (v6.5) 화면 전환 — 원래 .ov 로 잘못 써서 적용되지 않았다. 실제 클래스는 .overlay */
+.overlay .sheet{transition:transform .3s cubic-bezier(.2,1,.35,1), opacity .24s}
 
 /* 체크리스트 항목 위·아래 이동 */
 .itemrow{transition:transform .22s cubic-bezier(.2,.8,.3,1), opacity .2s}
-.itemrow.moving{background:rgba(215,164,154,.14);border-radius:.4em}
 
 /* 편집기 안 이미지 이동 */
 #edBody img.edimg{transition:box-shadow .18s, transform .18s}
@@ -230,7 +263,6 @@ html[data-theme="dark"] .note.sortable::after{color:rgba(255,255,255,.28)}
 
 @media (prefers-reduced-motion: reduce){
   .note.slide,.itemrow,#edBody img.edimg{transition:none!important}
-  .note.justAdded{animation:none!important}
 }
 
 /* ══════════ (v6.4) 휴지통 화면 ══════════
@@ -263,24 +295,26 @@ html[data-theme="dark"] #trashBanner{
 
 /* 카드 체크박스 (휴지통·선택모드) */
 .note .selbox{
-  position:absolute;top:.35em;right:.35em;z-index:4;
-  width:1.45em;height:1.45em;border-radius:.32em;
-  border:2px solid rgba(90,70,60,.4);background:rgba(255,255,255,.95);
+  position:absolute;top:.3em;right:.3em;z-index:4;
+  /* (v6.6) 더 크고 굵게 — 잘 보이도록 */
+  width:1.75em;height:1.75em;border-radius:.34em;
+  border:3px solid rgba(70,52,44,.62);background:rgba(255,255,255,.97);
   display:flex;align-items:center;justify-content:center;
-  font-size:.9em;font-weight:900;color:transparent;line-height:1;
-  box-shadow:0 1px 3px rgba(90,70,60,.2);
+  font-size:1.05em;font-weight:900;color:transparent;line-height:1;
+  box-shadow:0 2px 5px rgba(90,70,60,.28);
   transition:background .15s,border-color .15s,color .15s,transform .15s;
 }
 .note.sel .selbox{
-  background:var(--accent);border-color:var(--accent);color:#4a332e;
-  transform:scale(1.06);
+  background:var(--accent);border-color:#7a4f45;color:#3a241f;
+  transform:scale(1.1);
+  box-shadow:0 2px 7px rgba(90,70,60,.4);
 }
 html[data-theme="dark"] .note .selbox{
   background:rgba(40,38,36,.92);border-color:rgba(255,255,255,.32);
 }
 html[data-theme="dark"] .note.sel .selbox{background:var(--accent);border-color:var(--accent);color:#241a17}
 /* 체크박스가 제목을 가리지 않게 */
-.note.haschk .thead .ttl{padding-right:1.9em}
+.note.haschk .thead .ttl{padding-right:2.4em}
 
 /* (v6.3) 동기화 라이브러리 누락 경고 배너 */
 #acLibWarn{
@@ -477,9 +511,6 @@ main{order:1;flex:1;padding:0;max-width:1000px;width:100%;margin:0 auto;overflow
 }
 .note:active{transform:scale(.97)}
 .note.sel{outline:3px solid var(--accent);outline-offset:-3px}
-.note .selmark{position:absolute;top:.3em;right:.3em;width:1.4em;height:1.4em;border-radius:50%;
-  background:var(--accent);color:#4a332e;display:flex;align-items:center;justify-content:center;
-  font-size:.7em;font-weight:900;z-index:2}
 .note .thead{
   background:var(--tc,var(--chip));   /* (요구16) 제목줄 진한 2톤 */
   padding:.14em .5em;display:flex;align-items:center;gap:.3em;min-height:0
@@ -499,18 +530,18 @@ html[data-theme="dark"] mark{background:#8a6f62;color:#fff}
 
 /* ── 플로팅 + 버튼 (하단 바 바로 위에 붙음) ── */
 #folderNav{position:relative;flex:none}
-#fab,#vFab{
+#fab{
   /* (v6.4) 크기 80%로 축소 + 아래로 1mm · 오른쪽으로 2mm 이동 */
   position:absolute;right:.7em;bottom:100%;margin-bottom:.5em;z-index:31;
   width:1.7em;height:1.7em;padding:0;line-height:1;
   display:flex;align-items:center;justify-content:center;
   border-radius:50%;border:none;background:var(--accent);
   color:#4a332e;font-size:1.6em;font-weight:700;box-shadow:0 4px 12px rgba(90,75,65,.28);
-  transform:translate(2mm,1mm) scale(.8);
+  transform:translate(2mm,2mm) scale(.8);   /* (v6.5) 아래로 1mm 추가 이동 */
   transform-origin:center;
   transition:transform .15s
 }
-#fab:active,#vFab:active{transform:translate(2mm,1mm) scale(.72)}   /* 눌림 = 0.8 x 0.9 */
+#fab:active{transform:translate(2mm,2mm) scale(.72)}   /* 눌림 = 0.8 x 0.9 */
 
 /* (요구4) + → 추가 메뉴 */
 #addMenu{position:fixed;inset:0;z-index:45;background:rgba(0,0,0,.35);
@@ -605,27 +636,27 @@ html[data-theme="dark"] mark{background:#8a6f62;color:#fff}
 /* (요청3) 연필: 박스 없이 연필만. 연필심(끝)은 왼쪽. 편집 ON=노란 연필(박스 없음), 누르면 '들어가는' 눌림 */
 /* (v6.4) 연필이 배경에 묻혀 잘 안 보이던 문제 →
    흰 원 배경 + 윤곽선 + 그림자를 줘서 어떤 카드 색 위에서도 또렷하게 */
+/* (v6.5) 흰 동그라미 배경을 없애고, 연필 자체를 짙은 색으로 + 105% 확대 */
 #edPencil{
-  background:rgba(255,255,255,.92)!important;
-  border:1px solid rgba(90,70,60,.18);
-  border-radius:50%;
-  padding:.22em;
-  box-shadow:0 1px 4px rgba(90,70,60,.22);
+  background:none!important;
+  border:none;
+  padding:.1em;
 }
-#edPencil.on{
-  background:#fff!important;
-  border-color:rgba(90,70,60,.3);
-  box-shadow:0 2px 7px rgba(90,70,60,.34);
+#edPencil.on{background:none!important}
+#edPencil svg{
+  transition:transform .14s;
+  transform:scale(1.05);
+  filter:drop-shadow(0 1px 2px rgba(60,45,38,.5)) saturate(1.5) brightness(.78);
 }
-#edPencil svg{transition:transform .14s;filter:drop-shadow(0 1px 1.5px rgba(80,60,50,.35))}
-html[data-theme="dark"] #edPencil{
-  background:rgba(245,242,238,.94)!important;
-  border-color:rgba(0,0,0,.35);
-  box-shadow:0 1px 5px rgba(0,0,0,.5);
+#edPencil.on svg{
+  transform:rotate(-12deg) scale(1.12);
+  filter:drop-shadow(0 1.5px 3px rgba(60,45,38,.6)) saturate(1.6) brightness(.72);
+}
+#edPencil:active svg{transform:translate(.08em,.1em) rotate(-8deg) scale(.99)}
+html[data-theme="dark"] #edPencil svg{
+  filter:drop-shadow(0 1px 2px rgba(0,0,0,.7)) saturate(1.35) brightness(1.05);
 }
 #edPencil:active svg{transform:translate(.08em,.1em) rotate(-8deg) scale(.94)}
-/* 편집 모드일 때 연필이 살짝 기울어 '쓰는 중'임을 표시 */
-#edPencil.on svg{transform:rotate(-12deg) scale(1.06);filter:drop-shadow(0 1px 2px rgba(120,90,80,.35))}
 .edtool.on{background:var(--accent);color:#4a332e}
 /* (요구8) 사각 컬러박스 — 항상 선택된 색상 채움 */
 /* (v6.2 요청4) 컬러 버튼 = 흰색 굵은 테두리 + 바깥 얇은 윤곽선(밝은 배경에서도 보이게) */
@@ -677,16 +708,39 @@ html[data-theme="dark"] #edBody a,html[data-theme="dark"] #edBody a.nlink{color:
 #addItemBtn{margin:.6em 1em;width:calc(100% - 2em)}
 
 /* (요구8) 선택 시 뜨는 서식(볼드 등) 플로팅 툴바 */
+#selBar{position:fixed;z-index:95;display:flex;gap:.15em;background:var(--card);   /* (요청) 상단 고정 + 높은 z-index */
+  border:1px solid var(--line);border-radius:.6em;box-shadow:0 4px 16px rgba(0,0,0,.25);
+  padding:.25em;opacity:0;visibility:hidden;transform:translateY(6px);transition:opacity .15s,transform .15s;
+  max-width:calc(100vw - 12px);flex-wrap:wrap}
+#selBar.show{opacity:1;visibility:visible;transform:translateY(0)}
+#selBar .tb{background:var(--chip);border:none;color:var(--text);border-radius:.4em;
+  min-width:1.9em;height:1.9em;font-size:.78em;font-weight:700}
+#selBar .tb.b{font-weight:900}#selBar .tb.i{font-style:italic}
+#selBar .tb.u{text-decoration:underline}#selBar .tb.s{text-decoration:line-through}
 .palpop{position:absolute;z-index:70;background:var(--card);border:1px solid var(--line);
   border-radius:.5em;box-shadow:var(--shadow);padding:.4em;display:flex;gap:.25em;flex-wrap:wrap;width:11em}
 .palpop button{width:1.4em;height:1.4em;border-radius:50%;border:1px solid rgba(0,0,0,.15)}
 
 /* 컬러 선택 팝오버(사각 컬러박스용) */
 /* (요청) Type(서식) 팝오버 — 글자크기·볼드·이탤릭·밑줄·줄간격 */
-#edTypePop{position:absolute;z-index:70;top:2.6em;right:.4em;background:var(--card);
-  border:1px solid var(--line);border-radius:.6em;box-shadow:0 6px 20px rgba(0,0,0,.25);
-  padding:.5em .6em;width:min(92vw,280px);
+/* (v6.5) T(서식) 창이 글자를 가릴 때 손가락으로 옮길 수 있게 */
+#edTypePop{position:fixed;z-index:70;top:auto;right:auto;background:var(--card);
+  border:1px solid var(--line);border-radius:.6em;box-shadow:0 8px 24px rgba(0,0,0,.28);
+  padding:0 .6em .55em;width:min(92vw,280px);
   opacity:0;visibility:hidden;transform:translateY(-6px);transition:opacity .16s,transform .16s}
+#edTypePop.dragging{transition:none;box-shadow:0 14px 34px rgba(0,0,0,.4)}
+/* 잡고 옮기는 손잡이 */
+#tpHandle{
+  display:flex;align-items:center;justify-content:center;gap:.4em;
+  margin:0 -.6em .45em;padding:.5em .6em .42em;
+  border-bottom:1px solid var(--line);
+  cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;
+  background:linear-gradient(var(--chip),var(--chip));
+  border-radius:.6em .6em 0 0;
+}
+#tpHandle:active{cursor:grabbing}
+#tpHandle .bar{width:2.2em;height:4px;border-radius:2px;background:var(--sub);opacity:.5}
+#tpHandle .txt{font-size:.62em;font-weight:800;color:var(--sub);letter-spacing:.04em}
 #edTypePop.show{opacity:1;visibility:visible;transform:translateY(0)}
 .tprow{display:flex;align-items:center;gap:.4em;margin:.28em 0;flex-wrap:wrap}
 .tplab{font-size:.6em;color:var(--sub);font-weight:700;width:3.1em;flex:none}
@@ -775,7 +829,11 @@ html[data-theme="dark"] #edBody a,html[data-theme="dark"] #edBody a.nlink{color:
   #selMode .sbtn{padding:.42em .55em;font-size:.82em}
 }
 #selMode .sbtn{background:rgba(255,255,255,.35);border:none;color:#4a332e;border-radius:.5em;
-  padding:.4em .6em;font-size:.72em;font-weight:700;white-space:nowrap;flex:none}
+  padding:.4em .6em;font-size:.72em;font-weight:700;white-space:nowrap;flex:none;
+  display:inline-flex;align-items:center;gap:.28em}
+/* (v6.5) 복원 화살표가 너무 작아 안 보이던 문제 → 크고 진하게 */
+#selMode .sbtn .ic{font-size:1.9em;line-height:1;font-weight:900;-webkit-text-stroke:.02em currentColor}
+#selMode .sbtn.restore{background:rgba(255,255,255,.62)}
 
 /* ── 설정/계정 ── */
 .setsec{background:var(--card);border:1px solid var(--line);border-radius:.6em;padding:.6em;margin-bottom:.5em}
@@ -839,7 +897,7 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
   <button class="sbtn" id="selCancel">✕ <span class="lbl" data-i18n="cancel">Cancel</span></button>
   <button class="sbtn" id="selAll">☑ <span class="lbl" data-i18n="select_all">All</span></button>
   <span class="cnt" id="selCount">0<span data-i18n="sel_count"> selected</span></span>
-  <button class="sbtn" id="selRestore" style="display:none">↩︎ <span class="lbl" data-i18n="restore">Restore</span></button>
+  <button class="sbtn restore" id="selRestore" style="display:none"><span class="ic">↺</span> <span class="lbl" data-i18n="restore">Restore</span></button>
   <button class="sbtn" id="selDelete">🗑️ <span class="lbl" data-i18n="delete">Delete</span></button>
 </div>
 
@@ -973,7 +1031,10 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
 <!-- (v6.2 요청2) 텍스트 선택 시 뜨던 서식 툴바(가·기·밑·취 + 🎨🖍️🧹) 제거.
      서식은 상단 도구줄의 T 버튼에서 그대로 사용할 수 있습니다.
      팔레트 요소는 T 팝오버가 참조하므로 화면 밖에 숨겨서 유지합니다. -->
-
+<div id="selBar" style="display:none!important" aria-hidden="true">
+  <span class="palpop hidden" id="palColor"></span>
+  <span class="palpop hidden" id="palHi"></span>
+</div>
 
 <!-- 알림 설정 -->
 <div class="overlay" id="remindOverlay">
@@ -1043,9 +1104,7 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
         <button class="btn primary" id="acSyncNow" data-i18n="ac_syncnow">Sync now</button>
         <button class="btn" id="acDiag" data-i18n="ac_diag">Diagnose</button>
         <button class="btn danger" id="acLogout" data-i18n="ac_logout">Sign out</button>
-        <button class="btn danger" id="acDeleteAccount">Delete account</button>
       </div>
-      <div class="hint">Deleting your account permanently removes your synced notes, folders, and sign-in account. Local Vault data is not uploaded and must be deleted separately from Settings.</div>
       <div class="hint" data-i18n="ac_hint">⚠️ Sign in with the <b>same email</b> on both devices (PC and phone) to share notes. Different emails won’t sync.</div>
     </div>
   </div>
@@ -1247,7 +1306,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='soonenote';
-const APP_VER='6.5';
+const APP_VER='6.6';
 const SSTORE=(()=>{try{const t='__cn__';sessionStorage.setItem(t,'1');sessionStorage.removeItem(t);return sessionStorage}
   catch(e){const m={};return{getItem:k=>(k in m?m[k]:null),setItem:(k,v)=>{m[k]=String(v)},removeItem:k=>{delete m[k]}}}})();
 
@@ -1256,14 +1315,14 @@ const SSTORE=(()=>{try{const t='__cn__';sessionStorage.setItem(t,'1');sessionSto
 /* ══ (v6.1) soonenote 고정 팔레트 — 7색 muted pastel ══
    본문(COLORS)  = 기준색을 화이트에 72% 희석 → 거의 화이트에 가까운 파스텔
    제목(HEADS_L) = 기준색 그대로 또는 10%만 밝게                              */
-const PALETTE_BASE=['#D7A49A','#E4C9B6','#B8BBA3','#A4B1BA','#C9C3DD','#E1DAD3','#FFFFFF'];
-const COLORS  =['#f4e6e3','#f7f0eb','#ebece5','#e6e9ec','#f0eef5','#f7f5f3','#ffffff'];
-const HEADS_L =['#dbada4','#e7cebd','#bfc2ac','#adb9c1','#cec9e0','#e4ded7','#f0eeec'];
-const COLORS_D=['#3d3334','#3f3b39','#363835','#32363a','#3a3941','#3f3e3f','#454548'];
-const HEADS_D =['#584746','#5c544f','#4d4f49','#464b50','#53515c','#5b5959','#656668'];
+const PALETTE_BASE=['#D7A49A','#E4C9B6','#A4B1BA','#B8BBA3','#C9C3DD','#E1DAD3','#FFFFFF'];
+const COLORS  =['#f4e6e3','#f7f0eb','#e6e9ec','#ebece5','#f0eef5','#f7f5f3','#ffffff'];
+const HEADS_L =['#dbada4','#e7cebd','#adb9c1','#bfc2ac','#cec9e0','#e4ded7','#f0eeec'];
+const COLORS_D=['#3d3334','#3f3b39','#32363a','#363835','#3a3941','#3f3e3f','#454548'];
+const HEADS_D =['#584746','#5c544f','#464b50','#4d4f49','#53515c','#5b5959','#656668'];
 const NCOLORS=COLORS.length;                       /* 7 */
-const COLOR_NAMES   =['더스티 로즈','누드','세이지','베이비 블루','라벤더','아이보리','화이트'];
-const COLOR_NAMES_EN=['Dusty Rose','Nude','Sage','Baby Blue','Lavender','Ivory','White'];
+const COLOR_NAMES   =['더스티 로즈','누드','베이비 블루','세이지','라벤더','아이보리','화이트'];
+const COLOR_NAMES_EN=['Dusty Rose','Nude','Baby Blue','Sage','Lavender','Ivory','White'];
 const cnName=i=>((IS_KO?COLOR_NAMES[i]:COLOR_NAMES_EN[i])||'');
 /* 글자색·형광펜도 같은 톤으로 (원색 제거) */
 const TEXT_COLORS=['#3a3430','#8f6259','#8a7358','#6f7460','#5d6b74','#6f6889','#a89f97'];
@@ -2144,7 +2203,7 @@ const uid=()=> 'n'+Date.now().toString(36)+Math.random().toString(36).slice(2,7)
 function isDark(){const t=curSettings().theme;return t==='dark'||(t==='auto'&&matchMedia('(prefers-color-scheme: dark)').matches)}
 
 let S={notes:[],folders:[],settings:{}};
-let ui={folder:'',nofolder:false,view:null,search:'',trash:false,editingId:null,dragId:null,
+let ui={folder:'',nofolder:false,view:null,search:'',trash:false,editingId:null,
         edEdit:false, selMode:false, selected:new Set(), vault:false};
 
 /* (요구10) 현재 활성 컬렉션: 보관 모드면 VLT.notes, 아니면 일반 S.notes */
@@ -2194,12 +2253,20 @@ function load(){
      이미 저장된 노트의 색 번호를 새 위치로 옮겨 준다. (한 번만 실행)
      예전 0(아이보리)→새 5,  예전 2(더스티로즈)→새 0 …                        */
   if(!S.settings.palVer || S.settings.palVer<2){
-    const MAP=[5,1,0,2,3,4,6];   // 예전번호 → 새번호
+    const MAP=[5,1,0,3,2,4,6];   // v6.0 순서 → v6.5 순서 (한 번에 변환)
     S.notes.forEach(n=>{ const c=n.color; if(c>=0&&c<MAP.length) n.color=MAP[c]; });
     try{ if(VLT&&VLT.notes) VLT.notes.forEach(n=>{ const c=n.color; if(c>=0&&c<MAP.length) n.color=MAP[c]; }); }catch(_){}
     const dc=S.settings.defColor;
     if(dc!=null && dc>=0 && dc<MAP.length) S.settings.defColor=MAP[dc];
-    S.settings.palVer=2;
+    S.settings.palVer=3;
+  }else if(S.settings.palVer===2){
+    /* (v6.5) v6.4에서 3번↔4번(세이지↔베이비블루)만 자리를 맞바꿨다 */
+    const SW=[0,1,3,2,4,5,6];
+    S.notes.forEach(n=>{ const c=n.color; if(c>=0&&c<SW.length) n.color=SW[c]; });
+    try{ if(VLT&&VLT.notes) VLT.notes.forEach(n=>{ const c=n.color; if(c>=0&&c<SW.length) n.color=SW[c]; }); }catch(_){}
+    const dc2=S.settings.defColor;
+    if(dc2!=null && dc2>=0 && dc2<SW.length) S.settings.defColor=SW[dc2];
+    S.settings.palVer=3;
   }
   S.settings.font=migFont(S.settings.font);   /* (요청7) 구버전 5단계 → pt, 10~25 클램프 (v5.3) */
   // (요구3) 본문 굵기 4단계, 기본 'n'(보통=500). v5.2: 기본값 'b'로 저장됐던 기기·옛 숫자값을
@@ -2726,11 +2793,13 @@ function enableTouchSort(el,n){
   const begin=(e)=>{
     if(e.button!==undefined&&e.button!==0)return;
     sx=e.clientX; sy=e.clientY;
+    const pid=e.pointerId;
     clearTimeout(holdT);
     /* 400ms 길게 누르면 '집어 올린다' — 그냥 탭하면 노트가 열린다 */
     holdT=setTimeout(()=>{
       started=true;
-      startDrag(el,n,sx,sy);
+      el.style.touchAction='none';        /* (v6.5) 취소 방지 — 끌기 직전에 먼저 끈다 */
+      startDrag(el,n,sx,sy,pid);
       if(navigator.vibrate)try{navigator.vibrate(18)}catch(_){}
     },400);
   };
@@ -2748,10 +2817,21 @@ function enableTouchSort(el,n){
   el.addEventListener('pointercancel',end);
 }
 
-function startDrag(el,n,sx,sy){
+function startDrag(el,n,sx,sy,pid){
   const g=$('#grid');
   const r=el.getBoundingClientRect();
   _sortState={id:n.id,el,offX:sx-r.left,offY:sy-r.top,w:r.width,h:r.height};
+
+  /* ★ (v6.5) 터치에서 순서 바꾸기가 안 되던 진짜 원인 두 가지
+       ① 끌던 카드에 pointer-events:none 을 주면 브라우저가 터치를 취소해 버린다
+       ② 손가락 이동이 '화면 스크롤'로 넘어가 pointercancel 이 떠 버린다
+     → 카드에 포인터를 '고정(capture)'하고, 페이지 스크롤을 잠시 막는다. */
+  try{ if(pid!=null) el.setPointerCapture(pid); }catch(_){}
+  _sortState.pid=pid;
+  const mainEl=$('main');
+  _sortState.prevTouch=document.body.style.touchAction;
+  _sortState.prevOver=mainEl?mainEl.style.overflowY:'';
+  document.body.style.touchAction='none';
 
   el.classList.add('dragging');
   el.style.position='fixed';
@@ -2759,7 +2839,6 @@ function startDrag(el,n,sx,sy){
   el.style.height=r.height+'px';
   el.style.left=r.left+'px';
   el.style.top=r.top+'px';
-  el.style.pointerEvents='none';
 
   /* 빈 자리를 유지할 자리표시자 */
   const ph=document.createElement('div');
@@ -2797,10 +2876,26 @@ function startDrag(el,n,sx,sy){
     }
   };
 
+  /* 터치 좌표로도 따라가게 (pointercancel 이후 대비) */
+  const onTouchMove=(ev)=>{
+    if(!ev.touches||!ev.touches.length)return;
+    ev.preventDefault();
+    const t=ev.touches[0];
+    onMove({clientX:t.clientX,clientY:t.clientY,preventDefault(){}});
+  };
   const onUp=()=>{
+    el.removeEventListener('pointermove',onMove);
+    el.removeEventListener('pointerup',onUp);
+    el.removeEventListener('touchmove',onTouchMove);
+    el.removeEventListener('touchend',onUp);
+    el.removeEventListener('touchcancel',onUp);
     document.removeEventListener('pointermove',onMove);
     document.removeEventListener('pointerup',onUp);
-    document.removeEventListener('pointercancel',onUp);
+    document.removeEventListener('touchmove',onTouchMove);
+    document.removeEventListener('touchend',onUp);
+    el.style.touchAction='';
+    document.body.style.touchAction=_sortState?(_sortState.prevTouch||''):'';
+    try{ if(_sortState&&_sortState.pid!=null) el.releasePointerCapture(_sortState.pid); }catch(_){}
     g.querySelectorAll('.dropTarget').forEach(c=>c.classList.remove('dropTarget'));
 
     /* 자리표시자 위치 = 최종 순서 */
@@ -2815,9 +2910,19 @@ function startDrag(el,n,sx,sy){
     commitOrder(order);
   };
 
+  /* 포인터를 카드에 고정했으므로 이벤트는 카드에서 받는다 */
+  el.addEventListener('pointermove',onMove,{passive:false});
+  el.addEventListener('pointerup',onUp);
+  /* pointercancel 은 '손을 뗀 것'이 아니라 브라우저가 가로챈 것이므로
+     끌기를 끝내지 않는다. 대신 touchmove 로 계속 따라간다. */
+  el.addEventListener('touchmove',onTouchMove,{passive:false});
+  el.addEventListener('touchend',onUp);
+  el.addEventListener('touchcancel',onUp);
+  /* 안전망 (capture 를 못 쓰는 브라우저) */
   document.addEventListener('pointermove',onMove,{passive:false});
   document.addEventListener('pointerup',onUp);
-  document.addEventListener('pointercancel',onUp);
+  document.addEventListener('touchmove',onTouchMove,{passive:false});
+  document.addEventListener('touchend',onUp);
 }
 
 /* FLIP — 자리가 바뀌는 카드들이 툭 튀지 않고 미끄러지듯 이동 */
@@ -2931,16 +3036,6 @@ $('#selRestore').onclick=()=>{
   ids.forEach(id=>{const n=coll.find(x=>x.id===id);if(n){n.deleted=false;n.updatedAt=Date.now();n.dirty=true;}});
   exitSel();persistActive();render();if(!ui.vault)syncSoon();toast(tr('Restored','toast_restored'));
 };
-function dropBefore(targetId){
-  const coll=NOTES();
-  const from=coll.find(n=>n.id===ui.dragId);const to=coll.find(n=>n.id===targetId);
-  if(!from||!to||from===to)return;
-  const vis=visibleNotes();const ids=vis.map(n=>n.id);
-  const fi=ids.indexOf(from.id),ti=ids.indexOf(to.id);
-  ids.splice(fi,1);ids.splice(ti,0,from.id);
-  ids.forEach((id,i)=>{const n=coll.find(x=>x.id===id);if(n&&n.sortIndex!==i){n.sortIndex=i;n.dirty=true;n.updatedAt=Date.now()}});
-  touch();persistActive();render();if(!ui.vault)syncSoon();
-}
 function touch(){save()}
 
 /* (요구11) 휴지통 30일 경과분 자동 영구삭제 (로컬) */
@@ -3405,7 +3500,6 @@ function moveImgTo(img,node,before){
     }
   }catch(e){}
 }
-function atPoint(el,x,y){const r=el.getBoundingClientRect();return x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom}
 function placeImgBoxSoon(){ placeImgBox(); setTimeout(placeImgBox,30); setTimeout(placeImgBox,120); }
 function selectImg(img){
   selImg=img;
@@ -3596,6 +3690,11 @@ $('#edBody').addEventListener('pointerup',e=>{
 let typeFs=12, typeLh=1.5;   /* typeLh 범위는 아래 LH_MIN~LH_MAX(1.0~2.0) */
 function buildTypePop(){
   const p=$('#edTypePop'); if(p._built)return; p._built=true;
+  /* (v6.5) 맨 위 손잡이 — 잡고 끌면 창이 움직인다 */
+  const hd=document.createElement('div'); hd.id='tpHandle';
+  hd.innerHTML='<span class="bar"></span><span class="txt">'+L('끌어서 이동','DRAG TO MOVE')+'</span><span class="bar"></span>';
+  p.append(hd);
+  makeTypePopDraggable(p,hd);
   /* 글자 크기 */
   const r1=document.createElement('div');r1.className='tprow';
   r1.innerHTML='<span class="tplab">'+L('글자 크기','Font size')+'</span>';
@@ -3633,13 +3732,98 @@ function buildTypePop(){
 }
 function typeSelRange(){ const s=window.getSelection(); if(!s.rangeCount)return null;
   const r=s.getRangeAt(0); if(!$('#edBody').contains(r.commonAncestorContainer))return null; return r; }
-function applyTypeFontSize(){ const r=typeSelRange(); if(!r||r.collapsed){toast(L('크기를 바꿀 텍스트를 먼저 선택하세요','Select text to resize first'));updateTpVals();return}
-  $('#edBody').focus(); document.execCommand('styleWithCSS',false,true);
-  // execCommand fontSize를 쓰면 1~7 제한이므로, 선택을 span으로 감싸 실제 pt 적용
-  const frag=r.extractContents(); const sp=document.createElement('span'); sp.style.fontSize=typeFs+'pt';
-  sp.appendChild(frag); r.insertNode(sp);
-  const ns=window.getSelection(); ns.removeAllRanges(); const nr=document.createRange(); nr.selectNodeContents(sp); ns.addRange(nr);
-  $('#tpFsVal').textContent=typeFs+'pt'; schedSave(); }
+/* ══════════ (v6.5) T(서식) 창 옮기기 ══════════
+   서식 창이 지금 고치려는 글자를 가려서 안 보이는 일이 있었다.
+   맨 위 손잡이를 잡고 끌면 원하는 자리로 옮길 수 있다.
+   옮긴 위치는 기억해 두었다가 다음에 열 때 그대로 쓴다. */
+let _tpPos=null;
+function placeTypePop(p){
+  const w=p.offsetWidth||280, h=p.offsetHeight||220, M=6;
+  let x,y;
+  if(_tpPos){ x=_tpPos.x; y=_tpPos.y; }
+  else{
+    const bar=document.querySelector('.edbar');
+    const br=bar?bar.getBoundingClientRect():{bottom:56,right:innerWidth-6};
+    x=Math.max(M, br.right-w-6);
+    y=br.bottom+6;
+  }
+  x=Math.max(M,Math.min(x,innerWidth-w-M));
+  y=Math.max(M,Math.min(y,innerHeight-h-M));
+  p.style.left=x+'px'; p.style.top=y+'px';
+}
+function makeTypePopDraggable(p,handle){
+  let sx=0,sy=0,ox=0,oy=0,moved=false;
+  const down=e=>{
+    e.preventDefault(); e.stopPropagation();
+    const r=p.getBoundingClientRect();
+    sx=e.clientX; sy=e.clientY; ox=r.left; oy=r.top; moved=false;
+    p.classList.add('dragging');
+    document.addEventListener('pointermove',move,{passive:false});
+    document.addEventListener('pointerup',up);
+    document.addEventListener('pointercancel',up);
+  };
+  const move=e=>{
+    e.preventDefault();
+    const w=p.offsetWidth,h=p.offsetHeight,M=6;
+    let x=ox+(e.clientX-sx), y=oy+(e.clientY-sy);
+    x=Math.max(M,Math.min(x,innerWidth-w-M));
+    y=Math.max(M,Math.min(y,innerHeight-h-M));
+    p.style.left=x+'px'; p.style.top=y+'px';
+    moved=true;
+  };
+  const up=()=>{
+    p.classList.remove('dragging');
+    document.removeEventListener('pointermove',move);
+    document.removeEventListener('pointerup',up);
+    document.removeEventListener('pointercancel',up);
+    if(moved){ const r=p.getBoundingClientRect(); _tpPos={x:r.left,y:r.top}; }
+  };
+  handle.addEventListener('pointerdown',down);
+}
+
+/* ══════════ (v6.5 중요 버그수정) 글자 크기 줄이기 ══════════
+   [문제] 예전에는 선택 영역을 새 <span style="font-size:..">로 '한 겹 더' 감쌌다.
+          CSS에서 font-size는 가장 안쪽 값이 이기므로,
+          24pt로 키운 뒤 10pt로 줄이면 바깥만 10pt가 되고 글자는 24pt 그대로였다.
+          (줄간격에서 고쳤던 것과 똑같은 종류의 버그)
+   [해결] ① 선택 안에 이미 들어 있는 font-size 를 전부 지운 뒤
+          ② 하나의 span 으로만 감싼다.
+          ③ 감싼 뒤 껍데기만 남은 span 은 정리한다.                              */
+function applyTypeFontSize(){
+  const r=typeSelRange();
+  if(!r||r.collapsed){ toast(L('크기를 바꿀 텍스트를 먼저 선택하세요','Select text to resize first')); updateTpVals(); return; }
+  const body=$('#edBody');
+  body.focus();
+  try{ document.execCommand('styleWithCSS',false,true); }catch(_){}
+
+  const frag=r.extractContents();
+
+  /* ① 안쪽에 남아 있는 크기 지정을 전부 제거 (이게 없으면 줄이기가 안 먹는다) */
+  frag.querySelectorAll&&frag.querySelectorAll('[style*="font-size"]').forEach(el=>{
+    el.style.removeProperty('font-size');
+  });
+  /* 옛날 <font size=..> 태그도 정리 */
+  frag.querySelectorAll&&frag.querySelectorAll('font[size]').forEach(el=>el.removeAttribute('size'));
+
+  /* ② 한 겹만 감싼다 */
+  const sp=document.createElement('span');
+  sp.style.fontSize=typeFs+'pt';
+  sp.appendChild(frag);
+  r.insertNode(sp);
+
+  /* ③ 스타일이 하나도 안 남은 빈 span 은 풀어 준다 (중첩 누적 방지) */
+  sp.querySelectorAll('span').forEach(el=>{
+    if(!el.getAttribute('style')&&!el.className){
+      while(el.firstChild) el.parentNode.insertBefore(el.firstChild,el);
+      el.remove();
+    }
+  });
+
+  const ns=window.getSelection(); ns.removeAllRanges();
+  const nr=document.createRange(); nr.selectNodeContents(sp); ns.addRange(nr);
+  $('#tpFsVal').textContent=typeFs+'pt';
+  schedSave();
+}
 /* ══════════ (v6.1) 줄간격 수정 ══════════
    [문제] 예전 코드는 누를 때마다 선택 영역을 새 <span style="line-height:...">로 한 겹씩
           더 감쌌다. line-height는 바깥 span이 아니라 '가장 안쪽' 값이 이기므로,
@@ -3738,8 +3922,41 @@ $('#edTypeBtn').onclick=e=>{e.stopPropagation();buildTypePop();updateTpVals();
   $('#edColorPop').classList.remove('show');$('#edMenu').classList.remove('show');
   const tp=$('#edTypePop'); const willOpen=!tp.classList.contains('show');
   tp.classList.toggle('show'); if(willOpen)histPush();      /* (v6.2 요청5) */
+  /* (v6.5) position:fixed 로 바뀌었으므로 열 때 위치를 잡아 준다 */
+  if(willOpen) requestAnimationFrame(()=>placeTypePop(tp));
 };
 $('#edTypePop').onclick=e=>e.stopPropagation();
+
+/* ── (요구8) 특정 단어 선택 → 볼드 등 서식 툴바 ── */
+const selBar=$('#selBar');
+/* (v6.2 요청2) 선택 서식 툴바를 더 이상 띄우지 않는다 */
+const SELBAR_ENABLED=false;
+function showSelBar(){
+  if(!SELBAR_ENABLED){ hideSelBar(); return; }   /* (v6.2 요청2) 항상 숨김 */
+  const sel=window.getSelection();
+  if(!ui.edEdit||!sel||sel.isCollapsed||!sel.rangeCount){hideSelBar();return}
+  const r=sel.getRangeAt(0);
+  if(!$('#edBody').contains(r.commonAncestorContainer)){hideSelBar();return}
+  selBar.classList.add('show');
+  /* (요청) 서식 바는 항상 화면 상단(제목/도구줄 바로 아래)에 고정 —
+     OS의 복사/잘라내기 메뉴(선택 지점 위)와 겹치지 않게 함 */
+  const bw=selBar.offsetWidth||260, bh=selBar.offsetHeight||40;
+  const edb=document.querySelector('.edbar');
+  const anchor=edb?edb.getBoundingClientRect().bottom+6:8;
+  const top=Math.max(6,anchor);
+  let left=(innerWidth-bw)/2; left=Math.max(6,Math.min(left,innerWidth-bw-6));
+  selBar.style.left=left+'px'; selBar.style.top=top+'px';
+}
+function hideSelBar(){selBar.classList.remove('show');$('#palColor').classList.add('hidden');$('#palHi').classList.add('hidden')}
+document.addEventListener('selectionchange',()=>{ if($('#edOverlay').classList.contains('show'))setTimeout(showSelBar,10) });
+function buildPal(el,colors,cmd){
+  el.innerHTML='';colors.forEach(c=>{const b=document.createElement('button');b.style.background=c==='transparent'?'#fff':c;
+    if(c==='transparent'){b.textContent='🚫';b.style.fontSize='.5em'}
+    b.onclick=ev=>{ev.stopPropagation();document.execCommand(cmd,false,c);el.classList.add('hidden');schedSave()};
+    el.append(b)});
+}
+buildPal($('#palColor'),TEXT_COLORS,'foreColor');
+buildPal($('#palHi'),HI_COLORS,'hiliteColor');
 
 /* ── (요구6) 케밥(세로 점3개) 메뉴 ── */
 function buildKebab(){
@@ -4429,28 +4646,6 @@ $('#acLogout').onclick=async()=>{
   if(SYNC.client)await SYNC.client.auth.signOut();
   SYNC.reset();updateAccountUI();setStatus('',L('미로그인','Not signed in'));toast(L('로그아웃했습니다','Signed out'));
 };
-$('#acDeleteAccount').onclick=async()=>{
-  if(!SYNC.client||!SYNC.session){toast(L('먼저 로그인하세요','Sign in first'));return;}
-  const ok=await dlg(L('계정과 서버의 모든 동기화 노트·폴더를 영구 삭제할까요? 이 작업은 되돌릴 수 없습니다.','Permanently delete your account and all synced notes and folders? This cannot be undone.'),{danger:true,okText:L('계정 삭제','Delete account')});
-  if(!ok)return;
-  const typed=await dlg(L('확인을 위해 DELETE를 입력하세요.','Type DELETE to confirm.'),{input:true,okText:L('삭제','Delete')});
-  if(typed!=='DELETE'){toast(L('취소되었습니다','Canceled'));return;}
-  $('#acAuthStat').textContent=L('계정 삭제 중…','Deleting account…');
-  try{
-    const {error}=await SYNC.client.functions.invoke('delete-account');
-    if(error)throw error;
-    try{await SYNC.client.auth.signOut()}catch(_){}
-    SYNC.reset();
-    S.notes=[];S.folders=[];
-    S.settings.lastSync=0;S.settings.lastPull=0;
-    save();render();updateAccountUI();setStatus('','');
-    toast(L('계정과 동기화 데이터가 삭제되었습니다','Account and synced data deleted'));
-    ovCloseUi($('#acOverlay'));
-  }catch(e){
-    $('#acAuthStat').style.whiteSpace='pre-line';
-    $('#acAuthStat').textContent=L('삭제 실패: 서버에 delete-account Edge Function을 배포했는지 확인하세요.\n','Deletion failed. Confirm that the delete-account Edge Function is deployed.\n')+(e.message||e);
-  }
-};
 $('#acSyncNow').onclick=async()=>{ await SYNC.pushDirty(); await SYNC.pullAll(); updateAccountUI(); toast(L('동기화 완료','Sync complete')); };
 $('#acDiag').onclick=async()=>{
   const st=$('#acAuthStat');st.style.whiteSpace='pre-line';
@@ -4614,19 +4809,11 @@ $('#stEmptyTrash').onclick=async()=>{
 };
 /* ───────── (요구) 백업/복구: 이 기기 백업 목록 + 외부(Google Drive 등) Export/Import ───────── */
 let bkDetail=-1; const bkSel=new Set();
-async function buildBackup(){
-  let vaultEncrypted=null;
-  if(VLT.key){
-    vaultEncrypted=await aesEncrypt(VLT.key,JSON.stringify(VLT.notes||[]));
-    vaultEncrypted.__enc=1;
-  }else{
-    try{const raw=JSON.parse(STORE.getItem('sk.vault')||'null');if(raw&&raw.__enc===1)vaultEncrypted=raw;}catch(_){}
-  }
-  return {app:'sk-note',v:5,exportedAt:new Date().toISOString(),
+function buildBackup(){
+  return {app:'sk-note',v:4,exportedAt:new Date().toISOString(),
     notes:S.notes,
     folders:S.folders.map(f=>({id:f.id,name:f.name,createdAt:f.createdAt})),
-    vaultEncrypted,
-    vaultKeyInfo:vaultEncrypted?{pinHash:S.settings.pinHash||null,pinSalt:S.settings.pinSalt||null}:null,
+    vaultNotes:VLT.notes||[],
     vaultFolders:(VLT.folders||[]).map(f=>({id:f.id,name:f.name,createdAt:f.createdAt}))};
 }
 function backupName(){ const d=new Date(); const p=x=>String(x).padStart(2,'0');
@@ -4676,14 +4863,14 @@ function applyBackup(d, onlyIds){
 /* ── v6 자동 백업(스냅샷): 저장/닫기/백그라운드 전환 시 이전 상태를 이 기기에 자동 보관 ── */
 let autoSnapTimer=null;
 function snapSig(){ try{return (S.notes.length+':'+VLT.notes.length+':'+[...S.notes,...VLT.notes].reduce((a,n)=>a+(n.updatedAt||0),0))}catch(e){return 'x'} }
-async function autoSnapshot(force){
+function autoSnapshot(force){
   try{
     const sig=snapSig();
     const last=STORE.getItem('sk.snapSig');
     const t=Date.now(), lastT=parseInt(STORE.getItem('sk.snapLast')||'0',10)||0;
     if(!force && sig===last)return;                 // 내용이 안 바뀌었으면 생략
     if(t-lastT < 5*60*1000 && !force)return;        // 최소 5분 간격 (쓰기 폭주 방지)
-    saveLocalBackup(await buildBackup());
+    saveLocalBackup(buildBackup());
     STORE.setItem('sk.snapSig',sig); STORE.setItem('sk.snapLast',String(t));
   }catch(e){}
 }
@@ -4691,8 +4878,8 @@ function scheduleAutoSnap(){ clearTimeout(autoSnapTimer); autoSnapTimer=setTimeo
 /* 노트가 실제로 저장될 때마다 자동 백업 스케줄 (save/VLT.persist 끝에서 호출) */
 
 /* 💾 백업하기: 이 기기 목록에 저장 + 파일로도 받기 */
-$('#stExport').onclick=async()=>{
-  const payload=await buildBackup();
+$('#stExport').onclick=()=>{
+  const payload=buildBackup();
   saveLocalBackup(payload);                                   // (요구) 이 기기 백업 목록에 저장
   downloadBackup(payload);                                     // 파일로도 저장(폴백)
   toast(tr('Backup saved (normal + vault notes included)','toast_backup'));
@@ -4724,8 +4911,8 @@ function openBkList(){
   bks.forEach((b,i)=>{
     const row=document.createElement('div');row.className='setrow';
     const nm=document.createElement('span');
-    const nCnt=(b.data.notes||[]).length, vCnt=(b.data.vaultNotes||[]).length, hasEnc=!!b.data.vaultEncrypted;
-    nm.innerHTML=`<b>${fmtTime(b.at)}</b><br><span class="stat">${L('노트','notes')} ${nCnt}${vCnt?` · 🔐 ${vCnt}`:''}${hasEnc?' · 🔐 encrypted Vault':''}</span>`;
+    const nCnt=(b.data.notes||[]).length, vCnt=(b.data.vaultNotes||[]).length;
+    nm.innerHTML=`<b>${fmtTime(b.at)}</b><br><span class="stat">${L('노트','notes')} ${nCnt}${vCnt?` · 🔐 ${vCnt}`:''}</span>`;
     const btn=document.createElement('button');btn.className='btn primary';
     btn.textContent=L('보기 / 복구','View / Restore');
     btn.onclick=()=>{ bkDetail=i; bkSel.clear(); renderBkDetail(); };
@@ -4743,21 +4930,6 @@ function renderBkDetail(){
   const norm=(d.notes||[]).map(n=>({id:n.id,title:n.title||'',type:n.type,preview:n.type==='check'?(n.items||[]).slice(0,3).map(i=>i.text).join(' · '):plain(n.content).slice(0,90)}));
   const vlt=(d.vaultNotes||[]).map(n=>({id:n.id,vault:true,title:n.title||'',type:n.type,preview:n.type==='check'?(n.items||[]).slice(0,3).map(i=>i.text).join(' · '):plain(n.content).slice(0,90)}));
   const all=[...norm,...vlt];
-  if(d.vaultEncrypted){
-    const vr=document.createElement('div');vr.className='setrow';
-    const vt=document.createElement('span');vt.textContent=L('암호화된 Vault 백업 포함','Encrypted Vault backup included');
-    const vb=document.createElement('button');vb.className='btn danger';vb.textContent=L('Vault 복원','Restore Vault');
-    vb.onclick=async()=>{
-      if(!await dlg(L('현재 기기의 Vault를 이 암호화 백업으로 교체할까요? 기존 Vault는 덮어씁니다.','Replace this device’s Vault with the encrypted backup? The current Vault will be overwritten.'),{danger:true,okText:L('복원','Restore')}))return;
-      STORE.setItem('sk.vault',JSON.stringify(d.vaultEncrypted));
-      STORE.setItem('sk.vault.folders',JSON.stringify(d.vaultFolders||[]));
-      if(d.vaultKeyInfo&&d.vaultKeyInfo.pinHash&&d.vaultKeyInfo.pinSalt){
-        S.settings.pinHash=d.vaultKeyInfo.pinHash;S.settings.pinSalt=d.vaultKeyInfo.pinSalt;save();
-      }else{toast(L('이 백업에는 Vault 키 정보가 없어 다른 기기에서 열리지 않을 수 있습니다.','This backup lacks Vault key metadata and may not unlock on another device.'));}
-      VLT.key=null;VLT.load();if(ui.vault)VLT.leave();
-      toast(L('암호화된 Vault를 복원했습니다. 비밀번호로 열어 주세요.','Encrypted Vault restored. Unlock it with its password.'));
-    };vr.append(vt,vb);list.append(vr);
-  }
   /* 상단 도구줄 */
   const top=document.createElement('div');top.className='btnrow';top.style.marginBottom='.3em';
   const back=document.createElement('button');back.className='btn';back.textContent=L('← 목록','← List');
@@ -4813,7 +4985,7 @@ async function doApply(d, ids){
    지원 환경(Chrome/Edge·Android 등)은 showSaveFilePicker로 원하는 폴더에 저장,
    지원 안 하면(사파리 등) 일반 다운로드로 폴백. */
 $('#stExportEn').onclick=async()=>{
-  const payload=await buildBackup();
+  const payload=buildBackup();
   const json=JSON.stringify(payload,null,2);
   const name=backupName();
   try{
@@ -5389,6 +5561,9 @@ document.addEventListener('click',()=>{
 });
 addEventListener('resize',()=>hideCheer());
 
+/* (v6.5) 동기화 점을 누르면 상태 설명 — v6.2에 함수만 만들고 연결을 빠뜨렸었다 */
+if($('#syncDot')) $('#syncDot').onclick=e=>{ e.stopPropagation(); syncDotInfo(); };
+
 /* 시작 시 + 30분마다 시간대 색 갱신 */
 applyCheerTheme();
 setInterval(applyCheerTheme, 30*60*1000);
@@ -5438,13 +5613,31 @@ if('serviceWorker' in navigator&&location.protocol.startsWith('http')){
       document.addEventListener('visibilitychange',()=>{ if(!document.hidden)reg.update().catch(()=>{}); });
     }).catch(()=>{});
   });
-  /* (v6.1) 새 서비스워커가 제어권을 잡으면 한 번만 새로고침 →
-     예전 화면 + 새 코드가 섞이는 문제를 막는다. */
-  let _swRefreshed=false;
-  navigator.serviceWorker.addEventListener('controllerchange',()=>{
-    if(_swRefreshed)return; _swRefreshed=true;
+  /* ══════════ (v6.6 버그수정) 노트가 갑자기 안 열리던 원인 ══════════
+     [문제] 새 서비스워커가 제어권을 잡으면 곧바로 location.reload() 를 했다.
+            그런데 이 일은 '앱을 쓰는 도중'에도 일어난다.
+            → 노트를 열자마자 화면이 새로고침되어 '안 열린다'고 느껴졌고,
+              저장 전 글자가 날아갈 수도 있었다.
+     [해결] 즉시 새로고침하지 않는다.
+            ① 노트를 편집 중이거나 화면이 켜져 있으면 미뤄 둔다
+            ② 앱을 잠시 벗어났다가 돌아올 때(또는 홈 화면일 때) 조용히 반영한다 */
+  let _swRefreshed=false, _swPending=false;
+  function swApplyUpdate(){
+    if(_swRefreshed)return;
+    /* 노트 편집 중이거나 무언가 열려 있으면 절대 새로고침하지 않는다 */
+    const busy = (typeof ui!=='undefined') &&
+                 ( ui.editingId || (typeof OVS!=='undefined'&&OVS.length) ||
+                   ui.selMode || ui.vault );
+    if(busy){ _swPending=true; return; }
+    _swRefreshed=true;
+    try{ if(typeof flushEd==='function') flushEd(true); }catch(_){}
+    try{ if(typeof save==='function') save(); }catch(_){}
     location.reload();
-  });
+  }
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{ swApplyUpdate(); });
+  /* 앱을 벗어났다 돌아오거나, 하던 일을 마쳤을 때 미뤄둔 업데이트를 반영 */
+  document.addEventListener('visibilitychange',()=>{ if(document.hidden&&_swPending) swApplyUpdate(); });
+  addEventListener('pagehide',()=>{ if(_swPending) _swRefreshed=true; });
 }
 </script>
 </body>
