@@ -514,7 +514,9 @@ html[data-theme="dark"] .syncdot{border-color:rgba(255,255,255,.35)}
 .folderbar::-webkit-scrollbar{display:none}
 .chip{
   flex:none;background:var(--chip);color:var(--text);border:none;border-radius:1em;
-  padding:.32em .7em;font-size:.66em;font-weight:600;white-space:nowrap;transition:transform .1s,background .15s
+  padding:.32em .7em;font-size:.66em;font-weight:600;white-space:nowrap;transition:transform .1s,background .15s;
+  /* (v6.8 STEP3) 폴더 이름이 아무리 길어도 칩 하나가 화면을 다 차지하지 않게 — 뒤의 📁·🔐가 한 번의 스와이프 안에 남는다 */
+  max-width:38vw;overflow:hidden;text-overflow:ellipsis
 }
 .chip:active{transform:scale(.94)}
 .chip.on{background:var(--accent);color:#4a332e}
@@ -556,6 +558,9 @@ main{order:1;flex:1;padding:0;max-width:1000px;width:100%;margin:0 auto;overflow
 /* (요청6) 카드 미리보기 글자 크기(12pt)·굵기(400)는 완전 고정.
    설정에서 크기/굵기를 바꾸거나 노트 내부가 달라도 모든 노트박스 미리보기는 동일하게 보임 */
 .note .prog{font-size:.58em;color:var(--sub)}
+/* (v6.8 STEP1) 검색 결과에서만 보이는 폴더 이름 — 어느 폴더의 메모인지 바로 알 수 있게 */
+.note .fbadge{font-size:.56em;color:var(--sub);font-weight:700;flex:none;opacity:.9;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:.05em}
 .empty{color:var(--sub);text-align:center;padding:3em 1em;font-size:.8em}
 .hidden{display:none!important}
 /* (요구5) 검색어 하이라이트 */
@@ -939,6 +944,10 @@ html[data-theme="dark"] input[type=range]::-moz-range-thumb{border-color:#221f1e
 .setsec h4{margin:0 0 .5em;font-size:.62em;color:var(--sub);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
 .setrow{display:flex;align-items:center;justify-content:space-between;gap:.5em;padding:.35em 0;font-size:.78em;flex-wrap:wrap}
 .setrow label{font-weight:600}
+/* (v6.8 STEP2) 폴더 관리: 이름은 눌러서 이동, ★는 즐겨찾기 토글 */
+.setrow .fname{cursor:pointer;flex:1;min-width:6em}
+.btn.star{padding:.25em .55em;line-height:1}
+.btn.star.on{color:#e0a63c;border-color:#e0a63c}
 select,input[type=text],input[type=password],input[type=email],input[type=datetime-local]{
   background:var(--chip);color:var(--text);border:1px solid var(--line);border-radius:.4em;
   padding:.45em .5em;font-size:.75em;outline:none
@@ -1409,7 +1418,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='soonenote';
-const APP_VER='6.7.1';
+const APP_VER='6.8';
 const SSTORE=(()=>{try{const t='__cn__';sessionStorage.setItem(t,'1');sessionStorage.removeItem(t);return sessionStorage}
   catch(e){const m={};return{getItem:k=>(k in m?m[k]:null),setItem:(k,v)=>{m[k]=String(v)},removeItem:k=>{delete m[k]}}}})();
 
@@ -2345,7 +2354,9 @@ function migFont(f){ if(f==null)return '12'; if(FONT_KEYS_PT[f]!=null)return Str
    FONT_WEIGHTS 맵이 '글자 키(l/n/b/x) ↔ 숫자 값' 변환의 유일한 기준. 모든 저장·로드·적용은 이 맵을 거침 */
 const FONT_WEIGHTS={l:'300',n:'500',b:'700',x:'900'};   /* 가벼움·보통·굵게·매우굵게 — 간격이 확실하게 나뉜 새 굵기 */
 /* (v6.7) fontLs(자간, px) · fontLh(줄간격) 추가. 기본값은 V6.6과 똑같이 보이는 값 */
-const DEF={theme:'auto',view:'grid',sort:'color',font:'12',fontWeight:'n',fontLs:'0',fontLh:'1.05',box:'2',rule:'none',defColor:0,sbUrl:'',sbKey:'',lastSync:0,lastPull:0,pinHash:null,pinSalt:null,lang:'auto'};
+/* (v6.8 STEP2) favA/favB = 하단바에 고정해 두는 즐겨찾기 폴더 ID 2개.
+   폴더 데이터에는 손대지 않는다. 예전 설정에 이 값이 없으면 아래 기본값('')이 자동으로 채워진다. */
+const DEF={theme:'auto',view:'grid',sort:'color',font:'12',fontWeight:'n',fontLs:'0',fontLh:'1.05',box:'2',rule:'none',defColor:0,sbUrl:'',sbKey:'',lastSync:0,lastPull:0,pinHash:null,pinSalt:null,lang:'auto',favA:'',favB:''};
 /* (요청6) 보관 노트 전용 설정 기본값 — 일반 노트 설정과 별도로 저장됨 */
 const VAULT_DEF={theme:'auto',view:'grid',sort:'color',font:'12',fontWeight:'n',fontLs:'0',fontLh:'1.05',box:'2',rule:'none',defColor:0,unlockMinutes:0};
 function load(){
@@ -2748,10 +2759,13 @@ function applyPrefs(){
 }
 function visibleNotes(){
   let arr=NOTES().filter(n=>ui.trash?!!n.deleted:!n.deleted);
-  /* (요청3) 보관 노트에서도 폴더 필터 동일 적용 (폴더명은 일반/보관 공용) */
-  if(!ui.trash&&ui.nofolder)arr=arr.filter(n=>!n.folder);
-  else if(!ui.trash&&ui.folder)arr=arr.filter(n=>n.folder===ui.folder);
   const q=ui.search.trim().toLowerCase();
+  /* (요청3) 보관 노트에서도 폴더 필터 동일 적용 (폴더명은 일반/보관 공용)
+     (v6.8 STEP1) 검색어를 입력하면 폴더 필터를 잠시 건너뛰고 '지금 보고 있는 묶음 전체'에서 찾는다.
+       · 휴지통 ↔ 일반 경계는 위 filter가, 일반 ↔ 보관함 경계는 NOTES()가 그대로 지킨다.
+       · 검색어를 지우면 원래 폴더 화면으로 그대로 돌아온다(상태 저장 없음). */
+  if(!ui.trash&&!q&&ui.nofolder)arr=arr.filter(n=>!n.folder);
+  else if(!ui.trash&&!q&&ui.folder)arr=arr.filter(n=>n.folder===ui.folder);
   if(q)arr=arr.filter(n=>(n.title||'').toLowerCase().includes(q)||plain(n.content).toLowerCase().includes(q)||(n.items||[]).some(i=>(i.text||'').toLowerCase().includes(q)));
   const sort=curSettings().sort;
   arr.sort((a,b)=>{
@@ -2793,19 +2807,33 @@ function render(){
     const lt=$('#logoText'); if(lt){lt.innerHTML='';lt.title=tr('🔐 Vault','vault_title');}
   }else{
     const lt2=$('#logoText'); if(lt2){lt2.innerHTML='';lt2.title='';}
-    const all=document.createElement('button');all.className='chip'+(ui.folder===''&&!ui.nofolder&&!ui.trash?' on':'');
+    /* (v6.8 STEP3) 검색 중에는 폴더 칩의 선택 표시를 잠시 끈다.
+       STEP1에서 검색은 폴더를 넘어 전체를 찾으므로, 칩이 켜져 있으면 '이 폴더 안에서만 찾았다'고 오해할 수 있다.
+       검색어를 지우면 원래 폴더 표시가 그대로 돌아온다(선택 자체는 유지). */
+    const searching=!!(ui.search||'').trim();
+    const all=document.createElement('button');all.className='chip'+(ui.folder===''&&!ui.nofolder&&!ui.trash&&!searching?' on':'');
     all.textContent=tr('All','chip_all');all.onclick=()=>{ui.folder='';ui.nofolder=false;ui.trash=false;exitSel();render()};bar.append(all);
-    const nfc=document.createElement('button');nfc.className='chip'+(ui.nofolder&&!ui.trash?' on':'');
+    const nfc=document.createElement('button');nfc.className='chip'+(ui.nofolder&&!ui.trash&&!searching?' on':'');
     nfc.textContent=tr('Notes','chip_notes');nfc.title=tr('Notes','chip_notes');
     nfc.onclick=()=>{ui.folder='';ui.nofolder=true;ui.trash=false;exitSel();render()};bar.append(nfc);
-    FOLDERS().forEach(f=>{
-      const b=document.createElement('button');b.className='chip'+(ui.folder===f.id&&!ui.nofolder&&!ui.trash?' on':'');
+    /* (v6.8 STEP2) 하단바를 짧게 유지한다: 전체 | 노트 | ★즐겨찾기(최대 2개) | 지금 보는 폴더 | 📁
+         · 즐겨찾기는 settings.favA/favB(폴더 ID)만 본다 — 폴더 데이터는 그대로다.
+         · 지금 보고 있는 폴더가 즐겨찾기가 아니면 그 폴더만 임시로 하나 더 붙고, 벗어나면 사라진다.
+         · 나머지 폴더는 📁(폴더 관리)에서 이름을 눌러 바로 이동한다.
+       (보관함 폴더바는 위 분기에서 예전 그대로 유지) */
+    const favIds=[S.settings.favA,S.settings.favB].filter(id=>id&&S.folders.some(f=>f.id===id));
+    const barIds=favIds.slice();
+    if(ui.folder&&!barIds.includes(ui.folder)&&S.folders.some(f=>f.id===ui.folder))barIds.push(ui.folder);
+    barIds.forEach(id=>{
+      const f=S.folders.find(x=>x.id===id); if(!f)return;
+      const b=document.createElement('button');b.className='chip'+(ui.folder===f.id&&!ui.nofolder&&!ui.trash&&!searching?' on':'');
       const cnt=S.notes.filter(n=>!n.deleted&&n.folder===f.id).length;
-      b.textContent=`${f.name} (${cnt})`;b.onclick=()=>{ui.folder=f.id;ui.nofolder=false;ui.trash=false;exitSel();render()};
+      b.textContent=(favIds.includes(f.id)?'★ ':'')+`${f.name} (${cnt})`;
+      b.onclick=()=>{ui.folder=f.id;ui.nofolder=false;ui.trash=false;exitSel();render()};
       b.oncontextmenu=e=>{e.preventDefault();openFolderMgr()};
       bar.append(b);
     });
-    const add=document.createElement('button');add.className='chip';add.textContent=tr('+ Folder','chip_addfolder');add.onclick=openFolderMgr;bar.append(add);
+    const add=document.createElement('button');add.className='chip';add.textContent='📁';add.title=tr('Folders','folder_mgr');add.onclick=openFolderMgr;bar.append(add);
     // (요구9) 보관 버튼: 열쇠 아이콘만
     const vault=document.createElement('button');vault.className='chip';vault.textContent='🔐';vault.title=tr('🔐 Vault','vault_title');
     vault.onclick=()=>VLT.open();bar.append(vault);
@@ -2832,6 +2860,7 @@ function render(){
   g.className=(effView==='grid'?'':effView)+(ui.trash?' trashing':'');
   g.innerHTML='';
   const arr=visibleNotes();
+  const qNow=(ui.search||'').trim();          /* (v6.8 STEP1) 검색 중인지 — 폴더 이름 표시에만 사용 */
   $('#emptyMsg').classList.toggle('hidden',arr.length>0);
   $('#emptyMsg').textContent=ui.trash?tr('Trash is empty (deleted notes are removed after 30 days)','empty_trash'):(ui.search?tr('No results','empty_search'):(ui.folder?tr('No notes in this folder','empty_folder'):tr('Tap ＋ to create your first note','empty_new')));
   arr.forEach(n=>{
@@ -2839,6 +2868,9 @@ function render(){
     el.dataset.id=n.id;                       /* (v6.4) 순서 저장에 필요 */
     el.style.setProperty('--nc',PAL[n.color||0]); el.style.setProperty('--tc',HEAD[n.color||0]);
     const folder=FOLDERS().find(f=>f.id===n.folder);
+    /* (v6.8 STEP1) 검색 중에만 '어느 폴더의 메모인지'를 작게 보여준다.
+       검색이 아니거나 폴더가 없는 메모는 예전과 똑같이 아무것도 붙지 않는다. */
+    const fbadge=(qNow&&folder)?`<div class="fbadge">📁 ${esc(folder.name)}</div>`:'';
     let body='';
     if(n.type==='check'){
       const done=(n.items||[]).filter(i=>i.done).length,tot=(n.items||[]).length;
@@ -2863,7 +2895,7 @@ function render(){
         <span class="badges">${n.pinned?'📌':''}${hasRemind?'⏰':''}${n.type==='check'?'☑️':''}</span>
       </div>
       <div class="tinner">
-        ${body}
+        ${fbadge}${body}
       </div>`;
     attachNoteHandlers(el,n);
     g.append(el);
@@ -4253,12 +4285,37 @@ function openFolderMgr(){
   const list=$('#folderList');list.innerHTML='';
   const title=$('#folderMgrTitle');
   if(title)title.textContent=ui.vault?tr('🔐 Vault folders','vault_folder_mgr'):tr('Folders','folder_mgr');
-  const coll=FOLDERS();
+  /* (v6.8 STEP2) 즐겨찾기 폴더를 목록 위쪽으로 — 보여주는 순서만 바꾸고 폴더 데이터는 건드리지 않는다 */
+  const favL=[S.settings.favA,S.settings.favB];
+  const coll=ui.vault?FOLDERS():FOLDERS().slice().sort((a,b)=>(favL.includes(b.id)?1:0)-(favL.includes(a.id)?1:0));
   if(!coll.length)list.innerHTML='<div class="hint">'+L('폴더가 없습니다. 아래에서 추가하세요.','No folders yet. Add one below.')+'</div>';
   coll.forEach(f=>{
     const row=document.createElement('div');row.className='setrow';
     const nm=document.createElement('span');nm.textContent=f.name;nm.style.fontWeight='600';
+    /* (v6.8 STEP2) 폴더 이름을 누르면 그 폴더로 이동한다. 오버레이는 ovCloseUi로 딱 한 번만 닫는다 */
+    nm.className='fname';
+    nm.onclick=()=>{ui.folder=f.id;ui.nofolder=false;ui.trash=false;exitSel();ovCloseUi($('#folderOverlay'));render()};
     const wrap=document.createElement('div');
+    if(!ui.vault){
+      /* (v6.8 STEP2) ★ = 하단바에 고정할 즐겨찾기. 최대 2개까지만 되고, 3개째는 교체할지 물어본다 */
+      const st=S.settings, isFav=(st.favA===f.id||st.favB===f.id);
+      const star=document.createElement('button');star.className='btn star'+(isFav?' on':'');
+      star.textContent=isFav?'★':'☆';star.title=L('즐겨찾기','Favorite');star.style.marginRight='.3em';
+      star.onclick=async()=>{
+        if(st.favA===f.id)st.favA='';
+        else if(st.favB===f.id)st.favB='';
+        else if(!st.favA||!S.folders.some(x=>x.id===st.favA))st.favA=f.id;
+        else if(!st.favB||!S.folders.some(x=>x.id===st.favB))st.favB=f.id;
+        else{
+          const old=S.folders.find(x=>x.id===st.favA);
+          if(!await dlg(L(`즐겨찾기는 2개까지예요.\n'${old?old.name:''}' 대신 '${f.name}'을(를) 넣을까요?`,
+                          `You can pin only 2 favorites.\nReplace '${old?old.name:''}' with '${f.name}'?`),{okText:L('교체','Replace')}))return;
+          st.favA=st.favB;st.favB=f.id;
+        }
+        touch();openFolderMgr();render();
+      };
+      wrap.append(star);
+    }
     const re=document.createElement('button');re.className='btn';re.textContent=L('이름 변경','Rename');re.style.marginRight='.3em';
     re.onclick=async()=>{const v=await dlg(L('새 폴더 이름','New folder name'),{input:true,def:f.name,okText:L('변경','Rename')});
       if(v){f.name=v;f._synced=false;touch();openFolderMgr();render();if(!ui.vault)syncSoon();else VLT.persist()}};
@@ -4268,6 +4325,9 @@ function openFolderMgr(){
       NOTES().forEach(n=>{if(n.folder===f.id){n.folder='';n.dirty=true;n.updatedAt=Date.now()}});
       if(ui.vault){const i=VLT.folders.indexOf(f);if(i>=0)VLT.folders.splice(i,1);VLT.persist();}
       else{S.folders=S.folders.filter(x=>x!==f);SYNC.deleteFolder(f.id);}
+      /* (v6.8 STEP2) 지워진 폴더가 즐겨찾기였다면 하단바에 유령 칩이 남지 않게 함께 정리 */
+      if(S.settings.favA===f.id)S.settings.favA='';
+      if(S.settings.favB===f.id)S.settings.favB='';
       if(ui.folder===f.id)ui.folder='';
       touch();openFolderMgr();render();if(!ui.vault)syncSoon()};
     wrap.append(re,del);row.append(nm,wrap);list.append(row);
