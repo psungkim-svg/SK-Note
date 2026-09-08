@@ -1,8 +1,39 @@
 <!DOCTYPE html>
 <!--
 ═══════════════════════════════════════════════════════════════
-  soonenote  —  V6.6
-  (V6.0 → ... → V6.5 → V6.6)
+  soonenote  —  V6.7.1
+  (V6.0 → ... → V6.6 → V6.7 → V6.7.1)
+
+  V6.7.1 changes  (2026-09)  ← 사용자 승인 후 적용
+   1. Unused code removed: fontStep(), holdRepeat(), holdRepeatFs(), CSS .fontstep/.fsbtn
+   2. Pencil icon replaced with candidate C (minimal line icon, light/dark aware)
+
+  V6.7 changes  (2026-09)
+   1. Settings title: "Settings" -> "Full settings" (전체 화면 설정)
+   2. Settings > font block rebuilt:
+      - removed the "Note font size (10-25pt)" label and the - / + stepper
+      - the live sample now sits in a solid bordered box
+      - new sub-heading "노트 글자 조절 / Note text controls"
+      - three sliders: SIZE (10-25pt) · LETTER SPACING (-0.5~2.0px) · LINE HEIGHT (1.0-2.0)
+      - font weight select stays right below them
+      Letter spacing + line height are NEW settings. They apply to the NOTE BODY only
+      (home-screen card previews are untouched) and their defaults (0 / 1.05) render
+      exactly like V6.6, so existing notes do not change appearance.
+   3. Pencil icon: darkening filter removed and size reduced to ~85% (it looked
+      oversized and dull). The drawing itself is unchanged for now.
+   4. T (format) panel: fixed width dropped, so the empty space on the right is gone.
+      Font size and line spacing are now sliders. Because both act on the CURRENT
+      SELECTION, the selection is remembered on pointerdown and re-applied once when
+      the finger/mouse is released (applying on every drag step would re-wrap the
+      text over and over).
+   5. NEW: a checkbox button to the LEFT of the pencil. Tapping it saves the note and
+      returns to the list. It is shown in both view and edit mode, so the duplicate
+      check mark that used to appear only in edit mode is hidden (same action).
+   6. FIX (PC): the bottom folder bar was practically invisible on a desktop screen —
+      its colour is nearly identical to the page background and the chips huddle in the
+      far-left corner of a very wide bar. On screens >=900px it now has a clear top
+      border, a slightly stronger background and the chips are centred in the same
+      1000px column as the notes. Phone layout is untouched.
 
   V6.6 changes  (2026-09)
    ** FIX: "notes would not open" **
@@ -128,6 +159,9 @@
   --ui:17pt;          /* 앱 UI·아이콘·버튼·설정창·메뉴·입력창 제목·도구. 본문 설정과 무관하게 절대 안 변함 */
   --note:14pt;        /* 사용자가 입력한 본문(에디터·목록 미리보기·체크리스트). 설정과 노트별 옵션으로만 변함 */
   --notefw:500;       /* 본문 기본 굵기(보통). 너무 굵지도, 너무 가늘지도 않은 중간값 */
+  /* (v6.7) 본문 자간·줄간격. 기본값은 V6.6과 똑같이 보이는 값 → 기존 노트 모양 변화 없음 */
+  --notels:0px;       /* 노트 본문 자간 (설정 슬라이더) */
+  --notelh:1.05;      /* 노트 본문 줄간격 (설정 슬라이더) */
   --boxmin:165px;
 }
 html[data-theme="dark"]{
@@ -571,6 +605,20 @@ html[data-theme="dark"] mark{background:#8a6f62;color:#fff}
 }
 .overlay.show{opacity:1;visibility:visible}
 @media(min-width:640px){.overlay{align-items:center}}
+/* ══ (v6.7 PC 수정) 넓은 화면에서 하단 폴더바가 '없는 것처럼' 보이던 문제 ══
+   [원인] 바 색(#eeebe7)이 배경(#f5f2ef)과 거의 같고, 칩들이 1400px 넓은 바의 왼쪽 구석에만
+          몰려 있어서 바의 존재가 눈에 띄지 않았다. (폰에서는 칩이 폭을 채워 잘 보인다)
+   [해결] 900px 이상에서만 ① 윗변에 선 ② 배경을 살짝 진하게 ③ 칩을 노트 목록과 같은
+          1000px 기둥 안에 가운데 정렬. 폰 화면(<900px)에는 아무 영향이 없다. */
+@media(min-width:900px){
+  #folderNav{background:#e7e2dc;border-top:1px solid #d8d1c9;
+    box-shadow:0 -2px 6px rgba(90,75,65,.10)}
+  html[data-theme="dark"] #folderNav{background:#312d2b;border-top-color:#413c39}
+  #folderNav .folderbar{max-width:1000px;margin:0 auto}
+  #folderNav.vault{background:#dcded2;border-top:1px solid #c9ccbe}
+  html[data-theme="dark"] #folderNav.vault{background:#2f322c;border-top-color:#3d4139}
+  #fab{right:max(.7em, calc(50% - 500px + .7em))}
+}
 .sheet{
   background:var(--bg2);width:100%;max-width:640px;max-height:92vh;overflow:auto;
   box-sizing:border-box;                       /* (설정창 에러 방지) 패딩 포함 폭 계산 */
@@ -627,6 +675,21 @@ html[data-theme="dark"] mark{background:#8a6f62;color:#fff}
 .edbar:not(.editmode) #edPencil{font-size:1.25em}   /* (v6.4) 더 잘 보이게 */
 .edbar:not(.editmode) #edPencil svg{width:1.5em;height:1.5em}   /* (v6.2) 컬러 연필을 조금 크게 */
 .edbar:not(.editmode) #edColorBtn{width:1.57em;height:1.57em}   /* (v6.4) 85%로 축소 */
+/* ══ (v6.7) ☑ 체크박스 = 저장하고 목록으로 ══
+   연필 왼쪽에 항상 있는 자리. 보기/편집 어느 모드에서도 같은 위치, 같은 동작.
+   기존 ✓(#edSaveBtn)와 동작이 완전히 같으므로 편집 모드에서는 ✓를 숨겨 중복을 없앤다. */
+#edDone{
+  flex:none;width:1.5em;height:1.5em;padding:0;margin-right:.05em;
+  display:flex;align-items:center;justify-content:center;
+  background:#ffffff;border:2px solid var(--accent2);border-radius:.35em;
+  color:var(--accent2);font-size:.92em;font-weight:900;line-height:1;
+  box-shadow:0 1px 3px rgba(90,75,65,.20);
+  transition:transform .12s,background .15s,box-shadow .15s;
+}
+#edDone:active{transform:scale(.88);background:var(--accent);color:#4a332e;
+  box-shadow:inset 0 2px 5px rgba(0,0,0,.18)}
+html[data-theme="dark"] #edDone{background:#2a2726;border-color:#c39a91;color:#e5c6bf}
+.edbar.editmode #edSaveBtn{display:none}
 /* 편집 모드: Undo 120% 확대, T 볼드체 */
 .edbar.editmode #edUndo{font-size:1.14em;font-weight:800}
 #edTypeBtn{font-weight:800}
@@ -636,7 +699,8 @@ html[data-theme="dark"] mark{background:#8a6f62;color:#fff}
 /* (요청3) 연필: 박스 없이 연필만. 연필심(끝)은 왼쪽. 편집 ON=노란 연필(박스 없음), 누르면 '들어가는' 눌림 */
 /* (v6.4) 연필이 배경에 묻혀 잘 안 보이던 문제 →
    흰 원 배경 + 윤곽선 + 그림자를 줘서 어떤 카드 색 위에서도 또렷하게 */
-/* (v6.5) 흰 동그라미 배경을 없애고, 연필 자체를 짙은 색으로 + 105% 확대 */
+/* (v6.5) 흰 동그라미 배경을 없애고, 연필 자체를 짙은 색으로 + 105% 확대
+   (v6.7) 너무 크고 칙칙해 보인다는 의견 → 어둡게 처리(brightness .78)를 빼고 85% 크기로 */
 #edPencil{
   background:none!important;
   border:none;
@@ -645,18 +709,27 @@ html[data-theme="dark"] mark{background:#8a6f62;color:#fff}
 #edPencil.on{background:none!important}
 #edPencil svg{
   transition:transform .14s;
-  transform:scale(1.05);
-  filter:drop-shadow(0 1px 2px rgba(60,45,38,.5)) saturate(1.5) brightness(.78);
+  transform:scale(.9);
+  filter:drop-shadow(0 1px 1.5px rgba(60,45,38,.22));
 }
+/* (v6.7.1) 후보 C(선 아이콘) 색 — 라이트/다크 각각 지정 */
+#edPencil svg .pkBody,#edPencil svg .pkCap,#edPencil svg .pkLine{stroke:#6B5348}
+#edPencil svg .pkBody{fill:#F2DCD4}
+#edPencil svg .pkCap{fill:#DCCFE6}
 #edPencil.on svg{
-  transform:rotate(-12deg) scale(1.12);
-  filter:drop-shadow(0 1.5px 3px rgba(60,45,38,.6)) saturate(1.6) brightness(.72);
+  transform:rotate(-12deg) scale(.92);
+  filter:drop-shadow(0 1.5px 3px rgba(60,45,38,.34));
 }
 #edPencil:active svg{transform:translate(.08em,.1em) rotate(-8deg) scale(.99)}
 html[data-theme="dark"] #edPencil svg{
-  filter:drop-shadow(0 1px 2px rgba(0,0,0,.7)) saturate(1.35) brightness(1.05);
+  filter:drop-shadow(0 1px 2px rgba(0,0,0,.6));
 }
-#edPencil:active svg{transform:translate(.08em,.1em) rotate(-8deg) scale(.94)}
+html[data-theme="dark"] #edPencil svg .pkBody,
+html[data-theme="dark"] #edPencil svg .pkCap,
+html[data-theme="dark"] #edPencil svg .pkLine{stroke:#EFE4DC}
+html[data-theme="dark"] #edPencil svg .pkBody{fill:#6E5B54}
+html[data-theme="dark"] #edPencil svg .pkCap{fill:#8A7C96}
+#edPencil:active svg{transform:translate(.08em,.1em) rotate(-8deg) scale(.8)}
 .edtool.on{background:var(--accent);color:#4a332e}
 /* (요구8) 사각 컬러박스 — 항상 선택된 색상 채움 */
 /* (v6.2 요청4) 컬러 버튼 = 흰색 굵은 테두리 + 바깥 얇은 윤곽선(밝은 배경에서도 보이게) */
@@ -674,7 +747,9 @@ html[data-theme="dark"] #edColorBtn{border-color:#f2eeea;box-shadow:0 0 0 1px rg
 /* (요구7) 첫째 줄 아래 = 화면 전체 입력영역 */
 .edmain{flex:1;overflow:auto;position:relative;min-height:0}   /* (요청1) 긴 노트도 에디터 안에서만 스크롤 — 아래 도구/항목은 항상 화면 안에 보임 */
 #edBody{
-  min-height:100%;padding:.45em .7em 2em;font-size:var(--note);font-weight:var(--notefw);line-height:1.05;
+  /* (v6.7) 줄간격·자간을 설정 슬라이더 값으로. T창에서 줄에 직접 지정한 값이 있으면 그쪽이 우선 */
+  min-height:100%;padding:.45em .7em 2em;font-size:var(--note);font-weight:var(--notefw);
+  line-height:var(--notelh,1.05);letter-spacing:var(--notels,0px);
   outline:none;color:var(--text);background:transparent;border:none
 }
 #edBody:empty:before{content:attr(data-ph);color:var(--sub)}
@@ -726,7 +801,8 @@ html[data-theme="dark"] #edBody a,html[data-theme="dark"] #edBody a.nlink{color:
 /* (v6.5) T(서식) 창이 글자를 가릴 때 손가락으로 옮길 수 있게 */
 #edTypePop{position:fixed;z-index:70;top:auto;right:auto;background:var(--card);
   border:1px solid var(--line);border-radius:.6em;box-shadow:0 8px 24px rgba(0,0,0,.28);
-  padding:0 .6em .55em;width:min(92vw,280px);
+  /* (v6.7) 고정 폭 280px 이라 오른쪽이 남았다 → 폭을 줄이고 슬라이더가 남는 폭을 채운다 */
+  padding:0 .6em .55em;width:min(90vw,248px);
   opacity:0;visibility:hidden;transform:translateY(-6px);transition:opacity .16s,transform .16s}
 #edTypePop.dragging{transition:none;box-shadow:0 14px 34px rgba(0,0,0,.4)}
 /* 잡고 옮기는 손잡이 */
@@ -747,16 +823,39 @@ html[data-theme="dark"] #edBody a,html[data-theme="dark"] #edBody a.nlink{color:
 .tpbtn{background:var(--chip);border:none;color:var(--text);border-radius:.4em;padding:.32em .7em;font-size:.78em;font-weight:700}
 .tpval{min-width:2.6em;text-align:center;font-size:.78em;font-weight:800}
 .tpbiu{background:var(--chip);border:none;color:var(--text);border-radius:.4em;min-width:2.2em;height:2.2em;font-size:.8em;font-weight:800;font-style:normal}
+/* (v6.7) B/I/U 도 남는 폭을 나눠 가져 오른쪽 여백을 없앤다 */
+.tprow .tpbiu{flex:1}
 .tpbiu.on{background:var(--accent);color:#4a332e}
 
 /* (요청7) 설정 - 글자크기 스테퍼 + 실시간 샘플 */
-.fontstep{display:flex;align-items:center;gap:.35em}
-.fsbtn{background:var(--chip);border:none;color:var(--text);border-radius:.4em;width:2.1em;height:2.1em;font-size:.85em;font-weight:800}
-.fsbtn:active{background:var(--accent);color:#4a332e}
+/* (v6.7.1) .fontstep/.fsbtn(스테퍼 버튼 스타일) 삭제 — HTML에서 이미 제거됨(승인 완료) */
 .fsval{min-width:2em;text-align:center;font-size:1em;font-weight:800}
 .fsunit{font-size:.6em;color:var(--sub)}
-.fontsample{margin:.4em 0 .6em;padding:.45em .7em;background:var(--card);border:1px dashed var(--line);
-  border-radius:.5em;color:var(--text);line-height:1.4;text-align:center}
+/* (v6.7) 글자 샘플 = 테두리 박스. 크기·자간·줄간격·굵기가 실시간으로 보인다 */
+.fontsample{margin:.25em 0 .7em;padding:.7em .8em;background:var(--card);
+  border:1.5px solid var(--line);border-radius:.6em;color:var(--text);text-align:center;
+  box-shadow:inset 0 1px 3px rgba(90,75,65,.06);overflow:hidden;word-break:break-word}
+/* ══ (v6.7) 노트 글자 조절 — 크기 · 자간 · 줄간격 슬라이더 ══ */
+.subhead{display:flex;align-items:center;gap:.4em;font-size:.68em;font-weight:800;
+  color:var(--text);margin:.2em 0 .35em}
+.subhead:before{content:'';width:3px;height:.9em;border-radius:2px;background:var(--accent)}
+.slrow{display:flex;align-items:center;gap:.5em;padding:.22em 0}
+.sllab{font-size:.72em;font-weight:700;width:4.2em;flex:none}
+.slmin{font-size:.55em;color:var(--sub);flex:none;width:1em;text-align:center}
+.slmax{font-size:.9em;color:var(--sub);flex:none;width:1em;text-align:center;line-height:1}
+.slval{font-size:.75em;font-weight:800;min-width:3.1em;text-align:right;flex:none;
+  font-variant-numeric:tabular-nums}
+input[type=range]{-webkit-appearance:none;appearance:none;flex:1;min-width:0;
+  height:1.6em;background:transparent;margin:0;padding:0;border:none;touch-action:pan-y}
+input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:3px;background:var(--line)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
+  width:1.05em;height:1.05em;border-radius:50%;background:var(--accent2);border:2.5px solid #fff;
+  margin-top:calc(-.525em + 2px);box-shadow:0 1px 4px rgba(90,75,65,.35)}
+input[type=range]::-moz-range-track{height:4px;border-radius:3px;background:var(--line)}
+input[type=range]::-moz-range-thumb{width:1em;height:1em;border-radius:50%;background:var(--accent2);
+  border:2.5px solid #fff;box-shadow:0 1px 4px rgba(90,75,65,.35)}
+html[data-theme="dark"] input[type=range]::-webkit-slider-thumb{border-color:#221f1e}
+html[data-theme="dark"] input[type=range]::-moz-range-thumb{border-color:#221f1e}
 
 /* (요청2/3) 이미지 리사이즈: 에디터 안 이미지 + 선택 시 컨트롤 바 + 전체화면 미리보기 */
 #edBody img.edimg{max-width:100%;height:auto;border-radius:8px;margin:.3em 0;display:block}
@@ -966,28 +1065,17 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
       <button class="edtool" id="edSaveBtn" data-i18n-title="Save" title="Save">✓</button>
       <button class="edtool undo" id="edUndo" data-i18n-title="Undo" title="Undo">↶</button>
       <!-- (v6.2 요청4) 귀여운 컬러 연필 — 몸통은 팔레트 그라데이션, 나무결/흑연/지우개 분리 -->
+      <!-- (v6.7) ☑ 저장하고 목록으로 — 연필 왼쪽 고정 자리 -->
+      <button class="edtool" id="edDone" data-i18n-title="save_back" title="Save and go back">✓</button>
       <button class="edtool" id="edPencil" data-i18n-title="Edit mode" title="Edit mode">
         <svg viewBox="0 0 64 64" width="1.35em" height="1.35em" aria-hidden="true" class="pencilSvg">
-          <defs>
-            <linearGradient id="pncBody" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%"   stop-color="#D7A49A"/>
-              <stop offset="38%"  stop-color="#E4C9B6"/>
-              <stop offset="68%"  stop-color="#B8BBA3"/>
-              <stop offset="100%" stop-color="#A4B1BA"/>
-            </linearGradient>
-          </defs>
-          <!-- 지우개 (라벤더) -->
-          <path d="M44.6 6.6l12.8 12.8a4 4 0 0 1 0 5.7l-3.6 3.6L35.3 10.2l3.6-3.6a4 4 0 0 1 5.7 0z" fill="#C9C3DD"/>
-          <!-- 금속 밴드 -->
-          <path d="M33.1 12.4l18.5 18.5-3.4 3.4-18.5-18.5z" fill="#E1DAD3"/>
-          <!-- 몸통 -->
-          <path d="M27.9 17.6l18.5 18.5-27.6 27.6-6.2 1.3-.1.1H6.2l-1.4-6.4z" fill="url(#pncBody)"/>
-          <!-- 나무 깎인 부분 -->
-          <path d="M11.9 55.4l6.9 6.9-6.3 1.4H6.2l-1.4-6.4z" fill="#EFE7DF"/>
-          <!-- 흑연 심 -->
-          <path d="M5.6 62.4l1.5-6.7 5.2 5.2z" fill="#5C534D"/>
-          <!-- 하이라이트 -->
-          <path d="M31.1 20.8l3.1 3.1-24.4 24.4-1.2 1.2-1.6-1.6z" fill="#fff" opacity=".38"/>
+          <!-- (v6.7.1) 후보 C: 둥근 선으로만 그린 미니멀 연필 (색은 CSS에서 지정 → 다크모드 자동 대응) -->
+          <g transform="rotate(45 32 32)" fill="none" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round">
+            <path class="pkBody" d="M23 22h18v22l-9 12-9-12z"/>
+            <path class="pkCap"  d="M23 22v-7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v7"/>
+            <path class="pkLine" d="M23 44h18"/>
+            <path class="pkLine" d="M28 52h8"/>
+          </g>
         </svg>
       </button>
       <button class="edtool" id="edTypeBtn" data-i18n-title="Format" title="Format">T</button>
@@ -1113,7 +1201,7 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
 <!-- ───────── 설정 ───────── -->
 <div class="overlay" id="setOverlay">
   <div class="sheet">
-    <h3><span data-i18n="settings_title">⚙️ Settings</span>
+    <h3><span data-i18n="settings_title">⚙️ Full settings</span>
       <span>
         <button class="btn primary" id="setSave" data-i18n="save">Save</button>
         <button class="iconbtn" id="setClose">✕</button>
@@ -1148,14 +1236,29 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
           <option value="manual" data-i18n="sort_manual">Manual order</option>
         </select>
       </div>
-      <div class="setrow"><label data-i18n="font_size">Note font size (10–25pt)</label>
-        <div class="fontstep">
-          <button type="button" class="fsbtn" id="stFontMinus" title="−">−</button>
-          <span class="fsval" id="stFontVal">12</span><span class="fsunit">pt</span>
-          <button type="button" class="fsbtn" id="stFontPlus" title="＋">＋</button>
-        </div>
-      </div>
+      <!-- (v6.7) 글자 샘플 → 노트 글자 조절(크기·자간·줄간격) → 굵기 순서 -->
       <div class="fontsample" id="stFontSample" data-i18n="font_preview">Sample Abc 123 — preview</div>
+      <div class="subhead" data-i18n="font_ctrl">Note text controls</div>
+      <div class="slrow">
+        <span class="sllab" data-i18n="fc_size">Size</span>
+        <span class="slmin">A</span>
+        <input type="range" id="stFontRange" min="10" max="25" step="1" value="12"
+               data-i18n-title="fc_size" title="Size">
+        <span class="slmax">A</span>
+        <span class="slval"><span id="stFontVal">12</span><span class="fsunit">pt</span></span>
+      </div>
+      <div class="slrow">
+        <span class="sllab" data-i18n="fc_ls">Letter spacing</span>
+        <input type="range" id="stLsRange" min="-0.5" max="2" step="0.1" value="0"
+               data-i18n-title="fc_ls" title="Letter spacing">
+        <span class="slval" id="stLsVal">0.0</span>
+      </div>
+      <div class="slrow">
+        <span class="sllab" data-i18n="fc_lh">Line spacing</span>
+        <input type="range" id="stLhRange" min="1" max="2" step="0.05" value="1.05"
+               data-i18n-title="fc_lh" title="Line spacing">
+        <span class="slval" id="stLhVal">1.05</span>
+      </div>
       <div class="setrow"><label data-i18n="font_weight">Note font weight</label>
         <select id="stFontWeight">
           <option value="l" data-i18n="fw_l">Light (300)</option>
@@ -1306,7 +1409,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='soonenote';
-const APP_VER='6.6';
+const APP_VER='6.7.1';
 const SSTORE=(()=>{try{const t='__cn__';sessionStorage.setItem(t,'1');sessionStorage.removeItem(t);return sessionStorage}
   catch(e){const m={};return{getItem:k=>(k in m?m[k]:null),setItem:(k,v)=>{m[k]=String(v)},removeItem:k=>{delete m[k]}}}})();
 
@@ -1373,6 +1476,9 @@ const I18N={
   sort_by:{en:'Sort order'},sort_color:{en:'By color'},sort_updated:{en:'Recently edited'},
   sort_created:{en:'Date created'},sort_title:{en:'Title'},sort_manual:{en:'Manual order'},
   font_size:{en:'Note font size (10–25pt)'},font_preview:{en:'Sample Abc 123 — preview'},
+  /* (v6.7) 노트 글자 조절 슬라이더 + ☑ 저장하고 돌아가기 */
+  font_ctrl:{en:'Note text controls'},fc_size:{en:'Size'},fc_ls:{en:'Letter spacing'},fc_lh:{en:'Line spacing'},
+  save_back:{en:'Save and go back'},
   font_weight:{en:'Note font weight'},fw_l:{en:'Light (300)'},fw_n:{en:'Normal (500) — recommended'},
   fw_b:{en:'Bold (700)'},fw_x:{en:'Black (900)'},box_size:{en:'Box size (columns)'},
   box2:{en:'2 columns'},box3:{en:'3 columns'},box4:{en:'4 columns'},note_shape:{en:'Note shape'},
@@ -1394,7 +1500,7 @@ const I18N={
   bk_cleared:{en:'Backup list cleared'},bk_bad:{en:'Not a valid backup file'},
   data_hint:{en:'⚠ Notes are stored on this phone, in this browser, at this address. If you open a different address or clear browser data, notes may not show. Tap “Backup (save to phone)” once in a while or enable Sync. Even if the app is reinstalled or deleted, the backup file lets you Import everything back.'},
   app_name:{en:'soonenote'},
-  settings_title:{en:'⚙️ Settings'},save2:{en:'Save'},
+  settings_title:{en:'⚙️ Full settings'},save2:{en:'Save'},
   ac_title:{en:'☁️ Account · Sync'},ac_server:{en:'Server connection (Supabase)'},
   ac_url:{en:'Project URL'},ac_key:{en:'Public key (anon or sb_publishable)'},
   ac_save:{en:'Save · Connect'},ac_test:{en:'Test connection'},ac_login:{en:'Sign in (email)'},
@@ -1497,7 +1603,7 @@ const I18N_KO={
   ac_diag:'동기화 점검',
   ac_logout:'로그아웃',
   ac_hint:'⚠️ 두 기기(PC·폰)에서 <b>같은 이메일</b>로 로그인해야 노트가 공유됩니다. 로그인한 이메일이 서로 다르면 동기화되지 않습니다.',
-  settings_title:'⚙️ 설정',
+  settings_title:'⚙️ 전체 화면 설정',
   sec_screen:'화면',
   language:'언어 (Language)',
   lang_auto:'자동 (시스템 언어)',
@@ -1516,6 +1622,8 @@ const I18N_KO={
   sort_title:'제목',
   sort_manual:'직접 순서',
   font_size:'노트 글자 크기 (10~25pt)',
+  font_ctrl:'노트 글자 조절',fc_size:'크기',fc_ls:'자간',fc_lh:'줄간격',
+  save_back:'저장하고 돌아가기',
   font_preview:'가나다 Abc 123 — 지금 크기 미리보기',
   font_weight:'노트 글자 굵기 (입력 텍스트만)',
   fw_l:'가벼움 (300)',
@@ -1712,6 +1820,8 @@ const I18N_JA={
   default_view:'既定の表示',grid:'グリッド',list:'リスト',titles:'タイトルのみ',
   sort_by:'並び順',sort_color:'色順',sort_updated:'最近編集した順',
   sort_created:'作成日順',sort_title:'タイトル順',sort_manual:'手動',
+  font_ctrl:'本文の文字調整',fc_size:'サイズ',fc_ls:'字間',fc_lh:'行間',
+  save_back:'保存して戻る',
   font_size:'本文の文字サイズ (10〜25pt)',font_preview:'サンプル Abc 123 — プレビュー',
   font_weight:'本文の太さ',fw_l:'細い (300)',fw_n:'標準 (500) — 推奨',fw_b:'太い (700)',fw_x:'極太 (900)',
   box_size:'ボックスの大きさ（列数）',box2:'2列',box3:'3列',box4:'4列',
@@ -1726,7 +1836,7 @@ const I18N_JA={
   btn_wipe:'すべて削除',btn_emptytrash:'ゴミ箱を空にする',
   bk_title:'♻️ 保存済みバックアップ',bk_empty:'バックアップがありません。まず「バックアップ」を押してください。',
   bk_from_file:'📂 ファイルから読み込む',bk_clear:'バックアップ一覧を消去',
-  app_name:'soonenote',settings_title:'⚙️ 設定',save2:'保存',
+  app_name:'soonenote',settings_title:'⚙️ 全画面設定',save2:'保存',
   ac_title:'☁️ アカウント・同期',ac_server:'サーバー接続 (Supabase)',
   ac_url:'プロジェクト URL',ac_key:'公開キー (anon または sb_publishable)',
   ac_save:'保存・接続',ac_test:'接続テスト',ac_login:'ログイン（メール）',
@@ -1860,6 +1970,8 @@ const I18N_ZH={
   default_view:'默认视图',grid:'网格',list:'列表',titles:'仅标题',
   sort_by:'排序方式',sort_color:'按颜色',sort_updated:'最近编辑',
   sort_created:'创建时间',sort_title:'标题',sort_manual:'手动排序',
+  font_ctrl:'正文文字调整',fc_size:'大小',fc_ls:'字距',fc_lh:'行距',
+  save_back:'保存并返回',
   font_size:'正文字号 (10–25pt)',font_preview:'示例 Abc 123 — 预览',
   font_weight:'正文粗细',fw_l:'细 (300)',fw_n:'标准 (500) — 推荐',fw_b:'粗 (700)',fw_x:'特粗 (900)',
   box_size:'卡片大小（列数）',box2:'2 列',box3:'3 列',box4:'4 列',
@@ -1874,7 +1986,7 @@ const I18N_ZH={
   btn_wipe:'全部删除',btn_emptytrash:'清空回收站',
   bk_title:'♻️ 已保存的备份',bk_empty:'还没有备份。请先点击"备份"。',
   bk_from_file:'📂 从文件载入',bk_clear:'清除备份列表',
-  app_name:'soonenote',settings_title:'⚙️ 设置',save2:'保存',
+  app_name:'soonenote',settings_title:'⚙️ 全屏设置',save2:'保存',
   ac_title:'☁️ 账户 · 同步',ac_server:'服务器连接 (Supabase)',
   ac_url:'项目 URL',ac_key:'公开密钥 (anon 或 sb_publishable)',
   ac_save:'保存 · 连接',ac_test:'测试连接',ac_login:'登录（邮箱）',
@@ -2008,6 +2120,8 @@ const I18N_ES={
   default_view:'Vista predeterminada',grid:'Cuadrícula',list:'Lista',titles:'Solo títulos',
   sort_by:'Orden',sort_color:'Por color',sort_updated:'Editadas recientemente',
   sort_created:'Fecha de creación',sort_title:'Título',sort_manual:'Manual',
+  font_ctrl:'Ajuste del texto',fc_size:'Tamaño',fc_ls:'Espaciado',fc_lh:'Interlineado',
+  save_back:'Guardar y volver',
   font_size:'Tamaño de letra (10–25 pt)',font_preview:'Muestra Abc 123 — vista previa',
   font_weight:'Grosor de letra',fw_l:'Fina (300)',fw_n:'Normal (500) — recomendado',fw_b:'Negrita (700)',fw_x:'Extra (900)',
   box_size:'Tamaño de tarjeta (columnas)',box2:'2 columnas',box3:'3 columnas',box4:'4 columnas',
@@ -2022,7 +2136,7 @@ const I18N_ES={
   btn_wipe:'Eliminar todo',btn_emptytrash:'Vaciar papelera',
   bk_title:'♻️ Copias guardadas',bk_empty:'Aún no hay copias. Pulsa "Copia de seguridad" primero.',
   bk_from_file:'📂 Cargar desde archivo',bk_clear:'Borrar lista de copias',
-  app_name:'soonenote',settings_title:'⚙️ Ajustes',save2:'Guardar',
+  app_name:'soonenote',settings_title:'⚙️ Ajustes generales',save2:'Guardar',
   ac_title:'☁️ Cuenta · Sincronización',ac_server:'Conexión al servidor (Supabase)',
   ac_url:'URL del proyecto',ac_key:'Clave pública (anon o sb_publishable)',
   ac_save:'Guardar · Conectar',ac_test:'Probar conexión',ac_login:'Iniciar sesión (correo)',
@@ -2219,6 +2333,10 @@ function curSettings(){ return ui.vault ? VLT.settings : S.settings; }
 /* (요청7/요청1) 글자 크기: 'pt 숫자(10~25)' 하나로 통일 — 노트별 크기 기능은 폐지, 크기는 설정에서만.
    모든 크기는 --note 인라인으로만 적용되어 UI(17pt)와 완전 분리됨 */
 function ptClamp(v){ v=parseInt(v)||12; return Math.max(10,Math.min(25,v)); }
+/* (v6.7) 자간 -0.5~2.0px · 줄간격 1.0~2.0 — 잘못된 값이 들어와도 안전하게 */
+function lsClamp(v){ v=parseFloat(v); if(!isFinite(v))v=0; return Math.max(-0.5,Math.min(2,Math.round(v*10)/10)); }
+function noteLhClamp(v){ v=parseFloat(v); if(!isFinite(v))v=1.05; return Math.max(1,Math.min(2,Math.round(v*20)/20)); }
+function lhText(v){ const n=noteLhClamp(v); return (Math.round(n*100)%10===0)?n.toFixed(1):n.toFixed(2); }
 const FONT_KEYS_PT={'xs':12,'s':14,'m':16,'l':18,'xl':20};   /* (v5.3 이전) 구버전 5단계 → pt 마이그레이션 */
 function migFont(f){ if(f==null)return '12'; if(FONT_KEYS_PT[f]!=null)return String(FONT_KEYS_PT[f]); return String(ptClamp(f)); }
 
@@ -2226,9 +2344,10 @@ function migFont(f){ if(f==null)return '12'; if(FONT_KEYS_PT[f]!=null)return Str
    가벼움 300(Light) · 보통 500(Medium) · 굵게 700(Bold) · 매우굵게 900(Black).
    FONT_WEIGHTS 맵이 '글자 키(l/n/b/x) ↔ 숫자 값' 변환의 유일한 기준. 모든 저장·로드·적용은 이 맵을 거침 */
 const FONT_WEIGHTS={l:'300',n:'500',b:'700',x:'900'};   /* 가벼움·보통·굵게·매우굵게 — 간격이 확실하게 나뉜 새 굵기 */
-const DEF={theme:'auto',view:'grid',sort:'color',font:'12',fontWeight:'n',box:'2',rule:'none',defColor:0,sbUrl:'',sbKey:'',lastSync:0,lastPull:0,pinHash:null,pinSalt:null,lang:'auto'};
+/* (v6.7) fontLs(자간, px) · fontLh(줄간격) 추가. 기본값은 V6.6과 똑같이 보이는 값 */
+const DEF={theme:'auto',view:'grid',sort:'color',font:'12',fontWeight:'n',fontLs:'0',fontLh:'1.05',box:'2',rule:'none',defColor:0,sbUrl:'',sbKey:'',lastSync:0,lastPull:0,pinHash:null,pinSalt:null,lang:'auto'};
 /* (요청6) 보관 노트 전용 설정 기본값 — 일반 노트 설정과 별도로 저장됨 */
-const VAULT_DEF={theme:'auto',view:'grid',sort:'color',font:'12',fontWeight:'n',box:'2',rule:'none',defColor:0,unlockMinutes:0};
+const VAULT_DEF={theme:'auto',view:'grid',sort:'color',font:'12',fontWeight:'n',fontLs:'0',fontLh:'1.05',box:'2',rule:'none',defColor:0,unlockMinutes:0};
 function load(){
   /* v2.x → v3 자동 마이그레이션 */
   try{
@@ -2623,6 +2742,9 @@ function applyPrefs(){
   document.documentElement.style.setProperty('--note', ptClamp(sc.font)+'pt');   /* (요청7) 본문 글자 크기 10~25pt — UI(17pt)와 분리 */
   document.documentElement.dataset.cols=sc.box||'2';
   document.documentElement.dataset.notefw=FONT_WEIGHTS[sc.fontWeight]||'500';   /* (요구3) 본문 굵기: 키→숫자 값 변환으로 CSS[data-notefw]와 정합 (v5.1) */
+  /* (v6.7) 본문 자간·줄간격 — 노트 본문에만 적용(홈 카드 미리보기는 그대로) */
+  document.documentElement.style.setProperty('--notels', lsClamp(sc.fontLs)+'px');
+  document.documentElement.style.setProperty('--notelh', String(noteLhClamp(sc.fontLh)));
 }
 function visibleNotes(){
   let arr=NOTES().filter(n=>ui.trash?!!n.deleted:!n.deleted);
@@ -3211,6 +3333,8 @@ function closeEditor(fromBack){
   scheduleReminders();render();
 }
 $('#edSaveBtn').onclick=()=>{ flushEd(); closeEditor(); };   // ✓ = 저장 후 목록으로
+/* (v6.7) ☑ 체크박스(연필 왼쪽) = 저장하고 이전 화면으로. 보기/편집 어느 모드에서나 같은 자리 */
+$('#edDone').onclick=()=>{ flushEd(); closeEditor(); };
 /* (요구2) Undo(되돌리기): 본문/체크리스트 직전 편집 취소 */
 $('#edUndo').onclick=()=>{
   const nb=$('#edBody');
@@ -3695,15 +3819,17 @@ function buildTypePop(){
   hd.innerHTML='<span class="bar"></span><span class="txt">'+L('끌어서 이동','DRAG TO MOVE')+'</span><span class="bar"></span>';
   p.append(hd);
   makeTypePopDraggable(p,hd);
-  /* 글자 크기 */
+  /* 글자 크기 (v6.7: 슬라이더) */
   const r1=document.createElement('div');r1.className='tprow';
-  r1.innerHTML='<span class="tplab">'+L('글자 크기','Font size')+'</span>';
-  const bm=document.createElement('button');bm.className='tpbtn';bm.textContent='−';
+  r1.innerHTML='<span class="tplab">'+L('크기','Size')+'</span>';
+  const fsSl=document.createElement('input');
+  fsSl.type='range';fsSl.min='8';fsSl.max='48';fsSl.step='1';fsSl.id='tpFsRange';fsSl.value=String(typeFs);
   const val=document.createElement('span');val.className='tpval';val.id='tpFsVal';
-  const bp=document.createElement('button');bp.className='tpbtn';bp.textContent='＋';
-  r1.append(bm,val,bp);
-  holdRepeatFs(bm,-1);
-  holdRepeatFs(bp,+1);
+  r1.append(fsSl,val);
+  bindTypeSlider(fsSl,val,
+    v=>{ typeFs=Math.max(8,Math.min(48,parseInt(v)||12)); },
+    ()=>applyTypeFontSize(),
+    ()=>typeFs+'pt');
   p.append(r1);
   /* B / I / U */
   const r2=document.createElement('div');r2.className='tprow';r2.innerHTML='<span class="tplab">'+L('서식','Style')+'</span>';
@@ -3713,22 +3839,54 @@ function buildTypePop(){
     r2.append(b);
   });
   p.append(r2);
-  /* 줄간격 */
+  /* 줄간격 (v6.7: 슬라이더) */
   const r4=document.createElement('div');r4.className='tprow';
-  r4.innerHTML='<span class="tplab">'+L('줄간격','Line spacing')+'</span>';
-  const lm=document.createElement('button');lm.className='tpbtn';lm.textContent='−';
+  r4.innerHTML='<span class="tplab">'+L('줄간격','Spacing')+'</span>';
+  const lhSl=document.createElement('input');
+  lhSl.type='range';lhSl.min=String(LH_MIN);lhSl.max=String(LH_MAX);lhSl.step=String(LH_STEP);lhSl.id='tpLhRange';
+  lhSl.value=String(typeLh);
   const lv=document.createElement('span');lv.className='tpval';lv.id='tpLhVal';
-  const lp=document.createElement('button');lp.className='tpbtn';lp.textContent='＋';
-  r4.append(lm,lv,lp);
-  /* (v6.1) 탭 = 0.1 단계 / 길게 = 계속 조금씩. 범위 1.0~2.0 */
-  holdRepeat(lm,-LH_STEP);
-  holdRepeat(lp,+LH_STEP);
+  r4.append(lhSl,lv);
+  bindTypeSlider(lhSl,lv,
+    v=>{ typeLh=lhClamp(parseFloat(v)); },
+    ()=>applyTypeLh(),
+    ()=>typeLh.toFixed(1));
   p.append(r4);
   /* 안내 */
   const tip=document.createElement('div');
   tip.style.cssText='font-size:.56em;color:var(--sub);padding:.1em .2em .3em;line-height:1.3';
-  tip.textContent=L('줄간격 1.0~2.0 · 길게 누르면 계속 조절','Line spacing 1.0–2.0 · hold to keep adjusting');
+  tip.textContent=L('바꿀 글자를 먼저 드래그해서 고르세요 · 손을 떼면 적용됩니다',
+                    'Select the text first · applied when you release the slider');
   p.append(tip);
+}
+/* ══════════ (v6.7) T창 슬라이더 — 고른 글자를 놓치지 않게 ══════════
+   [문제] 크기·줄간격은 '드래그로 고른 글자'에만 적용된다. 그런데 슬라이더를 손으로 잡는
+          순간 브라우저가 포커스를 옮겨 선택이 풀려 버린다.
+   [해결] ① 손이 닿는 순간(pointerdown) 지금 선택을 기억해 두고
+          ② 끄는 동안에는 숫자만 바꾸고
+          ③ 손을 뗄 때(change) 기억해 둔 선택을 되살린 뒤 '딱 한 번' 적용한다.
+          끄는 내내 적용하면 <span>이 겹겹이 쌓여 V6.5에서 고쳤던 버그가 되살아난다. */
+let _tpSavedRange=null;
+function tpSaveRange(){ const r=typeSelRange(); _tpSavedRange = r ? r.cloneRange() : null; }
+function tpRestoreRange(){
+  if(!_tpSavedRange)return false;
+  try{ const s=window.getSelection(); s.removeAllRanges(); s.addRange(_tpSavedRange); return true; }
+  catch(e){ return false; }
+}
+function bindTypeSlider(sl,valEl,setVal,apply,fmt){
+  const save=()=>tpSaveRange();
+  sl.addEventListener('pointerdown',save);
+  sl.addEventListener('touchstart',save,{passive:true});
+  sl.addEventListener('mousedown',save);
+  sl.addEventListener('input',()=>{ setVal(sl.value); valEl.textContent=fmt(); });
+  sl.addEventListener('change',()=>{
+    setVal(sl.value);
+    tpRestoreRange();
+    apply();                       // 선택 영역에 실제로 적용 (한 번만)
+    valEl.textContent=fmt();
+    const r=typeSelRange(); if(r)_tpSavedRange=r.cloneRange();   // 적용 후 바뀐 선택을 다시 기억
+  });
+  sl.addEventListener('click',e=>e.stopPropagation());
 }
 function typeSelRange(){ const s=window.getSelection(); if(!s.rangeCount)return null;
   const r=s.getRangeAt(0); if(!$('#edBody').contains(r.commonAncestorContainer))return null; return r; }
@@ -3883,42 +4041,19 @@ function readCurrentLh(){
   let v = (lh==='normal') ? 1.4 : (parseFloat(lh)/fs);
   if(isFinite(v)) typeLh=lhClamp(v);
 }
-/* (v6.1 요청) 버튼을 '꾹 누르면' 조금씩 계속 변한다 (탭 = 1단계) */
-function holdRepeat(btn,step){
-  let t1=null,t2=null,fired=false;
-  const doStep=()=>{ typeLh=lhClamp(typeLh+step); applyTypeLh(); };
-  const start=e=>{
-    e.preventDefault(); e.stopPropagation();
-    fired=false;
-    doStep();                                   // 즉시 한 단계
-    t1=setTimeout(()=>{                         // 0.45초 이상 누르고 있으면 반복 시작
-      fired=true;
-      t2=setInterval(doStep,110);
-    },450);
-  };
-  const stop=()=>{ clearTimeout(t1); clearInterval(t2); t1=t2=null; };
-  btn.addEventListener('pointerdown',start);
-  ['pointerup','pointerleave','pointercancel'].forEach(ev=>btn.addEventListener(ev,stop));
-  btn.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();});   // 중복 방지
-}
-/* 글자 크기 버튼도 같은 방식으로 길게 누르기 지원 */
-function holdRepeatFs(btn,step){
-  let t1=null,t2=null;
-  const doStep=()=>{ typeFs=Math.max(8,Math.min(48,typeFs+step)); applyTypeFontSize(); };
-  const start=e=>{ e.preventDefault(); e.stopPropagation(); doStep();
-    t1=setTimeout(()=>{ t2=setInterval(doStep,110); },450); };
-  const stop=()=>{ clearTimeout(t1); clearInterval(t2); t1=t2=null; };
-  btn.addEventListener('pointerdown',start);
-  ['pointerup','pointerleave','pointercancel'].forEach(ev=>btn.addEventListener(ev,stop));
-  btn.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();});
-}
+/* (v6.7.1) T창 −/＋ 버튼이 슬라이더로 대체되어 holdRepeat()/holdRepeatFs() 삭제(승인 완료) */
 function execTypeCmd(cmd){ $('#edBody').focus(); document.execCommand(cmd,false,null); schedSave(); }
 function updateTpVals(){
   readCurrentLh();                                   /* (v6.1) 실제 값을 읽어와 표시 */
   $('#tpFsVal').textContent=typeFs+'pt';
   $('#tpLhVal').textContent=typeLh.toFixed(1);
+  /* (v6.7) 슬라이더 손잡이 위치도 현재 값에 맞춘다 */
+  const fr=$('#tpFsRange'); if(fr)fr.value=String(typeFs);
+  const lr=$('#tpLhRange'); if(lr)lr.value=String(typeLh);
 }
-$('#edTypeBtn').onclick=e=>{e.stopPropagation();buildTypePop();updateTpVals();
+$('#edTypeBtn').onclick=e=>{e.stopPropagation();
+  tpSaveRange();                                     /* (v6.7) 창을 열기 전 선택을 먼저 기억 */
+  buildTypePop();updateTpVals();
   $('#edColorPop').classList.remove('show');$('#edMenu').classList.remove('show');
   const tp=$('#edTypePop'); const willOpen=!tp.classList.contains('show');
   tp.classList.toggle('show'); if(willOpen)histPush();      /* (v6.2 요청5) */
@@ -4718,13 +4853,17 @@ function applySettingsFromUI(){
   sc.theme=$('#stTheme').value;
   ui.view=$('#stView').value;sc.view=ui.view;
   sc.sort=$('#stSort').value;
-  sc.font=String(ptClamp($('#stFontVal').textContent));   /* (요청7) 스테퍼 값 그대로 저장 (10~25) */
+  /* (v6.7) 크기·자간·줄간격은 슬라이더에서 읽는다 (스테퍼 −/＋ 는 제거됨) */
+  const _r1=$('#stFontRange'), _r2=$('#stLsRange'), _r3=$('#stLhRange');
+  sc.font  =String(ptClamp(_r1?_r1.value:$('#stFontVal').textContent));
+  if(_r2)sc.fontLs=String(lsClamp(_r2.value));
+  if(_r3)sc.fontLh=String(noteLhClamp(_r3.value));
   sc.fontWeight=$('#stFontWeight').value||'b';   /* (요구3) 본문 굵기 — 드롭다운 글자 키 그대로 저장 (v5.1) */
   sc.box=$('#stBox').value;
   sc.rule=$('#stRule').value;                          // (요청3) 줄 없음 / 줄쳐진 노트
   VLT.settings.unlockMinutes=parseInt($('#stVaultOpen').value||'0',10);   // (요청7)
   if(ui.vault)VLT.persistSettings(); else save();
-  applyPrefs();render();applyViewBtn();
+  applyPrefs();render();applyViewBtn();updateFontStepUI();
 }
 $('#btnSettings').onclick=openSettings;
 $('#stAccountBtn').onclick=()=>{ovCloseUi($('#setOverlay'));openAccount()};
@@ -4738,15 +4877,35 @@ $('#stLang').addEventListener('change',()=>{
 ['#stTheme','#stView','#stSort','#stFontWeight','#stBox','#stRule','#stVaultOpen'].forEach(sel=>$(sel).addEventListener('change',applySettingsFromUI));   /* (v5.3) stFont는 select→스테퍼로 대체 */
 /* (요청7) 글자크기 스테퍼: − / ＋ 1pt씩, 10~25, 미리보기 샘플 동시 갱신 */
 function updateFontStepUI(){
-  const pt=ptClamp(curSettings().font);
+  const sc=curSettings();
+  const pt=ptClamp(sc.font), ls=lsClamp(sc.fontLs), lh=noteLhClamp(sc.fontLh);
   $('#stFontVal').textContent=pt;
-  $('#stFontSample').style.fontSize=pt+'pt';
+  const lsv=$('#stLsVal'); if(lsv)lsv.textContent=ls.toFixed(1);
+  const lhv=$('#stLhVal'); if(lhv)lhv.textContent=lhText(lh);
+  const r1=$('#stFontRange'); if(r1&&document.activeElement!==r1)r1.value=pt;
+  const r2=$('#stLsRange');   if(r2&&document.activeElement!==r2)r2.value=ls;
+  const r3=$('#stLhRange');   if(r3&&document.activeElement!==r3)r3.value=lh;
+  /* 샘플 상자에 크기·자간·줄간격·굵기를 그대로 보여준다 */
+  const sm=$('#stFontSample');
+  if(sm){ sm.style.fontSize=pt+'pt'; sm.style.letterSpacing=ls+'px';
+          sm.style.lineHeight=String(lh); sm.style.fontWeight=FONT_WEIGHTS[sc.fontWeight]||'500'; }
 }
-function fontStep(d){ const sc=curSettings(); sc.font=String(ptClamp((parseInt($('#stFontVal').textContent)||12)+d));
-  if(ui.vault)VLT.persistSettings(); else save();
-  applyPrefs();render();updateFontStepUI(); }
-$('#stFontMinus').onclick=()=>fontStep(-1);
-$('#stFontPlus').onclick=()=>fontStep(+1);
+/* ══ (v6.7) 노트 글자 조절 슬라이더 — 크기 · 자간 · 줄간격 ══
+   드래그 중에는 화면에만 즉시 반영하고, 손을 뗄 때 저장한다(저장 폭주 방지). */
+function fcReadSliders(){
+  const sc=curSettings();
+  const r1=$('#stFontRange'), r2=$('#stLsRange'), r3=$('#stLhRange');
+  if(r1)sc.font  =String(ptClamp(r1.value));
+  if(r2)sc.fontLs=String(lsClamp(r2.value));
+  if(r3)sc.fontLh=String(noteLhClamp(r3.value));
+}
+['#stFontRange','#stLsRange','#stLhRange'].forEach(sel=>{
+  const el=$(sel); if(!el)return;
+  el.addEventListener('input', ()=>{ fcReadSliders(); applyPrefs(); updateFontStepUI(); });
+  el.addEventListener('change',()=>{ fcReadSliders(); applyPrefs(); updateFontStepUI();
+    if(ui.vault)VLT.persistSettings(); else save(); });
+});
+/* (v6.7.1) 설정창 −/＋ 스테퍼는 슬라이더로 대체 → fontStep() 및 핸들러 삭제(승인 완료) */
 $('#setSave').onclick=()=>{ applySettingsFromUI(); toast(tr('Settings saved','toast_settings_saved')); ovCloseUi($('#setOverlay')); };
 $('#setClose').onclick=()=>{ applySettingsFromUI(); ovCloseUi($('#setOverlay')); };
 
