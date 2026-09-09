@@ -1418,7 +1418,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='soonenote';
-const APP_VER='6.8';
+const APP_VER='6.8.1';
 const SSTORE=(()=>{try{const t='__cn__';sessionStorage.setItem(t,'1');sessionStorage.removeItem(t);return sessionStorage}
   catch(e){const m={};return{getItem:k=>(k in m?m[k]:null),setItem:(k,v)=>{m[k]=String(v)},removeItem:k=>{delete m[k]}}}})();
 
@@ -4292,9 +4292,17 @@ function openFolderMgr(){
   coll.forEach(f=>{
     const row=document.createElement('div');row.className='setrow';
     const nm=document.createElement('span');nm.textContent=f.name;nm.style.fontWeight='600';
-    /* (v6.8 STEP2) 폴더 이름을 누르면 그 폴더로 이동한다. 오버레이는 ovCloseUi로 딱 한 번만 닫는다 */
+    /* (v6.8 STEP2) 폴더 이름을 누르면 그 폴더로 이동한다.
+       (v6.8.1) 그런데 이름 글자(약 124×26px)만 눌려서 행의 반 이상이 죽어 있었다.
+       → 핸들러를 '행 전체'로 옮긴다. 행 어디를 눌러도 이동하고,
+         ★·이름 변경·삭제 버튼과 입력창은 각각의 동작을 그대로 유지한다.
+       ★ 핸들러는 행 하나에만 둔다(이름 span에 두면 버블링되어 ovCloseUi·histPop이 두 번 돈다). */
     nm.className='fname';
-    nm.onclick=()=>{ui.folder=f.id;ui.nofolder=false;ui.trash=false;exitSel();ovCloseUi($('#folderOverlay'));render()};
+    row.style.cursor='pointer';
+    row.onclick=(e)=>{
+      if(e.target.closest('button,input,select,textarea'))return;
+      ui.folder=f.id;ui.nofolder=false;ui.trash=false;exitSel();ovCloseUi($('#folderOverlay'));render();
+    };
     const wrap=document.createElement('div');
     if(!ui.vault){
       /* (v6.8 STEP2) ★ = 하단바에 고정할 즐겨찾기. 최대 2개까지만 되고, 3개째는 교체할지 물어본다 */
@@ -5066,7 +5074,15 @@ function applyBackup(d, onlyIds){
   // 폴더는 '전체 복구'일 때만 동기화 (부분 복구 때는 건드리지 않음)
   if(!onlyIds)(d.folders||[]).forEach(sf=>{const lf=S.folders.find(f=>f.id===sf.id);
     if(lf)lf.name=sf.name; else S.folders.push({id:sf.id,name:sf.name,createdAt:sf.createdAt,_synced:false})});
-  if(Array.isArray(d.vaultNotes)){
+  /* (v6.8.1) 금고가 잠긴 상태에서의 보관 노트 복구를 막는다.
+     [이유] 잠기면 VLT.notes=[] 이다. 이때 vaultNotes가 빈 백업으로 '모두 복구'하면
+            VLT.persist()가 sk.vault를 "[]"(평문)으로 덮어써서 암호문째 금고가 사라졌다.
+            반대로 잠긴 상태로 백업의 금고 노트를 받아쓰면 평문 저장이라 암호화가 풀린다.
+     [처리] 열쇠 없이(잠금) 복구하고자 할 때 금고 부분만 건너뛰고 사용자에게 알린다.
+            일반 노트 복구는 평소대로 전부 동작한다. */
+  const vaultHasContent=Array.isArray(d.vaultNotes)&&d.vaultNotes.length>0;   /* 안내문은 실제로 건너뛴 내용이 있을 때만 */
+  const vaultLockedButProtected=(VLT.encrypted && !VLT.key);
+  if(Array.isArray(d.vaultNotes)&&!vaultLockedButProtected){
     (d.vaultNotes||[]).forEach(vn=>{
       if(!want(vn.id))return;
       const local=VLT.notes.find(n=>n.id===vn.id);
@@ -5077,7 +5093,9 @@ function applyBackup(d, onlyIds){
     VLT.persist();
   }
   save();touch();render();syncSoon();
-  return {added,updated,vadded};
+  /* vskip: 잠겨 있어서 보관 노트를 건너뛴 여부 — 호출 쪽의 결과 안내문에 붙인다
+     (여기서 toast() 를 따로 띄우면 직 후의 '복구 완료' 토스트에 덮여 안 보인다) */
+  return {added,updated,vadded,vskip:(vaultLockedButProtected&&vaultHasContent)};
 }
 /* ── v6 자동 백업(스냅샷): 저장/닫기/백그라운드 전환 시 이전 상태를 이 기기에 자동 보관 ── */
 let autoSnapTimer=null;
@@ -5195,8 +5213,8 @@ async function doApply(d, ids){
   try{
     const r=applyBackup(d,ids);
     ovCloseUi($('#bkOverlay'));
-    toast(L(`복구 완료: 추가 ${r.added} · 갱신 ${r.updated}${r.vadded?` · 보관 ${r.vadded}`:''}`,
-            `Restored: added ${r.added}, updated ${r.updated}${r.vadded?` · vault ${r.vadded}`:''}`));
+    toast(L(`복구 완료: 추가 ${r.added} · 갱신 ${r.updated}${r.vadded?` · 보관 ${r.vadded}`:''}${r.vskip?' · 🔐 보관 노트는 잠겨서 건드리지 않음':''}`,
+            `Restored: added ${r.added}, updated ${r.updated}${r.vadded?` · vault ${r.vadded}`:''}${r.vskip?' · vault skipped (locked)':''}`));
   }catch(e){ toast(L('올바른 백업이 아닙니다','Not a valid backup')); }
 }
 
@@ -5228,7 +5246,8 @@ $('#importFile').addEventListener('change',e=>{
   r.onload=()=>{try{
     const d=JSON.parse(r.result);
     const res=applyBackup(d);
-    toast(IS_KO?`가져오기 완료: 추가 ${res.added}/갱신 ${res.updated}, 보관 ${res.vadded}개`:`Import done: added ${res.added}, updated ${res.updated}, vault ${res.vadded}`);
+    toast(IS_KO?`가져오기 완료: 추가 ${res.added}/갱신 ${res.updated}, 보관 ${res.vadded}개${res.vskip?' (🔐 보관 노트는 잠겨서 건드리지 않음)':''}`
+              :`Import done: added ${res.added}, updated ${res.updated}, vault ${res.vadded}${res.vskip?' (vault skipped — locked)':''}`);
   }catch(err){toast(tr('Not a valid backup file','bk_bad'))}};
   r.readAsText(f);e.target.value='';
 });
