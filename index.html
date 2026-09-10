@@ -1552,7 +1552,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='soonenote';
-const APP_VER='7.1';
+const APP_VER='7.1.1';
 const SSTORE=(()=>{try{const t='__cn__';sessionStorage.setItem(t,'1');sessionStorage.removeItem(t);return sessionStorage}
   catch(e){const m={};return{getItem:k=>(k in m?m[k]:null),setItem:(k,v)=>{m[k]=String(v)},removeItem:k=>{delete m[k]}}}})();
 
@@ -6300,3 +6300,4 @@ if('serviceWorker' in navigator&&location.protocol.startsWith('http')){
   });
 })();
 </script>
+</body></html>
