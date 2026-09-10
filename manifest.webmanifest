@@ -1,7 +1,7 @@
 {
   "name": "soonenote",
   "short_name": "soonenote",
-  "description": "Muted pastel color notepad — notes, checklists, photos, folders and a private vault.",
+  "description": "A pastel notepad with folders and an encrypted private vault.",
   "id": "/",
   "start_url": "./",
   "scope": "./",
@@ -10,7 +10,7 @@
   "orientation": "portrait",
   "background_color": "#f5f2ef",
   "theme_color": "#f5f2ef",
-  "lang": "ko",
+  "lang": "en",
   "dir": "ltr",
   "categories": ["productivity", "utilities"],
   "icons": [

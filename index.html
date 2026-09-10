@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <!--
 ═══════════════════════════════════════════════════════════════
-  soonenote  —  V6.7.1
+  soonenote  —  V7.1
   (V6.0 → ... → V6.6 → V6.7 → V6.7.1)
 
-  V6.7.1 changes  (2026-09)  ← 사용자 승인 후 적용
-   1. Unused code removed: fontStep(), holdRepeat(), holdRepeatFs(), CSS .fontstep/.fsbtn
-   2. Pencil icon replaced with candidate C (minimal line icon, light/dark aware)
+  V7.1 changes  (2026-09)  ← security and folder rebuild
+   1. Vault v2 encrypts notes, folders, and vault settings in one AES-GCM envelope; backups retain ciphertext only.
+   2. Folder management is rebuilt as separate list and detail screens; detail columns use an independent setting.
 
   V6.7 changes  (2026-09)
    1. Settings title: "Settings" -> "Full settings" (전체 화면 설정)
@@ -90,9 +90,7 @@
      5 languages (100 total). Recently seen ones are not repeated.
    · Badge and card colors shift with the time of day
    · Respects the system "reduce motion" setting
-   · Sync library now self-heals: if vendor/supabase.min.js is missing
-     (e.g. the folder was not uploaded), it is fetched from a CDN
-     automatically. Local file is still preferred so offline keeps working.
+   · Sync library is local-only: vendor/supabase.min.js must be deployed with the app; no CDN script fallback runs.
    · FIX: "Test connection" reported failure even when the connection was
      fine. The RLS security check returned ok:false; it now reports success
      and appends the security warning instead.
@@ -133,6 +131,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-nSWELJMuN3j0DAwY7TRzRjigZX6cNGZSb9sxVS+F/sM='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
 <!-- (요구3) 전화기 화면에 딱 맞게 · 자동 확대(핀치 줌 포함) 완전 금지 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#f5f2ef">
@@ -142,8 +142,8 @@
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="mask-icon" href="icons/icon-maskable-512.png" color="#D7A49A">
 <!-- (v6.1) Supabase 2.45.4 로컬 번들 — 오프라인/버전고정 -->
-<!-- (v6.1) Supabase 로컬 번들. 없으면 아래 JS가 인터넷에서 자동으로 받아옵니다 -->
-<script src="vendor/supabase.min.js" defer onerror="window.__sbLocalFailed=1"></script>
+<!-- v7.1: local-only Supabase bundle. Deploy this file with the app; no CDN fallback is used. -->
+<script src="vendor/supabase.min.js" integrity="sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o" crossorigin="anonymous" defer></script>
 <style>
 :root{
   /* ══ (v6.1) soonenote 고정 팔레트 — muted pastel / soft luxury ══
@@ -656,79 +656,72 @@ html[data-theme="dark"] mark{background:#8a6f62;color:#fff}
 .overlay.show .sheet{transform:translateY(0)}
 @media(min-width:640px){.sheet{border-radius:18px}}
 .sheet h3{margin:.2em 0 .7em;font-size:.85em;display:flex;align-items:center;justify-content:space-between;gap:.4em}
-/* == (v6.9 1) tap folder -> FULL SCREEN folder page ==
-   [before] a half-height sheet rising from the bottom (.sheet inside .overlay)
-   [req]    a whole-screen page that only lists folders; add folders there; tap one -> its notes
-   [how]    same overlay element (#folderOverlay), just stretched to the viewport.
-              open/close, OVS and History stay untouched, so Android Back keeps working. */
-#folderOverlay{align-items:stretch}
+/* ══════════ v7.1 폴더 화면 재구축 ══════════
+   폴더 관리 목록과 폴더 안 노트 화면을 분리한다.
+   동시에 두 목록을 40%/60%로 나누지 않으며, 각 화면에는 주 스크롤 영역이 하나뿐이다. */
+#folderOverlay{align-items:stretch;background:var(--bg)}
 #folderOverlay .sheet{width:100%;max-width:100%;height:100%;max-height:100%;border-radius:0;
   display:flex;flex-direction:column;overflow:hidden;transform:none;
-  padding:.6em .72em calc(.7em + env(safe-area-inset-bottom))}
-#folderOverlay .sheet h3{font-size:1.12em;margin:.15em 0 .3em}
-/* ══ (v7.0 요청3) 폴더 화면 윗줄 — 노트 화면과 같은 검색 + 한 줄 개수 + 배치 + 휴지통 ══ */
-.fbar{display:flex;gap:.3em;align-items:center;flex-wrap:nowrap;margin:0 0 .34em}
-.fbar input{flex:1 1 4em;min-width:0;font-size:.9em;padding:.42em .6em;border:1px solid var(--line);
-  border-radius:.6em;background:var(--card);color:var(--text)}
-.fbar .iconbtn{flex:none;min-width:2.05em;min-height:2.05em;font-size:.95em}
-.fcolsrow{margin:0 0 .5em;gap:.28em}
-.fclab{flex:none;font-size:.74em;color:var(--sub);font-weight:700}
-.fcols{display:flex;gap:.15em;flex:1;min-width:0;justify-content:flex-start}
-.fcols button{flex:1 1 0;min-width:1.9em;max-width:3.2em;min-height:2.0em;font-size:.8em;border:1px solid var(--line);
-  border-radius:.5em;background:var(--card);color:var(--sub);padding:0;cursor:pointer;line-height:1;font-weight:700}
+  padding:.62em .72em calc(.72em + env(safe-area-inset-bottom))}
+#folderPages{flex:1;min-height:0;display:flex;flex-direction:column}
+.folder-page{flex:1;min-height:0;display:flex;flex-direction:column}
+.folder-page.hidden{display:none!important}
+.fhead{display:flex;align-items:center;gap:.34em;flex:none;margin:.05em 0 .48em}
+.fhead h3{flex:1;min-width:0;margin:0;font-size:1.03em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fhead .iconbtn{min-width:2.15em;min-height:2.15em;font-size:.94em}
+#folderBack{font-size:1.05em}
+.fbar{display:flex;align-items:center;gap:.34em;flex:none;margin:0 0 .48em}
+.fbar input{flex:1;min-width:0;font-size:.84em;padding:.52em .66em;border:1px solid var(--line);
+  border-radius:.65em;background:var(--card);color:var(--text)}
+.fbar .iconbtn{flex:none;min-width:2.2em;min-height:2.2em;font-size:.94em}
+#folderList{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  display:flex;flex-direction:column;gap:.38em;padding:.03em 0 .5em}
+.frow{display:flex;align-items:center;gap:.3em;min-width:0;background:var(--card);
+  border:1px solid var(--line);border-radius:.7em;padding:.12em .2em .12em .55em}
+.frow:focus-within{border-color:var(--accent2)}
+.frowmain{display:flex;flex:1;align-items:center;gap:.5em;min-width:0;background:none;border:0;
+  padding:.45em .05em;text-align:left;color:var(--text);font:inherit}
+.frowmain:active{transform:scale(.99)}
+.frowcopy{flex:1;min-width:0;display:flex;flex-direction:column;gap:.08em}
+.frowname{font-size:.9em;font-weight:800;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.frowmeta{font-size:.61em;color:var(--sub);font-weight:650}
+.frowgo{font-size:1.14em;color:var(--sub);line-height:1;flex:none}
+.fstar{flex:none;width:2.15em;height:2.15em;border:0;border-radius:.5em;background:var(--chip);
+  color:var(--sub);font-size:.94em;font-weight:800}
+.fstar.on{color:#bd8326;background:#fbefd3}
+.fempty{padding:1.6em .7em;text-align:center;color:var(--sub);font-size:.76em;line-height:1.6}
+.fadd{display:flex;gap:.4em;align-items:center;flex:none;padding-top:.55em;margin-top:.28em;border-top:1px solid var(--line)}
+.fadd input[type=text]{flex:1;min-width:0;font-size:.84em;padding:.56em .68em}
+.fadd .btn{flex:none;min-height:2.35em;padding:.48em .85em;font-size:.8em}
+#folderNotes{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:.04em 0 .6em}
+.fdetailtools{display:flex;align-items:center;gap:.32em;flex:none;margin:0 0 .48em}
+.fclab{flex:none;font-size:.66em;color:var(--sub);font-weight:700;white-space:nowrap}
+.fcols{display:flex;gap:.14em;flex:1;min-width:0}
+.fcols button{flex:1 1 0;min-width:0;height:2.12em;border:1px solid var(--line);border-radius:.46em;
+  background:var(--card);color:var(--sub);font-size:.71em;font-weight:800;padding:0}
 .fcols button.on{background:var(--accent);color:#4a332e;border-color:var(--accent)}
-@media(min-width:520px){.fcols{flex:none}.fcols button{flex:none;min-width:2.3em}}
-/* 폴더 카드 배치: 세로 한 줄씩(기본) ↔ 가로 2열 */
-html[data-faxis="row"] #folderList{display:grid;grid-template-columns:repeat(2,1fr);gap:.42em}
-/* (v7.0 요청2) 폴더를 누르면 같은 화면 아래에 그 폴더의 노트가 나온다 */
-#folderOverlay.withnotes #folderList{flex:none;max-height:40%}
-#folderNotes{display:none;flex:1;overflow-y:auto;min-height:0;-webkit-overflow-scrolling:touch;padding:.1em 0 .5em;
-  border-top:1px solid var(--line);margin-top:.45em}
-#folderNotes .fnh{display:flex;align-items:center;gap:.34em;margin:.4em 0 .45em;font-size:.82em;color:var(--sub);font-weight:700}
-#folderNotes .fnh .fnm{font-size:1.2em;color:var(--text);font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#folderNotes .fnh button{margin-left:.2em;font-size:.92em;padding:.36em .6em;min-height:2.1em}
-#folderNotes .fnh button:first-of-type{margin-left:auto}
-#fnGrid{display:grid;gap:1mm;grid-template-columns:repeat(var(--fcols,2),1fr)}
+#fAddNote{flex:none;white-space:nowrap;min-height:2.2em;padding:.42em .62em;font-size:.72em}
+#fnGrid{display:grid;gap:1mm;grid-template-columns:repeat(var(--fcols,2),minmax(0,1fr))}
 .fnote{background:var(--nc,var(--card));border:1px solid var(--line);border-radius:6px;padding:.5em .55em;
-  min-height:3.3em;display:flex;flex-direction:column;gap:.16em;cursor:pointer;word-break:break-word;overflow:hidden}
+  min-height:4.3em;display:flex;flex-direction:column;gap:.16em;cursor:pointer;word-break:break-word;overflow:hidden}
 .fnote:active{transform:scale(.98)}
-.fnote .t{font-weight:800;font-size:1em;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.fnote .b{font-size:.78em;line-height:1.3;color:var(--sub);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.fnote .m{font-size:.64em;color:var(--sub);display:flex;gap:.3em;align-items:center;margin-top:auto}
+.fnote .t{font-weight:800;font-size:.82em;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fnote .b{font-size:.68em;line-height:1.32;color:var(--sub);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.fnote .m{font-size:.58em;color:var(--sub);display:flex;gap:.3em;align-items:center;margin-top:auto}
 .fnote .cdot{width:.62em;height:.62em;border-radius:50%;border:1px solid var(--line);flex:none;display:inline-block}
-/* (v7.0 I) 열 수가 5개 이상이면 '제목만' 보이는 타일로 — 본문·날짜까지 넣으면 한 글자씩 깨져 읽히지 않았다 */
-html body.cols-tight .fnote{min-height:2.5em;padding:.34em .3em;gap:.1em}
-html body.cols-tight .fnote .b,html body.cols-tight .fnote .m{display:none}
-html body.cols-tight .fnote .t{font-size:.72em;letter-spacing:-.02em}
-html body.cols-tight #grid .note .body,html body.cols-tight #grid .note .prog,
-html body.cols-tight #grid .note .fbadge,html body.cols-tight #grid .note .badges{display:none}
-html body.cols-tight #grid .note{aspect-ratio:auto;min-height:2.5em;padding:0}
-html body.cols-tight #grid .note .thead{padding:.14em .24em;gap:.12em}
-html body.cols-tight #grid .note .ttl{font-size:.68em;letter-spacing:-.02em}
-html body.cols-tight #grid .note .tinner{padding:0}
-@media(min-width:640px){html[data-faxis="row"] #folderList{grid-template-columns:repeat(3,1fr)}}
-#folderList{flex:1;overflow-y:auto;min-height:0;display:flex;flex-direction:column;gap:.4em;
-  -webkit-overflow-scrolling:touch;padding-bottom:.4em}
-.fcard{display:flex;flex-wrap:wrap;align-items:flex-start;gap:.42em .5em;padding:.66em .66em .6em;
-  border:1px solid var(--line);border-radius:.72em;background:var(--card);cursor:pointer;
-  transition:transform .1s,background .15s;flex:none}
-.fcard:active{transform:scale(.985)}
-.fcard.on{border-color:var(--accent2);background:#fbf3ef}
-html[data-theme="dark"] .fcard.on{background:#332c2a}
-/* (v6.9 1) 이름은 한 행을 혼자 쓴다 - 버튼에 밀려 잘리는 일 없게, 길면 두 줄까지 */
-.fcard .fmain{flex:1 1 100%;min-width:0;display:flex;flex-direction:column;gap:.06em;text-align:left}
-.fcard .fnav{font-size:1.5em;font-weight:700;line-height:1.22;font-stretch:100%;letter-spacing:normal;
-  overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word}
-.fcard .fcnt{font-size:.7em;color:var(--sub);font-weight:600;line-height:1.35}
-.fcard .facts{display:flex;gap:.34em;width:100%;justify-content:flex-end;align-items:center;flex:none}
-.fcard .btn{font-size:.86em;padding:.46em .82em;min-height:2.35em}
-.fadd{display:flex;gap:.4em;align-items:center;padding-top:.55em;margin-top:.45em;
-  border-top:1px solid var(--line)}
-.fadd input[type=text]{flex:1;min-width:0;font-size:1.02em;padding:.55em .7em}
-.fadd .btn{flex:none;padding:.6em .95em;font-size:1.02em}
-.fempty{padding:1.3em .4em;text-align:center;color:var(--sub);font-size:.82em;line-height:1.6}
-@media(min-width:640px){#folderOverlay .sheet{max-width:640px;margin:0 auto;
-  border-left:1px solid var(--line);border-right:1px solid var(--line)}}
+#folderDetailPage.tight .fnote{min-height:2.55em;padding:.34em .3em;gap:.1em}
+#folderDetailPage.tight .fnote .b,#folderDetailPage.tight .fnote .m{display:none}
+#folderDetailPage.tight .fnote .t{font-size:.68em;letter-spacing:-.02em}
+#folderActions{display:flex;gap:.3em;justify-content:flex-end;flex:none;margin:-.12em 0 .48em}
+#folderActions.hidden{display:none!important}
+#folderActions .btn{font-size:.7em;min-height:2.18em;padding:.42em .65em}
+@media(min-width:640px){
+  #folderOverlay .sheet{padding-left:max(.9em,calc((100vw - 780px)/2));padding-right:max(.9em,calc((100vw - 780px)/2))}
+  #folderList{max-width:780px;width:100%;align-self:center}
+  #folderListPage .fbar,#folderListPage .fadd,#folderDetailPage .fhead,#folderDetailPage .fbar,#folderDetailPage .fdetailtools,#folderDetailPage #folderActions,#folderDetailPage #folderNotes{max-width:780px;width:100%;align-self:center}
+  .fcols{max-width:21em}
+}
+
 .btn{
   background:var(--chip);color:var(--text);border:none;border-radius:.5em;
   padding:.5em .8em;font-size:.75em;font-weight:600;transition:transform .1s,filter .15s
@@ -1423,16 +1416,6 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
       <div class="hint" data-i18n="vault_hint">Regular notes need no password. Vault asks for a password every time (unless a grace time is set).</div>
       <div class="setrow"><label data-i18n="vault_open">🔐 Vault</label><button class="btn" id="stVaultBtn" data-i18n="open">Open</button></div>
       <div class="setrow"><label data-i18n="vault_pin">Vault password</label><button class="btn" id="stPinBtn" data-i18n="pin_set">Set / Change</button></div>
-      <div class="setrow"><label data-i18n="vault_unlock_time">Stay unlocked for</label>
-        <select id="stVaultOpen">
-          <option value="0" data-i18n="vault_always">Always ask</option>
-          <option value="5">5 minutes</option>
-          <option value="10">10 minutes</option>
-          <option value="15">15 minutes</option>
-          <option value="30">30 minutes</option>
-          <option value="60">1 hour</option>
-        </select>
-      </div>
     </div>
 
     <div class="setsec">
@@ -1461,32 +1444,45 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
   </div>
 </div>
 
-<!-- ───────── 폴더 관리 ───────── -->
+<!-- ───────── 폴더 (v7.1: 목록과 상세를 분리한 전체화면) ───────── -->
 <div class="overlay" id="folderOverlay">
   <div class="sheet">
-    <h3><span id="folderMgrTitle">📁 Folders</span> <button class="iconbtn" id="folderClose">✕</button></h3>
-    <!-- (4번 재설계) 상단 바: 홈·돋보기·+폴더·휴지통·점세개 -->
-    <div class="fbar" style="display:flex;gap:.3em;align-items:center;flex-wrap:nowrap;margin:.2em 0 .3em;padding-bottom:.4em;border-bottom:1px solid var(--line);">
-      <button class="iconbtn" id="fHomeBtn" title="홈" onclick="ovCloseUi($('#folderOverlay'));ui.vault=false;ui.folder='';render();">⌂</button>
-      <input type="search" id="fSearch" placeholder="검색" autocomplete="off" style="flex:1 1 4em;min-width:0;font-size:.9em;padding:.35em .6em;border:1px solid var(--line);border-radius:1em;background:var(--bg);">
-      <button class="iconbtn" id="fAddBtn" title="+폴더" onclick="$('#newFolderName').focus();">+</button>
-      <button class="iconbtn" id="fTrashBtn" title="휴지통" onclick="$('#folderOverlay').classList.add('trashopen');">🗑</button>
-      <div style="position:relative;">
-        <button class="iconbtn" id="fMoreBtn" title="더보기" onclick="this.nextElementSibling.classList.toggle('show');">⋮</button>
-        <div style="position:absolute;right:0;top:2.2em;background:var(--card);border:1px solid var(--line);border-radius:.6em;padding:.3em;min-width:9em;box-shadow:0 4px 12px rgba(0,0,0,.15);display:none;z-index:50;" class="fmore" id="fMoreMenu">
-          <button onclick="$('#folderOverlay').classList.add('selectmode');this.parentElement.classList.remove('show');" style="display:block;width:100%;text-align:left;padding:.25em .5em;border:none;background:none;cursor:pointer;">Select</button>
-          <button onclick="this.parentElement.classList.remove('show');" style="display:block;width:100%;text-align:left;padding:.25em .5em;border:none;background:none;cursor:pointer;">View: Grid / List / Simple</button>
-          <button onclick="this.parentElement.classList.remove('show');" style="display:block;width:100%;text-align:left;padding:.25em .5em;border:none;background:none;cursor:pointer;">Sort</button>
+    <div id="folderPages">
+      <section class="folder-page" id="folderListPage" aria-label="Folders">
+        <div class="fhead">
+          <h3 id="folderTitle">📁 Folders</h3>
+          <button class="iconbtn" id="folderClose" title="Close">✕</button>
         </div>
-      </div>
-    </div>
-    <style>.fmore.show{display:block}</style>
-    <!-- 폴더 아이콘 그리드 -->
-    <div id="folderGrid" style="display:grid;gap:.5em;grid-template-columns:repeat(auto-fill,minmax(4em,1fr));padding:.2em 0;"></div>
-    <div id="folderNotesWrap" style="display:none;"><div id="folderNotes"></div></div>
-    <div class="fadd" style="margin-top:.4em;padding-top:.3em;border-top:1px solid var(--line);">
-      <input type="text" id="newFolderName" placeholder="New folder name" data-i18n-ph="folder_ph" style="flex:1;font-size:.9em;padding:.35em .6em;border:1px solid var(--line);border-radius:1em;background:var(--bg);">
-      <button class="btn primary" id="addFolderBtn" data-i18n="add2" onclick="$('#newFolderName').value.trim()&&($('#folderOverlay').find('.fadd').hide(),openFolderMgr(),render());">Add</button>
+        <div class="fbar">
+          <input type="search" id="fSearch" placeholder="폴더·노트 검색" autocomplete="off">
+          <button class="iconbtn" id="fTrashBtn" title="Trash">🗑</button>
+        </div>
+        <div id="folderList"></div>
+        <div class="fadd">
+          <input type="text" id="newFolderName" placeholder="New folder name" data-i18n-ph="folder_ph" maxlength="80">
+          <button class="btn primary" id="addFolderBtn" data-i18n="add2">Add</button>
+        </div>
+      </section>
+      <section class="folder-page hidden" id="folderDetailPage" aria-label="Folder notes">
+        <div class="fhead">
+          <button class="iconbtn" id="folderBack" title="Back">←</button>
+          <h3 id="folderDetailTitle">Folder</h3>
+          <button class="iconbtn" id="folderDetailMenu" title="Folder options">⋮</button>
+          <button class="iconbtn" id="folderDetailClose" title="Close">✕</button>
+        </div>
+        <div class="fbar">
+          <input type="search" id="fNoteSearch" placeholder="이 폴더에서 검색" autocomplete="off">
+        </div>
+        <div class="fdetailtools">
+          <span class="fclab" id="fColsLabel">Columns</span><div class="fcols" id="fCols"></div>
+          <button class="btn primary" id="fAddNote">＋ Note</button>
+        </div>
+        <div id="folderActions" class="hidden">
+          <button class="btn" id="folderRename">Rename</button>
+          <button class="btn danger" id="folderDelete">Delete</button>
+        </div>
+        <div id="folderNotes"></div>
+      </section>
     </div>
   </div>
 </div>
@@ -1496,12 +1492,11 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
   <div class="sheet" style="max-width:380px">
     <h3><span data-i18n="pin_title">🔐 Vault password</span> <button class="iconbtn" id="pinClose">✕</button></h3>
     <div class="setrow" style="flex-direction:column;align-items:stretch">
-      <input type="password" inputmode="numeric" id="pinNew" placeholder="New password (4 digits recommended)" data-i18n-ph="pin_new_ph" maxlength="12">
-      <input type="password" inputmode="numeric" id="pinNew2" placeholder="Enter again" data-i18n-ph="pin_again_ph" maxlength="12" style="margin-top:.4em">
+      <input type="password" id="pinNew" placeholder="New password (12+ characters)" data-i18n-ph="pin_new_ph" maxlength="128" autocomplete="new-password">
+      <input type="password" id="pinNew2" placeholder="Enter again" data-i18n-ph="pin_again_ph" maxlength="128" autocomplete="new-password" style="margin-top:.4em">
     </div>
     <div class="btnrow">
       <button class="btn primary" id="pinSave" data-i18n="save">Save</button>
-      <button class="btn danger" id="pinRemove" data-i18n="pin_remove">Remove (unlock)</button>
     </div>
   </div>
 </div>
@@ -1510,7 +1505,7 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
 <div class="overlay" id="vGate" style="z-index:80">
   <div class="vgateCard">
     <div class="vgateTitle" data-i18n="gate_title">Password</div>
-    <input type="password" inputmode="numeric" id="vGatePass" maxlength="12" autocomplete="current-password">
+    <input type="password" id="vGatePass" maxlength="128" autocomplete="current-password">
     <button class="btn primary vunlock" id="vPassBtn" data-i18n="gate_ok">OK</button>
   </div>
 </div>
@@ -1534,7 +1529,7 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
 <div class="overlay" id="dlg" style="z-index:110">
   <div class="sheet" style="max-width:360px">
     <div id="dlgMsg" style="font-size:.8em;line-height:1.5;margin:.3em .2em .7em;white-space:pre-line"></div>
-    <input type="password" inputmode="numeric" id="dlgInput" class="hidden" maxlength="12"
+    <input type="password" id="dlgInput" class="hidden" maxlength="128"
       style="width:100%;padding:.5em;border-radius:.5em;background:var(--chip);border:1px solid var(--line);color:var(--text);outline:none;font-size:.85em;margin-bottom:.6em">
     <div class="btnrow" style="justify-content:flex-end;margin-top:0">
       <button class="btn" id="dlgNo" data-i18n="dlg_no">Cancel</button>
@@ -1552,7 +1547,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='soonenote';
-const APP_VER='7.1.1';
+const APP_VER='7.1';
 const SSTORE=(()=>{try{const t='__cn__';sessionStorage.setItem(t,'1');sessionStorage.removeItem(t);return sessionStorage}
   catch(e){const m={};return{getItem:k=>(k in m?m[k]:null),setItem:(k,v)=>{m[k]=String(v)},removeItem:k=>{delete m[k]}}}})();
 
@@ -1662,7 +1657,7 @@ const I18N={
   rm_hint:{en:'⚠ The reminder only fires while soonenote is open on screen. Android may stop timers when the app is closed or the screen is off, so a closed-app reminder is NOT guaranteed. Server push is planned for a future version.'},
   rm_clear:{en:'Clear reminder'},
   folder_ph:{en:'New folder name'},add2:{en:'Add'},
-  pin_title:{en:'🔐 Vault password'},pin_new_ph:{en:'New password (4 digits recommended)'},
+  pin_title:{en:'🔐 Vault password'},pin_new_ph:{en:'New password (12+ characters recommended)'},
   pin_again_ph:{en:'Enter again'},pin_remove:{en:'Remove (unlock)'},
   pin_set_btn:{en:'Set / Change'},pin_change_btn:{en:'Change / Reset'},pin_set_btn2:{en:'Set'},
   dlg_no:{en:'Cancel'},dlg_ok:{en:'OK'},
@@ -1822,7 +1817,7 @@ const I18N_KO={
   dlg_ok:'확인',
   title_ph:'제목',
   folder_ph:'새 폴더 이름',
-  pin_new_ph:'새 비밀번호 (숫자 4자리 권장)',
+  pin_new_ph:'새 비밀번호 (12자 이상 권장)',
   pin_again_ph:'다시 입력',
   view_toggle:'보기 전환',
   trash:'휴지통',
@@ -2498,9 +2493,9 @@ const FONT_WEIGHTS={l:'300',n:'500',b:'700',x:'900'};   /* 가벼움·보통·�
 /* (v6.7) fontLs(자간, px) · fontLh(줄간격) 추가. 기본값은 V6.6과 똑같이 보이는 값 */
 /* (v6.8 STEP2) favA/favB = 하단바에 고정해 두는 즐겨찾기 폴더 ID 2개.
    폴더 데이터에는 손대지 않는다. 예전 설정에 이 값이 없으면 아래 기본값('')이 자동으로 채워진다. */
-const DEF={theme:'auto',view:'grid',sort:'color',font:'12',fontWeight:'n',fontLs:'0',fontLh:'1.05',box:'2',rule:'none',defColor:0,sbUrl:'',sbKey:'',lastSync:0,lastPull:0,pinHash:null,pinSalt:null,lang:'auto',favA:'',favB:'',fldAxis:'col'};   /* (v7.0 요청3) fldAxis: 폴더 카드 배치 col|row */
+const DEF={theme:'auto',view:'grid',sort:'color',font:'12',fontWeight:'n',fontLs:'0',fontLh:'1.05',box:'2',fldCols:'2',rule:'none',defColor:0,sbUrl:'',sbKey:'',lastSync:0,lastPull:0,pinHash:null,pinSalt:null,lang:'auto',favA:'',favB:''};
 /* (요청6) 보관 노트 전용 설정 기본값 — 일반 노트 설정과 별도로 저장됨 */
-const VAULT_DEF={theme:'auto',view:'grid',sort:'color',font:'12',fontWeight:'n',fontLs:'0',fontLh:'1.05',box:'2',rule:'none',defColor:0,unlockMinutes:0,fldAxis:'col'};
+const VAULT_DEF={theme:'auto',view:'grid',sort:'color',font:'12',fontWeight:'n',fontLs:'0',fontLh:'1.05',box:'2',fldCols:'2',rule:'none',defColor:0};
 function load(){
   /* v2.x → v3 자동 마이그레이션 */
   try{
@@ -2548,7 +2543,8 @@ function load(){
     else if(S.settings.fontWeight==='b')S.settings.fontWeight='n';
     S.settings.fwVer=2;
   }else if(!['l','n','b','x'].includes(S.settings.fontWeight))S.settings.fontWeight='n';
-  if(!['2','3','4'].includes(S.settings.box))S.settings.box='2';
+  if(!['1','2','3','4','5','6','7'].includes(String(S.settings.box)))S.settings.box='2';
+  if(!['1','2','3','4','5','6','7'].includes(String(S.settings.fldCols)))S.settings.fldCols=S.settings.box;
   // (요청4) 정렬은 색상 우선을 기본으로 강제 (기존 기기의 '최근수정' 설정 1회 교정)
   if(!S.settings._sortFixed){ S.settings.sort='color'; S.settings._sortFixed=true; }
   /* (v6.9 요청3·4) T창에서 크기·줄간격 조절과 '이 노트만 굵게'를 없앴다. 이미 걸려 있는
@@ -2830,8 +2826,9 @@ window.addEventListener('popstate',()=>{
   /* 2) 선택 모드 해제 */
   if(ui.selMode){ exitSel(true); histPush(); return }
 
-  /* 3) 오버레이 한 겹 닫기 (설정·계정·폴더·노트편집 …) */
+  /* 3) 오버레이 한 겹 닫기. 폴더 상세에서는 먼저 목록으로 돌아간다. */
   if(OVS.length){
+    if(OVS[OVS.length-1]===$('#folderOverlay')&&folderUI&&folderUI.page==='detail'){leaveFolderDetail();histPush();return;}
     ovCloseTop();
     /* 아직 남은 화면이 있으면 history 자리를 다시 확보해 둔다 */
     if(hasSomethingToClose()) histPush();
@@ -2923,13 +2920,13 @@ function applyPrefs(){
   const sc=curSettings();
   document.documentElement.dataset.theme=isDark()?'dark':'light';
   document.documentElement.style.setProperty('--note', ptClamp(sc.font)+'pt');   /* (요청7) 본문 글자 크기 10~25pt — UI(17pt)와 분리 */
-  document.documentElement.dataset.cols=sc.box||'2';
-  /* (v7.0 요청3) 폴더 카드 배치 + 폴더 화면 노트 프리뷰는 같은 '한 줄 개수'를 쓴다 */
-  document.documentElement.dataset.faxis=(sc.fldAxis==='row')?'row':'col';
-  {const _t=fColsNum(sc)>=5; document.body.classList.toggle('cols-tight',_t);   /* (v7.0 I) 5열부터는 제목만 */
-    const fg=document.getElementById('fnGrid');
-    if(fg){const _n=fColsNum(sc);fg.style.setProperty('--fcols',String(_n));
-      fg.style.gridTemplateColumns='repeat('+_n+',minmax(0,1fr))';}}
+  const mainCols=['1','2','3','4','5','6','7'].includes(String(sc.box))?String(sc.box):'2';
+  document.documentElement.dataset.cols=mainCols;
+  /* 홈 카드의 조밀 보기와 폴더 상세의 조밀 보기는 서로 독립이다. */
+  document.body.classList.toggle('cols-tight',parseInt(mainCols,10)>=5);
+  const fg=document.getElementById('fnGrid');
+  if(fg){const _n=fColsNum(sc);fg.style.setProperty('--fcols',String(_n));
+    fg.style.gridTemplateColumns='repeat('+_n+',minmax(0,1fr))';}
   document.documentElement.dataset.notefw=FONT_WEIGHTS[sc.fontWeight]||'500';   /* (요구3) 본문 굵기: 키→숫자 값 변환으로 CSS[data-notefw]와 정합 (v5.1) */
   /* (v6.7) 본문 자간·줄간격 — 노트 본문에만 적용(홈 카드 미리보기는 그대로) */
   document.documentElement.style.setProperty('--notels', lsClamp(sc.fontLs)+'px');
@@ -2976,7 +2973,7 @@ function render(){
     FOLDERS().forEach(f=>{
       const b=document.createElement('button');b.className='chip'+(ui.folder===f.id&&!ui.nofolder&&!ui.trash?' on':'');
       const cnt=VLT.notes.filter(n=>!n.deleted&&n.folder===f.id).length;
-      b.textContent=`${f.name} (${cnt})`;b.onclick=()=>{ui.folder=f.id;ui.nofolder=false;ui.trash=false;exitSel();openFolderMgr();render()};
+      b.textContent=`${f.name} (${cnt})`;b.onclick=()=>{ui.folder=f.id;ui.nofolder=false;ui.trash=false;exitSel();render()};
       b.oncontextmenu=e=>{e.preventDefault();openFolderMgr()};
       bar.append(b);
     });
@@ -3008,7 +3005,7 @@ function render(){
       const b=document.createElement('button');b.className='chip'+(ui.folder===f.id&&!ui.nofolder&&!ui.trash&&!searching?' on':'');
       const cnt=S.notes.filter(n=>!n.deleted&&n.folder===f.id).length;
       b.textContent=(favIds.includes(f.id)?'★ ':'')+`${f.name} (${cnt})`;
-      b.onclick=()=>{ui.folder=f.id;ui.nofolder=false;ui.trash=false;exitSel();openFolderMgr();render()};
+      b.onclick=()=>{ui.folder=f.id;ui.nofolder=false;ui.trash=false;exitSel();render()};
       b.oncontextmenu=e=>{e.preventDefault();openFolderMgr()};
       bar.append(b);
     });
@@ -3409,11 +3406,11 @@ function fireReminder(id){
 
 /* ═══════════════ 에디터 (전체화면 · 보기/편집 모드) ═══════════════ */
 let edSaveTimer=null;
-function newNote(type){
+function newNote(type,folderOverride){
   const coll=NOTES();
   const minSi=coll.length?Math.min(...coll.map(n=>n.sortIndex??0)):0;
   const dc=curSettings().defColor;   /* (요구5) 기본 컬러 설정값(0~4). 없으면 0(노랑) */
-  const n={id:uid(),folder:(ui.nofolder?'':ui.folder),color:(dc==null?0:dc),type:type||'note',title:'',content:'',items:[],pinned:false,   /* (요청3) 보관 노트에서도 현재 폴더 유지 */
+  const n={id:uid(),folder:(folderOverride!==undefined?folderOverride:(ui.nofolder?'':ui.folder)),color:(dc==null?0:dc),type:type||'note',title:'',content:'',items:[],pinned:false,
     remindAt:0,sortIndex:minSi-1,createdAt:Date.now(),updatedAt:Date.now(),deleted:false,dirty:true};
   coll.unshift(n);persistActive();return n;
 }
@@ -4436,10 +4433,11 @@ async function moveNoteFolder(n){
   toast(tr('Moved to folder','toast_folder_moved'));
 }
 async function moveToVault(n){
-  if(!await dlg(L('이 노트를 보관 노트로 옮길까요?\n(서버 동기화에서 제외되고 이 기기에만 저장됩니다)','Move this note to Vault?\n(Stored on this device only, not synced)'),{okText:L('이동','Move')}))return;
-  VLT.notes.unshift({id:uid(),folder:'',color:n.color||0,type:n.type,title:n.title,content:n.content,items:n.items||[],
-    createdAt:n.createdAt,updatedAt:Date.now(),deleted:false});   /* (요구1) 폴더는 일반/보관 별개 → 빈 값으로 이동 */
-  VLT.persist();
+  if(!VLT.key||!hasVaultPin()){toast(L('먼저 금고를 열고 비밀번호를 확인하세요.','Open and unlock the vault first.'));return;}
+  if(!await dlg(L('이 노트를 보관 노트로 옮길까요?\n(암호화되어 이 기기에만 저장되며 서버 동기화에서 제외됩니다)','Move this note to Vault?\n(It is encrypted on this device and excluded from server sync.)'),{okText:L('이동','Move')}))return;
+  const copy={id:uid(),folder:'',color:n.color||0,type:n.type,title:n.title,content:n.content,items:n.items||[],createdAt:n.createdAt,updatedAt:Date.now(),deleted:false};
+  VLT.notes.unshift(copy);
+  if(!(await VLT.persist())){VLT.notes=VLT.notes.filter(x=>x.id!==copy.id);toast(L('금고 저장에 실패해 이동하지 않았습니다.','Vault save failed; the note was not moved.'));return;}
   S.notes=S.notes.filter(x=>x.id!==n.id);SYNC.hardDelete(n.id);
   ui.editingId=null;touch();ovCloseUi($('#edOverlay'));render();toast(tr('Moved to vault','toast_tovault'));
 }
@@ -4521,187 +4519,125 @@ function addItemAt(i){const n=cur();n.items.splice(i,0,{text:'',done:false});sch
 $('#addItemBtn').onclick=()=>{const n=cur();n.items.push({text:'',done:false});schedSave();renderItems(n);
   const inputs=$$('#edItems .itxt');inputs[inputs.length-1].focus()};
 
-/* ═══════════════ 폴더 ═══════════════
-   (요구1) 일반 노트 폴더와 보관 노트 폴더는 완전히 별개다.
-   일반 화면에서 열면 S.folders만, 보관 화면에서 열면 VLT.folders만 관리한다. */
-/* ══ (v7.0 요청2·3) 폴더 화면 헬퍼 ══
-   [설계] '한 줄 개수'는 기존 설정 box(노트박스)를 그대로 쓴다 — 저장 구조에 새 값을 넣지 않아
-          백업·동기화·롤백이 전부 그대로 동작하고, 설정 화면의 선택과도 자동 동기화된다.
-          1~7만 허용하도록 여기서 한 번 클램프한다. */
-function fColsNum(sc){let n=parseInt((sc&&sc.box)||'2',10);if(!(n>=1))n=2;if(n>7)n=7;return n}
+/* ═══════════════ 폴더 v7.1 — 목록 화면 → 상세 화면 ═══════════════ */
+const FOLDER_COLS=['1','2','3','4','5','6','7'];
+const folderUI={page:'list',id:'',actions:false};
+function fColsNum(sc){const v=String((sc&&sc.fldCols)||'2');return FOLDER_COLS.includes(v)?parseInt(v,10):2}
 function fNoteHit(n,q){
   if(!q)return true;
   return (n.title||'').toLowerCase().includes(q)||plain(n.content||'').toLowerCase().includes(q)
     ||(n.items||[]).some(i=>(i.text||'').toLowerCase().includes(q));
 }
-function buildFBar(){
+function setFolderPage(page){
+  folderUI.page=page;
+  $('#folderListPage').classList.toggle('hidden',page!=='list');
+  $('#folderDetailPage').classList.toggle('hidden',page!=='detail');
+}
+function folderName(f){return f&&f.name?f.name:L('(이름 없는 폴더)','(untitled folder)')}
+function currentFolder(){return FOLDERS().find(f=>f.id===folderUI.id)||null}
+function persistFolderState(){
+  if(ui.vault){VLT.persist().catch(()=>{});}else{save();syncSoon();}
+}
+function renderFolderColumns(){
+  const label=$('#fColsLabel');if(label)label.textContent=L('한 줄','Columns');
   const box=$('#fCols');if(!box)return;
-  if(!box._b){box._b=true;box.innerHTML='';
-    for(let i=1;i<=7;i++){const b=document.createElement('button');b.textContent=i;
-      b.title=L('한 줄에 '+i+'개',i+' per row');
-      b.onclick=()=>{const sc=curSettings();sc.box=String(i);
-        if(ui.vault)VLT.persistSettings();else save();
-        applyPrefs();openFolderMgr();render();};
-      box.append(b);}
-    const si=$('#fSearch');if(si&&!si._b){si._b=true;
-      si.oninput=()=>{openFolderMgr()};
-      si.onkeydown=e=>{if(e.key==='Escape'){si.value='';openFolderMgr()}};}
-    const ax=$('#fAxisBtn');if(ax&&!ax._b){ax._b=true;
-      ax.onclick=()=>{const sc=curSettings();sc.fldAxis=(document.documentElement.dataset.faxis==='row')?'col':'row';
-        if(ui.vault)VLT.persistSettings();else save();
-        applyPrefs();openFolderMgr();toast(sc.fldAxis==='row'?L('폴더를 가로로 놨습니다','Folders side by side'):L('폴더를 세로로 놨습니다','Folders in a list'));};}
-    const tr2=$('#fTrashBtn');if(tr2&&!tr2._b){tr2._b=true;
-      tr2.onclick=()=>{ui.trash=true;ui.folder='';ui.nofolder=false;exitSel();
-        ovCloseUi($('#folderOverlay'));render();};}
-  }
-  const on=String(fColsNum(curSettings()));
-  [...box.children].forEach(b=>b.classList.toggle('on',b.textContent===on));
+  if(!box._built){box._built=true;box.innerHTML='';FOLDER_COLS.forEach(v=>{
+    const b=document.createElement('button');b.type='button';b.textContent=v;
+    b.title=L('한 줄에 '+v+'개',v+' per row');
+    b.onclick=()=>{const sc=curSettings();sc.fldCols=v;persistFolderState();renderFolderDetail();};box.append(b);
+  });}
+  const active=String(fColsNum(curSettings()));
+  [...box.children].forEach(b=>b.classList.toggle('on',b.textContent===active));
 }
-/* 폴더를 누르면(같은 화면 유지) 아래에 그 폴더의 노트가 나온다. 검색어가 있으면 모든 폴더의 노트를 찾는다. */
-function renderFolderNotes(){
-  const box=$('#folderNotes'),ov=$('#folderOverlay');if(!box||!ov)return;
-  const q=(($('#fSearch')&&$('#fSearch').value)||'').trim().toLowerCase();
-  const pool=NOTES();
-  let arr=null,head='';
-  if(q){
-    arr=pool.filter(n=>!n.deleted&&fNoteHit(n,q)).slice(0,40);
-    head=L('검색 ','Search ')+q+'  ·  '+arr.length+L('개','');
-  }else if(ui.folder&&!ui.trash){
-    const f=FOLDERS().find(x=>x.id===ui.folder);
-    if(f){arr=pool.filter(n=>!n.deleted&&n.folder===f.id);head=f.name;}
-  }
-  if(!arr||!arr.length){box.style.display='none';ov.classList.remove('withnotes');
-    if(arr&&!arr.length){box.style.display='block';box.innerHTML='';
-      const e2=document.createElement('div');e2.className='fempty';
-      e2.textContent=q?L('검색 결과가 없습니다.','Nothing found.')
-                      :L('이 폴더에는 아직 노트가 없습니다.\n아래 ＋ 노트 를 누르면 이 폴더에 바로 생깁니다.','No notes in this folder yet. Tap + Note to add one.');
-      const g=document.createElement('div');g.id='fnGrid';g.append(e2);box.append(g);}
-    return;}
-  box.style.display='block';ov.classList.add('withnotes');box.innerHTML='';
-  const h=document.createElement('div');h.className='fnh';
-  const nm=document.createElement('span');nm.className='fnm';nm.textContent=head;h.append(nm);
-  if(!q){
-    const op=document.createElement('button');op.className='btn';op.textContent=L('전체 화면으로','Open');
-    op.onclick=()=>{ovCloseUi(ov);render()};h.append(op);
-    const add=document.createElement('button');add.className='btn primary';add.textContent=L('＋ 노트','＋ Note');
-    add.onclick=()=>{const n=newNote('note');openEditor(n.id)};h.append(add);
-  }
-  const g=document.createElement('div');g.id='fnGrid';
-  const _nc=fColsNum(curSettings());
-  document.body.classList.toggle('cols-tight',_nc>=5);
-  g.style.setProperty('--fcols',String(_nc));
-  g.style.gridTemplateColumns='repeat('+_nc+',minmax(0,1fr))';
-  const dark=isDark(),PAL=dark?COLORS_D:COLORS,HEAD=dark?HEADS_D:HEADS_L;
-  arr.forEach(n=>{
-    const d=document.createElement('div');d.className='fnote';
-    d.style.setProperty('--nc',PAL[n.color||0]||'');
-    const t=document.createElement('div');t.className='t';
-    t.textContent=(n.type==='check'?'☑ ':'')+(n.pinned?'📌 ':'')+(n.title||L('(제목 없음)','(untitled)'));
-    const b=document.createElement('div');b.className='b';
-    b.textContent=(n.type==='check')
-      ? (n.items||[]).map(i=>(i.done?'✓ ':'· ')+i.text).join('  ')
-      : plain(n.content||'').replace(/\s+/g,' ').slice(0,120);
-    const m=document.createElement('div');m.className='m';
-    const dot=document.createElement('i');dot.className='cdot';dot.style.background=HEAD[n.color||0]||'';m.append(dot);
-    const dt=document.createElement('span');
-    dt.textContent=new Date(n.updatedAt||Date.now()).toLocaleDateString();m.append(dt);
-    const cn=(n.items||[]).length?document.createElement('span'):null;
-    if(cn){cn.textContent=' '+(n.items.filter(i=>i.done).length)+'/'+(n.items).length;m.append(cn);}
-    d.append(t,b,m);
-    d.onclick=ev=>{if(ev.target.closest('button'))return;ovCloseUi(ov);openEditor(n.id)};
-    g.append(d);
-  });
-  box.append(h,g);
-}
-function openFolderMgr(){
+function renderFolderList(){
+  setFolderPage('list');folderUI.actions=false;
+  const title=$('#folderTitle');if(title)title.textContent=ui.vault?L('🔐 보관 폴더','🔐 Vault folders'):L('📁 폴더','📁 Folders');
+  const search=$('#fSearch');if(search)search.placeholder=L('폴더 이름 또는 안의 노트 검색','Search folders or notes');
+  const q=((search&&search.value)||'').trim().toLowerCase();
   const list=$('#folderList');list.innerHTML='';
-  buildFBar();                                                    /* (v7.0) 툴바 */
-  const fq=($('#fSearch')&&$('#fSearch').value||'').trim().toLowerCase();   /* (v7.0) 이 화면 전용 검색 */
-  const title=$('#folderMgrTitle');
-  if(title)title.textContent=ui.vault?tr('🔐 Vault folders','vault_folder_mgr'):tr('Folders','folder_mgr');
-  /* (v6.8 STEP2) 즐겨찾기 폴더를 목록 위쪽으로 — 보여주는 순서만 바꾸고 폴더 데이터는 건드리지 않는다 */
-  const favL=[S.settings.favA,S.settings.favB];
-  let coll=ui.vault?FOLDERS():FOLDERS().slice().sort((a,b)=>(favL.includes(b.id)?1:0)-(favL.includes(a.id)?1:0));   /* (v7.0) 검색 필터로 다시 할당하므로 let */
-  if(fq)coll=coll.filter(f=>f.name.toLowerCase().includes(fq)||(ui.vault?VLT.notes:(S.notes||[])).some(n=>!n.deleted&&n.folder===f.id&&fNoteHit(n,fq)));   /* (v7.0) 검색: 폴더명 또는 그 안의 노트 */
-  if(!coll.length)list.innerHTML='<div class="fempty">'+L(fq?'조건에 맞는 폴더가 없습니다.\n검색어를 지우면 전체 폴더가 돌아옵니다.':'아직 폴더가 없습니다.\n아래 입력창에 이름을 넣고 추가를 누르면 됩니다.',
-      fq?'No folder matches.\nClear the search to see all folders.':'No folders yet.\nType a name below and tap Add.')+'</div>';
   const favIds=[S.settings.favA,S.settings.favB];
+  let coll=FOLDERS().slice();
+  if(!ui.vault)coll.sort((a,b)=>(favIds.includes(b.id)?1:0)-(favIds.includes(a.id)?1:0));
+  if(q)coll=coll.filter(f=>f.name.toLowerCase().includes(q)||NOTES().some(n=>!n.deleted&&n.folder===f.id&&fNoteHit(n,q)));
+  if(!coll.length){const e=document.createElement('div');e.className='fempty';e.textContent=q?L('조건에 맞는 폴더가 없습니다.','No matching folders.'):L('아직 폴더가 없습니다. 아래에서 추가하세요.','No folders yet. Add one below.');list.append(e);return;}
   coll.forEach(f=>{
-    /* (v6.9 1) one folder = one big card: name + note count + star/rename/delete on the right */
-    const row=document.createElement('div');
-    row.className='fcard'+((!ui.vault&&ui.folder===f.id&&!ui.nofolder&&!ui.trash)?' on':'');
-    const main=document.createElement('div');main.className='fmain';
-    const nm=document.createElement('div');nm.className='fnav';nm.textContent=f.name;
-    /* (v6.8 STEP2) 폴더 이름을 누르면 그 폴더로 이동한다.
-       (v6.8.1) 그런데 이름 글자(약 124×26px)만 눌려서 행의 반 이상이 죽어 있었다.
-       → 핸들러를 '행 전체'로 옮긴다. 행 어디를 눌러도 이동하고,
-         ★·이름 변경·삭제 버튼과 입력창은 각각의 동작을 그대로 유지한다.
-       ★ 핸들러는 행 하나에만 둔다(이름 span에 두면 버블링되어 ovCloseUi·histPop이 두 번 돈다). */
-    const pool=ui.vault?VLT.notes:(S.notes||[]);
-    const cnt=pool.filter(n=>!n.deleted&&n.folder===f.id).length;
-    const favNow=!ui.vault&&favIds.includes(f.id);
-    const info=document.createElement('div');info.className='fcnt';
-    info.textContent=IS_KO?('노트 ' + cnt + '개' + (favNow?' ★ ':'')):(cnt + ' notes' + (favNow?' ★':''));
-    main.append(nm,info);
-    /* the whole card navigates; star/rename/delete/inputs keep their own action.
-       handler on the ROW only - putting it on the inner span bubbles twice through ovCloseUi/histPop (v6.8.1 lesson) */
-    row.onclick=(e)=>{
-      if(e.target.closest('button,input,select,textarea'))return;
-      /* (v7.0 요청2) 한 번 누르면 같은 화면 아래에 그 폴더의 노트가 뜨고,
-         같은 카드를 다시 누르면 그 폴더로 열린 채 화면이 닫힌다(v6.9 동작). */
-      const same=ui.folder===f.id&&!ui.nofolder&&!ui.trash;
-      ui.folder=f.id;ui.nofolder=false;ui.trash=false;exitSel();render();
-      if(same)ovCloseUi($('#folderOverlay'));else openFolderMgr();
-    };
-    const wrap=document.createElement('div');wrap.className='facts';
+    const row=document.createElement('div');row.className='frow';
+    const open=document.createElement('button');open.type='button';open.className='frowmain';
+    const copy=document.createElement('span');copy.className='frowcopy';
+    const name=document.createElement('span');name.className='frowname';name.textContent=folderName(f);
+    const count=NOTES().filter(n=>!n.deleted&&n.folder===f.id).length;
+    const meta=document.createElement('span');meta.className='frowmeta';meta.textContent=L('노트 ','notes ')+count;
+    const go=document.createElement('span');go.className='frowgo';go.textContent='›';
+    copy.append(name,meta);open.append(copy,go);open.onclick=()=>openFolderDetail(f.id);row.append(open);
     if(!ui.vault){
-      /* (v6.8 STEP2) ★ = 하단바에 고정할 즐겨찾기. 최대 2개까지만 되고, 3개째는 교체할지 물어본다 */
-      const st=S.settings, isFav=(st.favA===f.id||st.favB===f.id);
-      const star=document.createElement('button');star.className='btn star'+(isFav?' on':'');
-      star.textContent=isFav?'★':'☆';star.title=L('즐겨찾기','Favorite');star.style.marginRight='.3em';
-      star.onclick=async()=>{
-        if(st.favA===f.id)st.favA='';
-        else if(st.favB===f.id)st.favB='';
+      const star=document.createElement('button');star.type='button';const isFav=favIds.includes(f.id);
+      star.className='fstar'+(isFav?' on':'');star.textContent=isFav?'★':'☆';star.title=L('즐겨찾기','Favorite');
+      star.onclick=async()=>{const st=S.settings;
+        if(st.favA===f.id)st.favA='';else if(st.favB===f.id)st.favB='';
         else if(!st.favA||!S.folders.some(x=>x.id===st.favA))st.favA=f.id;
         else if(!st.favB||!S.folders.some(x=>x.id===st.favB))st.favB=f.id;
-        else{
-          const old=S.folders.find(x=>x.id===st.favA);
-          if(!await dlg(L(`즐겨찾기는 2개까지예요.\n'${old?old.name:''}' 대신 '${f.name}'을(를) 넣을까요?`,
-                          `You can pin only 2 favorites.\nReplace '${old?old.name:''}' with '${f.name}'?`),{okText:L('교체','Replace')}))return;
-          st.favA=st.favB;st.favB=f.id;
-        }
-        touch();openFolderMgr();render();
-      };
-      wrap.append(star);
+        else{const old=S.folders.find(x=>x.id===st.favA);if(!await dlg(L(`즐겨찾기는 2개까지예요.\n'${folderName(old)}' 대신 '${folderName(f)}'을(를) 넣을까요?`,`You can pin only 2 favorites. Replace '${folderName(old)}' with '${folderName(f)}'?`),{okText:L('교체','Replace')}))return;st.favA=st.favB;st.favB=f.id;}
+        save();render();renderFolderList();};row.append(star);
     }
-    const re=document.createElement('button');re.className='btn';re.textContent=L('이름 변경','Rename');re.style.marginRight='.3em';
-    re.onclick=async()=>{const v=await dlg(L('새 폴더 이름','New folder name'),{input:true,def:f.name,okText:L('변경','Rename')});
-      if(v){f.name=v;f._synced=false;touch();openFolderMgr();render();if(!ui.vault)syncSoon();else VLT.persist()}};
-    const del=document.createElement('button');del.className='btn danger';del.textContent=L('삭제','Delete');
-    del.onclick=async()=>{
-      if(!await dlg(L(`'${f.name}' 폴더를 삭제할까요?\n노트는 '전체'로 이동합니다.`,`Delete folder '${f.name}'?\nIts notes move to 'All'.`),{danger:true,okText:L('삭제','Delete')}))return;
-      NOTES().forEach(n=>{if(n.folder===f.id){n.folder='';n.dirty=true;n.updatedAt=Date.now()}});
-      if(ui.vault){const i=VLT.folders.indexOf(f);if(i>=0)VLT.folders.splice(i,1);VLT.persist();}
-      else{S.folders=S.folders.filter(x=>x!==f);SYNC.deleteFolder(f.id);}
-      /* (v6.8 STEP2) 지워진 폴더가 즐겨찾기였다면 하단바에 유령 칩이 남지 않게 함께 정리 */
-      if(S.settings.favA===f.id)S.settings.favA='';
-      if(S.settings.favB===f.id)S.settings.favB='';
-      if(ui.folder===f.id)ui.folder='';
-      touch();openFolderMgr();render();if(!ui.vault)syncSoon()};
-    wrap.append(re,del);row.append(main,wrap);list.append(row);
+    list.append(row);
   });
-  renderFolderNotes();                                            /* (v7.0) 폴더 안 노트 */
-  ovOpen($('#folderOverlay'));
+}
+function renderFolderDetail(){
+  const f=currentFolder();if(!f){renderFolderList();return;}
+  setFolderPage('detail');
+  const title=$('#folderDetailTitle');if(title)title.textContent=folderName(f);
+  const search=$('#fNoteSearch');if(search)search.placeholder=L('이 폴더에서 노트 검색','Search notes in this folder');
+  $('#folderActions').classList.toggle('hidden',!folderUI.actions);
+  const page=$('#folderDetailPage'),cols=fColsNum(curSettings());page.classList.toggle('tight',cols>=5);
+  renderFolderColumns();
+  const q=((search&&search.value)||'').trim().toLowerCase();
+  const arr=NOTES().filter(n=>!n.deleted&&n.folder===f.id&&fNoteHit(n,q));
+  const box=$('#folderNotes');box.innerHTML='';
+  if(!arr.length){const e=document.createElement('div');e.className='fempty';e.textContent=q?L('검색 결과가 없습니다.','Nothing found.'):L('이 폴더에는 아직 노트가 없습니다.','This folder has no notes yet.');box.append(e);return;}
+  const grid=document.createElement('div');grid.id='fnGrid';grid.style.setProperty('--fcols',String(cols));
+  const dark=isDark(),PAL=dark?COLORS_D:COLORS,HEAD=dark?HEADS_D:HEADS_L;
+  arr.forEach(n=>{
+    const card=document.createElement('div');card.className='fnote';card.style.setProperty('--nc',PAL[n.color||0]||'');
+    const t=document.createElement('div');t.className='t';t.textContent=(n.type==='check'?'☑ ':'')+(n.pinned?'📌 ':'')+(n.title||L('(제목 없음)','(untitled)'));
+    const b=document.createElement('div');b.className='b';b.textContent=n.type==='check'?(n.items||[]).map(i=>(i.done?'✓ ':'· ')+i.text).join('  '):plain(n.content||'').replace(/\s+/g,' ').slice(0,120);
+    const m=document.createElement('div');m.className='m';const dot=document.createElement('i');dot.className='cdot';dot.style.background=HEAD[n.color||0]||'';const dt=document.createElement('span');dt.textContent=new Date(n.updatedAt||Date.now()).toLocaleDateString();m.append(dot,dt);
+    card.append(t,b,m);card.onclick=()=>{ovCloseUi($('#folderOverlay'));openEditor(n.id)};grid.append(card);
+  });
+  box.append(grid);
+}
+function openFolderDetail(id){folderUI.id=id;folderUI.actions=false;renderFolderDetail();}
+function openFolderMgr(){
+  folderUI.id='';folderUI.actions=false;setFolderPage('list');
+  $('#fSearch').value='';$('#fNoteSearch').value='';renderFolderList();ovOpen($('#folderOverlay'));
+}
+function leaveFolderDetail(){folderUI.id='';folderUI.actions=false;renderFolderList();}
+async function renameCurrentFolder(){
+  const f=currentFolder();if(!f)return;
+  const v=await dlg(L('새 폴더 이름','New folder name'),{input:true,def:f.name,okText:L('변경','Rename')});
+  if(!v)return;f.name=v.slice(0,80);f._synced=false;persistFolderState();render();renderFolderDetail();
+}
+async function deleteCurrentFolder(){
+  const f=currentFolder();if(!f)return;
+  if(!await dlg(L(`'${folderName(f)}' 폴더를 삭제할까요?\n안의 노트는 '전체'로 이동합니다.`,`Delete folder '${folderName(f)}'? Its notes move to All.`),{danger:true,okText:L('삭제','Delete')}))return;
+  NOTES().forEach(n=>{if(n.folder===f.id){n.folder='';n.dirty=true;n.updatedAt=Date.now()}});
+  if(ui.vault){VLT.folders=VLT.folders.filter(x=>x.id!==f.id);VLT.persist().catch(()=>{});}
+  else{S.folders=S.folders.filter(x=>x.id!==f.id);if(S.settings.favA===f.id)S.settings.favA='';if(S.settings.favB===f.id)S.settings.favB='';save();SYNC.deleteFolder(f.id);syncSoon();}
+  if(ui.folder===f.id)ui.folder='';render();leaveFolderDetail();
 }
 $('#folderClose').onclick=()=>ovCloseUi($('#folderOverlay'));
-$('#addFolderBtn').onclick=()=>{
-  const v=$('#newFolderName').value.trim();if(!v)return;
-  if(ui.vault)VLT.folders.push({id:uid(),name:v,createdAt:Date.now()});
-  else S.folders.push({id:uid(),name:v,createdAt:Date.now(),_synced:false});
-  $('#newFolderName').value='';
-  touch();openFolderMgr();render();if(ui.vault)VLT.persist();else syncSoon();
-};
+$('#folderDetailClose').onclick=()=>ovCloseUi($('#folderOverlay'));
+$('#folderBack').onclick=leaveFolderDetail;
+$('#folderDetailMenu').onclick=()=>{folderUI.actions=!folderUI.actions;renderFolderDetail();};
+$('#folderRename').onclick=renameCurrentFolder;
+$('#folderDelete').onclick=deleteCurrentFolder;
+$('#fTrashBtn').onclick=()=>{ui.trash=true;ui.folder='';ui.nofolder=false;exitSel();ovCloseUi($('#folderOverlay'));render();};
+$('#fAddNote').onclick=()=>{const f=currentFolder();if(!f)return;const n=newNote('note',f.id);ovCloseUi($('#folderOverlay'));openEditor(n.id);};
+$('#addFolderBtn').onclick=()=>{const v=$('#newFolderName').value.trim();if(!v)return;
+  const f={id:uid(),name:v.slice(0,80),createdAt:Date.now(),_synced:false};if(ui.vault){VLT.folders.push(f);VLT.persist().catch(()=>{});}else{S.folders.push(f);save();syncSoon();}
+  $('#newFolderName').value='';render();renderFolderList();};
 $('#newFolderName').addEventListener('keydown',e=>{if(e.key==='Enter')$('#addFolderBtn').click()});
+$('#fSearch').addEventListener('input',renderFolderList);
+$('#fNoteSearch').addEventListener('input',renderFolderDetail);
 
 /* ═══════════════ Supabase 동기화 ═══════════════ */
 /* (요청2 진단) 초보가 겪는 흔한 Supabase 설정 문제를 에러 메시지에 바로 안내 */
@@ -5243,8 +5179,7 @@ function openSettings(){
   updateFontStepUI();   /* (요청7) 글자크기 스테퍼 + 샘플 */
   $('#stFontWeight').value=sc.fontWeight||'b';   /* (요구3) 본문 굵기 4단계 — 키 기본 'b'(보통), 드롭다운 선택 표시 정상화 (v5.1) */
   $('#stRule').value=sc.rule||'none';
-  $('#stVaultOpen').value=String(VLT.settings.unlockMinutes||0);
-  $('#stPinBtn').textContent=S.settings.pinHash?tr('Change / Reset','pin_change_btn'):tr('Set','pin_set_btn2');
+  $('#stPinBtn').textContent=hasVaultPin()?tr('Change / Reset','pin_change_btn'):tr('Set','pin_set_btn2');
   const langSel=$('#stLang'); if(langSel)langSel.value=S.settings.lang||'auto';   /* (v6) 언어(자동/영어/한국어) */
   buildDefColor();
   ovOpen($('#setOverlay'));
@@ -5280,7 +5215,6 @@ function applySettingsFromUI(){
   sc.fontWeight=$('#stFontWeight').value||'b';   /* (요구3) 본문 굵기 — 드롭다운 글자 키 그대로 저장 (v5.1) */
   sc.box=$('#stBox').value;
   sc.rule=$('#stRule').value;                          // (요청3) 줄 없음 / 줄쳐진 노트
-  VLT.settings.unlockMinutes=parseInt($('#stVaultOpen').value||'0',10);   // (요청7)
   if(ui.vault)VLT.persistSettings(); else save();
   applyPrefs();render();applyViewBtn();updateFontStepUI();
 }
@@ -5293,7 +5227,7 @@ $('#stLang').addEventListener('change',()=>{
   location.reload();
 });
 /* 미리보기: 선택만 해도 즉시 반영(피드백) */
-['#stTheme','#stView','#stSort','#stFontWeight','#stBox','#stRule','#stVaultOpen'].forEach(sel=>$(sel).addEventListener('change',applySettingsFromUI));   /* (v5.3) stFont는 select→스테퍼로 대체 */
+['#stTheme','#stView','#stSort','#stFontWeight','#stBox','#stRule'].forEach(sel=>$(sel).addEventListener('change',applySettingsFromUI));
 /* (요청7) 글자크기 스테퍼: − / ＋ 1pt씩, 10~25, 미리보기 샘플 동시 갱신 */
 function updateFontStepUI(){
   const sc=curSettings();
@@ -5331,49 +5265,36 @@ $('#setClose').onclick=()=>{ applySettingsFromUI(); ovCloseUi($('#setOverlay'));
 /* 보관 노트 비밀번호 */
 $('#stPinBtn').onclick=()=>{$('#pinNew').value='';$('#pinNew2').value='';ovOpen($('#pinOverlay'))};
 $('#pinClose').onclick=()=>ovCloseUi($('#pinOverlay'));
-/* (v6.1) 비밀번호 설정 = PBKDF2 해시 + 랜덤 솔트 저장. 보관 노트는 그 즉시 AES 암호화된다. */
+/* ══════════ v7.1 금고 PIN 변경 — 암호문 envelope와 원자적으로 연결 ══════════ */
+function hasVaultPin(){return !!(VLT&&VLT.auth&&VLT.auth.salt&&VLT.auth.hash);}
 async function setVaultPin(pin,silent){
-  const salt=randB64(16);
-  const h=await pinHash(pin,salt);
-  S.settings.pinSalt=salt; S.settings.pinHash=h; save();
-  /* 이미 열려 있던(또는 평문이던) 보관 노트를 새 키로 다시 암호화 */
-  try{ VLT.key=await pinKey(pin,salt); VLT.persist(); }catch(e){}
+  if(typeof pin!=='string'||pin.length<12)throw new Error('vault password must be at least 12 characters');
+  const previous={auth:VLT.auth,key:VLT.key}, hadLegacyMeta=VLT.legacyMeta;
+  const salt=randB64(16), hash=await pinHash(pin,salt), key=await pinKey(pin,salt);
+  VLT.auth={v:1,kdf:'PBKDF2-SHA256',iter:PBKDF2_ITER,salt,hash};
+  VLT.key=key;
+  const saved=await VLT.persist();
+  if(!saved){VLT.auth=previous.auth;VLT.key=previous.key;throw new Error('vault write failed');}
+  /* v7.0 이하의 별도 verifier/metadata는 성공 저장 뒤에만 제거한다. */
+  if(S.settings.pinHash||S.settings.pinSalt){S.settings.pinHash=null;S.settings.pinSalt=null;save();}
+  if(hadLegacyMeta){try{STORE.removeItem('sk.vault.folders');STORE.removeItem('sk.vault.settings');}catch(_){} VLT.legacyMeta=false;}
   if(!silent)toast(L('보관 노트 비밀번호가 설정되었습니다','Vault password set'));
 }
 $('#pinSave').onclick=async()=>{
   const a=$('#pinNew').value,b=$('#pinNew2').value;
-  if(a.length<4){toast(L('4자 이상 입력하세요','Enter at least 4 characters'));return}
-  if(a!==b){toast(L('두 값이 다릅니다','The two values differ'));return}   /* (v6.1) 달라도 저장되던 버그 수정 */
-  /* 비밀번호를 바꾸는 경우: 기존 암호문을 먼저 풀어둬야 내용을 잃지 않는다 */
-  if(S.settings.pinHash && VLT.encrypted && !VLT.key){
-    const old=await dlg(L('현재 비밀번호를 입력하세요 (내용을 옮기기 위해 필요합니다)','Enter your current password (needed to move the contents)'),{input:true,password:true,okText:L('확인','OK')});
+  if(a.length<12){toast(L('금고 비밀번호는 12자 이상으로 설정하세요','Use a vault password of at least 12 characters'));return}
+  if(a!==b){toast(L('두 값이 다릅니다','The two values differ'));return}
+  /* 기존 암호문은 이전 비밀번호로 먼저 풀어야 새 키로 안전하게 다시 암호화할 수 있다. */
+  if(hasVaultPin()&&VLT.encrypted&&!VLT.key){
+    const old=await dlg(L('현재 비밀번호를 입력하세요 (내용을 새 키로 옮기기 위해 필요합니다)','Enter the current password to re-encrypt the vault'),{input:true,password:true,okText:L('확인','OK')});
     if(old===null||old===undefined)return;
-    const okOld=S.settings.pinSalt? eqConst(await pinHash(old,S.settings.pinSalt),S.settings.pinHash)
-                                  : eqConst(await sha256(old),S.settings.pinHash);
+    const okOld=eqConst(await pinHash(old,VLT.auth.salt),VLT.auth.hash);
     if(!okOld){toast(L('비밀번호가 틀렸습니다','Wrong password'));return}
-    const k=await pinKey(old,S.settings.pinSalt||'');
-    if(S.settings.pinSalt && !(await VLT.decryptInto(k))){toast(L('내용을 열 수 없습니다','Could not decrypt'));return}
+    const k=await pinKey(old,VLT.auth.salt);
+    if(!(await VLT.decryptInto(k))){toast(L('내용을 열 수 없습니다. 금고 데이터는 바꾸지 않았습니다.','Could not decrypt; the vault was not changed.'));return}
   }
-  await setVaultPin(a);
-  ovCloseUi($('#pinOverlay'));openSettings();
-};
-$('#pinRemove').onclick=async()=>{
-  if(!S.settings.pinHash){toast(L('설정된 비밀번호가 없습니다','No password is set yet'));return}
-  const v=await dlg(L('현재 비밀번호를 입력하세요 (해제 확인용)','Enter the current password to unlock'),{input:true,password:true,okText:L('확인','OK')});
-  if(v===null||v===undefined)return;
-  const ok=S.settings.pinSalt? eqConst(await pinHash(v,S.settings.pinSalt),S.settings.pinHash)
-                             : eqConst(await sha256(v),S.settings.pinHash);
-  if(!ok){toast(L('비밀번호가 틀렸습니다','Wrong password'));return}
-  /* 비밀번호를 없애면 암호화도 풀어야 다음에 읽을 수 있다 */
-  if(S.settings.pinSalt&&VLT.encrypted&&!VLT.key){
-    const k=await pinKey(v,S.settings.pinSalt);
-    await VLT.decryptInto(k);
-  }
-  VLT.key=null; VLT.encrypted=false;
-  try{ STORE.setItem('sk.vault',JSON.stringify(VLT.notes)); }catch(e){}
-  S.settings.pinHash=null; S.settings.pinSalt=null; save();
-  ovCloseUi($('#pinOverlay'));openSettings();
-  toast(L('비밀번호가 제거되었습니다 (보관 노트 암호화도 해제됨)','Password removed (vault is no longer encrypted)'));
+  try{await setVaultPin(a);ovCloseUi($('#pinOverlay'));openSettings();}
+  catch(_){toast(L('금고를 안전하게 저장하지 못했습니다. 비밀번호는 변경하지 않았습니다.','Vault could not be safely saved; the password was not changed.'));}
 };
 
 $('#stEmptyTrash').onclick=async()=>{
@@ -5387,12 +5308,31 @@ $('#stEmptyTrash').onclick=async()=>{
 };
 /* ───────── (요구) 백업/복구: 이 기기 백업 목록 + 외부(Google Drive 등) Export/Import ───────── */
 let bkDetail=-1; const bkSel=new Set();
+function vaultSnapshotForBackup(){
+  if(!VLT.encrypted||!VLT._blob||VLT.format<2||!VLT.auth)return null;
+  /* JSON round-trip ensures a detached ciphertext-only snapshot. */
+  return {fmt:2,blob:JSON.parse(JSON.stringify(VLT._blob))};
+}
 function buildBackup(){
-  return {app:'sk-note',v:4,exportedAt:new Date().toISOString(),
+  return {app:'sk-note',v:5,exportedAt:new Date().toISOString(),
     notes:S.notes,
     folders:S.folders.map(f=>({id:f.id,name:f.name,createdAt:f.createdAt})),
-    vaultNotes:VLT.notes||[],
-    vaultFolders:(VLT.folders||[]).map(f=>({id:f.id,name:f.name,createdAt:f.createdAt}))};
+    vault:vaultSnapshotForBackup()};
+}
+function validVaultSnapshot(v){
+  const b=v&&v.blob,a=b&&b.auth;
+  return !!(b&&b.__enc===1&&Number(b.fmt)>=2&&typeof b.iv==='string'&&typeof b.ct==='string'&&a&&typeof a.salt==='string'&&typeof a.hash==='string');
+}
+/* v7.0 및 이전 자동 백업에는 vaultNotes 평문이 있을 수 있다.
+   원문 금고 내용은 잠긴 상태에서 안전하게 재암호화할 수 없으므로, 앱 내 오래된 백업에서는
+   그 부분만 즉시 삭제한다. 일반 노트 백업은 보존한다. 이미 내려받은 파일은 앱이 회수할 수 없다. */
+function scrubLegacyVaultBackups(){
+  const list=localBackups();let changed=0;
+  list.forEach(entry=>{const d=entry&&entry.data;if(!d)return;
+    if(Array.isArray(d.vaultNotes)||Array.isArray(d.vaultFolders)){delete d.vaultNotes;delete d.vaultFolders;changed++;}
+  });
+  if(changed){try{STORE.setItem('sk.backups',JSON.stringify(list));}catch(_){}}
+  return changed;
 }
 function backupName(){ const d=new Date(); const p=x=>String(x).padStart(2,'0');
   return `sknote-backup-${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}.json`; }
@@ -5411,9 +5351,9 @@ function saveLocalBackup(data){
 }
 /* 백업 데이터를 실제 노트에 반영(병합) */
 /* 백업 데이터를 실제 노트에 반영(병합). onlyIds를 주면 그 노트만 반영(부분 복구). */
-function applyBackup(d, onlyIds){
-  if(!d||!d.notes)throw 0;
-  let added=0,updated=0,vadded=0;
+async function applyBackup(d, onlyIds){
+  if(!d||!Array.isArray(d.notes))throw new Error('not a backup');
+  let added=0,updated=0,vadded=0,vskip=false;
   const want=id=>!onlyIds||onlyIds.includes(id);
   d.notes.forEach(sn=>{
     if(!want(sn.id))return;
@@ -5422,31 +5362,38 @@ function applyBackup(d, onlyIds){
     if(!local){S.notes.push(Object.assign({},sn,{dirty:true}));added++}
     else if((sn.updatedAt||0)>local.updatedAt){Object.assign(local,sn,{dirty:true});updated++}
   });
-  // 폴더는 '전체 복구'일 때만 동기화 (부분 복구 때는 건드리지 않음)
   if(!onlyIds)(d.folders||[]).forEach(sf=>{const lf=S.folders.find(f=>f.id===sf.id);
-    if(lf)lf.name=sf.name; else S.folders.push({id:sf.id,name:sf.name,createdAt:sf.createdAt,_synced:false})});
-  /* (v6.8.1) 금고가 잠긴 상태에서의 보관 노트 복구를 막는다.
-     [이유] 잠기면 VLT.notes=[] 이다. 이때 vaultNotes가 빈 백업으로 '모두 복구'하면
-            VLT.persist()가 sk.vault를 "[]"(평문)으로 덮어써서 암호문째 금고가 사라졌다.
-            반대로 잠긴 상태로 백업의 금고 노트를 받아쓰면 평문 저장이라 암호화가 풀린다.
-     [처리] 열쇠 없이(잠금) 복구하고자 할 때 금고 부분만 건너뛰고 사용자에게 알린다.
-            일반 노트 복구는 평소대로 전부 동작한다. */
-  const vaultHasContent=Array.isArray(d.vaultNotes)&&d.vaultNotes.length>0;   /* 안내문은 실제로 건너뛴 내용이 있을 때만 */
-  const vaultLockedButProtected=(VLT.encrypted && !VLT.key);
-  if(Array.isArray(d.vaultNotes)&&!vaultLockedButProtected){
-    (d.vaultNotes||[]).forEach(vn=>{
-      if(!want(vn.id))return;
-      const local=VLT.notes.find(n=>n.id===vn.id);
-      if(!local){VLT.notes.push(vn);vadded++}
-      else if((vn.updatedAt||0)>local.updatedAt){Object.assign(local,vn);vadded++}
-    });
-    if(!onlyIds)(d.vaultFolders||[]).forEach(vf=>{if(!VLT.folders.find(f=>f.id===vf.id))VLT.folders.push(vf)});
-    VLT.persist();
+    if(lf)lf.name=sf.name;else S.folders.push({id:sf.id,name:sf.name,createdAt:sf.createdAt,_synced:false})});
+  /* Legacy v4 files may carry a plaintext vault. Never write it while locked. */
+  if(Array.isArray(d.vaultNotes)&&d.vaultNotes.length){
+    if(!VLT.key){vskip=true;}
+    else{
+      d.vaultNotes.forEach(vn=>{if(!want(vn.id))return;const local=VLT.notes.find(n=>n.id===vn.id);
+        if(!local){VLT.notes.push(vn);vadded++}else if((vn.updatedAt||0)>local.updatedAt){Object.assign(local,vn);vadded++}});
+      if(!onlyIds)(d.vaultFolders||[]).forEach(vf=>{if(!VLT.folders.find(f=>f.id===vf.id))VLT.folders.push(vf)});
+      if(!(await VLT.persist()))throw new Error('vault save failed');
+    }
   }
-  save();touch();render();syncSoon();
-  /* vskip: 잠겨 있어서 보관 노트를 건너뛴 여부 — 호출 쪽의 결과 안내문에 붙인다
-     (여기서 toast() 를 따로 띄우면 직 후의 '복구 완료' 토스트에 덮여 안 보인다) */
-  return {added,updated,vadded,vskip:(vaultLockedButProtected&&vaultHasContent)};
+  save();render();syncSoon();
+  return {added,updated,vadded,vskip};
+}
+async function restoreVaultSnapshot(v){
+  if(!validVaultSnapshot(v)){toast(L('암호화된 금고 백업 형식이 아닙니다','This is not a valid encrypted vault snapshot'));return false;}
+  /* Finish queued ciphertext writes before replacing the one local envelope. */
+  await VLT.flush();
+  const ok=await dlg(L('이 암호화된 금고 스냅샷으로 현재 금고를 교체할까요?\n현재 금고 내용은 이 작업으로 복구되지 않습니다. 백업을 먼저 보관하세요.',
+                       'Replace the current vault with this encrypted snapshot? Current vault content will not be retained. Keep a backup first.'),{danger:true,okText:L('금고 교체','Replace vault')});
+  if(!ok)return false;
+  try{
+    /* Remove any rendered/decrypted old vault state before the ciphertext replacement. */
+    if(ui.vault)VLT.leave();
+    STORE.setItem('sk.vault',JSON.stringify(v.blob));
+    STORE.removeItem('sk.vault.folders');STORE.removeItem('sk.vault.settings');STORE.removeItem('sk.vault.rate');
+    S.settings.pinHash=null;S.settings.pinSalt=null;save();
+    VLT.load();render();
+    toast(L('암호화된 금고를 복구했습니다. 이 백업의 금고 비밀번호로 열어 주세요.','Encrypted vault restored. Open it with this backup’s vault password.'));
+    return true;
+  }catch(_){toast(L('금고 스냅샷을 저장하지 못했습니다','Could not save the vault snapshot'));return false;}
 }
 /* ── v6 자동 백업(스냅샷): 저장/닫기/백그라운드 전환 시 이전 상태를 이 기기에 자동 보관 ── */
 let autoSnapTimer=null;
@@ -5466,16 +5413,14 @@ function scheduleAutoSnap(){ clearTimeout(autoSnapTimer); autoSnapTimer=setTimeo
 /* 노트가 실제로 저장될 때마다 자동 백업 스케줄 (save/VLT.persist 끝에서 호출) */
 
 /* 💾 백업하기: 이 기기 목록에 저장 + 파일로도 받기 */
-$('#stExport').onclick=()=>{
-  /* (v7.0 패치G / S-1b) 잠긴 상태의 백업에는 금고가 들어가지 않는다 — 그 점을 숨기지 않고 알린다 */
-  this._vaultSkipped = !!(VLT.encrypted && !VLT.key);
+$('#stExport').onclick=async()=>{
+  await VLT.flush();
   const payload=buildBackup();
-  saveLocalBackup(payload);                                   // (요구) 이 기기 백업 목록에 저장
-  downloadBackup(payload);                                     // 파일로도 저장(폴백)
-  toast(this._vaultSkipped
-        ? L('백업 저장: 일반 노트만 · 🔐 금골 잠겨서 포함 안 함 (금고를 연 뒤 백업하면 함께 들어갑니다)',
-            'Backup saved (normal only — the vault is locked, so it was skipped)')
-        : tr('Backup saved (normal + vault notes included)','toast_backup'));
+  saveLocalBackup(payload);
+  downloadBackup(payload);
+  toast(payload.vault
+        ? L('백업 저장: 일반 노트 + 🔐 암호화된 금고 스냅샷','Backup saved: normal notes + encrypted vault snapshot')
+        : L('백업 저장: 일반 노트만 (금고 스냅샷 없음)','Backup saved: normal notes only (no vault snapshot)'));
 };
 function downloadBackup(payload){
   const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
@@ -5504,8 +5449,8 @@ function openBkList(){
   bks.forEach((b,i)=>{
     const row=document.createElement('div');row.className='setrow';
     const nm=document.createElement('span');
-    const nCnt=(b.data.notes||[]).length, vCnt=(b.data.vaultNotes||[]).length;
-    nm.innerHTML=`<b>${fmtTime(b.at)}</b><br><span class="stat">${L('노트','notes')} ${nCnt}${vCnt?` · 🔐 ${vCnt}`:''}</span>`;
+    const nCnt=(b.data.notes||[]).length, hasVault=validVaultSnapshot(b.data.vault);
+    nm.innerHTML=`<b>${fmtTime(b.at)}</b><br><span class="stat">${L('노트','notes')} ${nCnt}${hasVault?' · 🔐 encrypted':''}</span>`;
     const btn=document.createElement('button');btn.className='btn primary';
     btn.textContent=L('보기 / 복구','View / Restore');
     btn.onclick=()=>{ bkDetail=i; bkSel.clear(); renderBkDetail(); };
@@ -5521,8 +5466,9 @@ function renderBkDetail(){
   const arr=localBackups(); if(bkDetail<0||!arr[bkDetail]){openBkList();return;}
   const b=arr[bkDetail], d=b.data;
   const norm=(d.notes||[]).map(n=>({id:n.id,title:n.title||'',type:n.type,preview:n.type==='check'?(n.items||[]).slice(0,3).map(i=>i.text).join(' · '):plain(n.content).slice(0,90)}));
-  const vlt=(d.vaultNotes||[]).map(n=>({id:n.id,vault:true,title:n.title||'',type:n.type,preview:n.type==='check'?(n.items||[]).slice(0,3).map(i=>i.text).join(' · '):plain(n.content).slice(0,90)}));
-  const all=[...norm,...vlt];
+  /* Encrypted v5 vault data is deliberately not expanded into title/body previews. */
+  const all=[...norm];
+  const vaultSnap=validVaultSnapshot(d.vault);
   /* 상단 도구줄 */
   const top=document.createElement('div');top.className='btnrow';top.style.marginBottom='.3em';
   const back=document.createElement('button');back.className='btn';back.textContent=L('← 목록','← List');
@@ -5537,7 +5483,11 @@ function renderBkDetail(){
   const hint=document.createElement('div');hint.className='hint';hint.style.marginBottom='.4em';
   hint.innerHTML=L('복구할 노트를 체크한 뒤 아래 버튼을 누르세요. 체크 안 한 노트·기존 내용은 그대로 둡니다.','Check the notes to restore, then use the buttons below. Unchecked notes and current content are kept as-is.');
   list.append(hint);
-  if(!all.length){const e=document.createElement('div');e.className='hint';e.innerHTML=L('이 백업에는 노트가 없습니다.','This backup has no notes.');list.append(e);}
+  if(vaultSnap){const vb=document.createElement('div');vb.className='setsec';
+    const vt=document.createElement('div');vt.className='hint';vt.textContent=L('🔐 암호화된 금고 스냅샷이 포함되어 있습니다. 제목과 본문은 여기서 표시하지 않습니다.','🔐 This backup includes an encrypted vault snapshot. Titles and contents are never shown here.');
+    const vr=document.createElement('button');vr.className='btn danger';vr.textContent=L('이 금고 스냅샷 복구','Restore this vault snapshot');
+    vr.onclick=async()=>{if(await restoreVaultSnapshot(d.vault)){openBkList();}};vb.append(vt,vr);list.append(vb);}
+  if(!all.length&&!vaultSnap){const e=document.createElement('div');e.className='hint';e.innerHTML=L('이 백업에는 노트가 없습니다.','This backup has no notes.');list.append(e);}
   all.forEach(x=>{
     const row=document.createElement('div');row.className='setrow';row.style.alignItems='flex-start';
     const cb=document.createElement('input');cb.type='checkbox';cb.style.marginTop='.2em';cb.checked=bkSel.has(x.id);
@@ -5567,7 +5517,7 @@ async function doApply(d, ids){
     : L('이 백업 전체로 복구할까요?\n(없는 노트가 추가되고, 백업이 더 새로우면 갱신됩니다)','Restore this whole backup?\n(Missing notes are added; newer backup content is applied)');
   if(!await dlg(msg,{okText:L('복구','Restore')}))return;
   try{
-    const r=applyBackup(d,ids);
+    const r=await applyBackup(d,ids);
     ovCloseUi($('#bkOverlay'));
     toast(L(`복구 완료: 추가 ${r.added} · 갱신 ${r.updated}${r.vadded?` · 보관 ${r.vadded}`:''}${r.vskip?' · 🔐 보관 노트는 잠겨서 건드리지 않음':''}`,
             `Restored: added ${r.added}, updated ${r.updated}${r.vadded?` · vault ${r.vadded}`:''}${r.vskip?' · vault skipped (locked)':''}`));
@@ -5578,6 +5528,7 @@ async function doApply(d, ids){
    지원 환경(Chrome/Edge·Android 등)은 showSaveFilePicker로 원하는 폴더에 저장,
    지원 안 하면(사파리 등) 일반 다운로드로 폴백. */
 $('#stExportEn').onclick=async()=>{
+  await VLT.flush();
   const payload=buildBackup();
   const json=JSON.stringify(payload,null,2);
   const name=backupName();
@@ -5599,18 +5550,20 @@ $('#stImportEn').onclick=()=>$('#importFile').click();
 $('#importFile').addEventListener('change',e=>{
   const f=e.target.files[0];if(!f)return;
   const r=new FileReader();
-  r.onload=()=>{try{
+  r.onload=async()=>{try{
     const d=JSON.parse(r.result);
-    const res=applyBackup(d);
-    toast(IS_KO?`가져오기 완료: 추가 ${res.added}/갱신 ${res.updated}, 보관 ${res.vadded}개${res.vskip?' (🔐 보관 노트는 잠겨서 건드리지 않음)':''}`
-              :`Import done: added ${res.added}, updated ${res.updated}, vault ${res.vadded}${res.vskip?' (vault skipped — locked)':''}`);
+    const res=await applyBackup(d);
+    /* v5 external backups carry the vault as a separate ciphertext snapshot. Never merge it as plaintext. */
+    const vaultRestored=validVaultSnapshot(d.vault)?await restoreVaultSnapshot(d.vault):false;
+    toast(IS_KO?`가져오기 완료: 추가 ${res.added}/갱신 ${res.updated}, 보관 ${res.vadded}개${vaultRestored?' · 🔐 암호화 금고 복구됨':''}${res.vskip?' (🔐 이전 평문 보관 노트는 잠겨서 건드리지 않음)':''}`
+              :`Import done: added ${res.added}, updated ${res.updated}, vault ${res.vadded}${vaultRestored?' · encrypted vault restored':''}${res.vskip?' (legacy plaintext vault skipped — locked)':''}`);
   }catch(err){toast(tr('Not a valid backup file','bk_bad'))}};
   r.readAsText(f);e.target.value='';
 });
 $('#stWipe').onclick=async()=>{
   if(!await dlg(L('정말 이 기기의 모든 노트·폴더를 삭제할까요?\n(일반·보관 노트 전부, 서버 데이터는 안 지워짐)','Delete all notes and folders on this device?\n(Regular and Vault notes; server data is not deleted)'),{danger:true,okText:L('삭제','Delete')}))return;
   if(!await dlg(L('다시 한번 확인합니다. 삭제하시겠습니까?','Are you sure? This cannot be undone.'),{danger:true,okText:L('삭제','Delete')}))return;
-  S.notes=[];S.folders=[];VLT.notes=[];VLT.folders=[];VLT.persist();touch();render();toast(L('초기화되었습니다','Everything was cleared'));
+  S.notes=[];S.folders=[];VLT.wipe();touch();render();toast(L('초기화되었습니다','Everything was cleared'));
 };
 
 /* ═══════════════ 헤더/플로팅 버튼 (요구4) ═══════════════ */
@@ -5647,180 +5600,110 @@ function toggleView(){
 $('#btnView').onclick=toggleView;
 $('#btnTrash').onclick=()=>{ui.trash=!ui.trash;exitSel();render()};
 
-/* ═══════════════ 보관 노트 (Vault) — 진입 시마다 비밀번호 (요구11) ═══════════════ */
+/* ═══════════════ v7.1 보관 노트 (Vault) — 암호문 envelope 단일 저장소 ═══════════════ */
 const VLT={
-  notes:[], folders:[], bio:false, settings:{}, openUntil:0,
-  key:null,          /* (v6.1) 잠금 해제 시에만 메모리에 존재하는 AES 키 */
-  encrypted:false,   /* 저장소가 암호화 형식인지 */
+  notes:[],folders:[],settings:{},key:null,auth:null,encrypted:false,format:0,_blob:null,legacyMeta:false,_writeChain:Promise.resolve(),failCount:0,lockUntil:0,
   load(){
-    /* (v6.1 + S-2) 암호화 형식이면 잠금 해제 전에는 내용을 읽지 않는다 */
+    this.key=null;this.notes=[];this.folders=[];this.settings=Object.assign({},VAULT_DEF);this.encrypted=false;this.format=0;this._blob=null;this.auth=null;this.legacyMeta=false;this.failCount=0;this.lockUntil=0;
+    try{const rate=JSON.parse(STORE.getItem('sk.vault.rate')||'{}');this.failCount=Math.max(0,parseInt(rate.fails,10)||0);this.lockUntil=Math.max(0,parseInt(rate.until,10)||0);}catch(_){}
+    let legacyFolders=[],legacySettings={};
+    try{legacyFolders=JSON.parse(STORE.getItem('sk.vault.folders'))||[]}catch(_){}
+    try{legacySettings=JSON.parse(STORE.getItem('sk.vault.settings'))||{}}catch(_){}
+    const legacyAuth=(S.settings.pinSalt&&S.settings.pinHash)?{v:1,kdf:'PBKDF2-SHA256',iter:PBKDF2_ITER,salt:S.settings.pinSalt,hash:S.settings.pinHash,legacy:true}:null;
     const raw=STORE.getItem('sk.vault');
-    this.encrypted=false; this.notes=[]; this.folders=[]; this.settings=Object.assign({},VAULT_DEF);
-    if(raw){
-      try{
-        const o=JSON.parse(raw);
-        if(o&&o.__enc===1){ this.encrypted=true; this._blob=o; }   // 잠글 때까지 대기
-        else if(Array.isArray(o)){ this.notes=o; this.encrypted=false; } // 구버전 평문
-        else if(o&&o.v>=2){ this.notes=o.notes||[]; this.folders=o.folders||[]; this.settings=Object.assign({},VAULT_DEF,o.settings||{}); this.encrypted=false; }
-      }catch(e){ this.notes=[]; }
-    }
-    /* (S-2) 암호화된 v2 스키마가 아니면 평문 폴더를 읽음 (마이그레이션용) */
-    if(!this.encrypted || !(this._blob && this._blob.v>=2)){
-      try{this.folders=JSON.parse(STORE.getItem('sk.vault.folders'))||[]}catch(e){this.folders=[]}
-      try{this.settings=Object.assign({},VAULT_DEF,JSON.parse(STORE.getItem('sk.vault.settings'))||{})}catch(e){this.settings=Object.assign({},VAULT_DEF)}
-      try{const f=JSON.parse(STORE.getItem('sk.vault.fail')||'{}'); this.failCount=f.failCount||0; this.lockUntil=f.lockUntil||0;}catch(e){this.failCount=0; this.lockUntil=0;}
-    }
-  },
-  /* 잠금 해제 후 호출 — 암호문을 풀어 this.notes 채움 */
-  async decryptInto(key){
-    this.key=key;
-    if(!this.encrypted||!this._blob){ return true; }
+    if(!raw){this.auth=legacyAuth;this.folders=legacyFolders;this.settings=Object.assign({},VAULT_DEF,legacySettings);this.legacyMeta=!!(legacyFolders.length||Object.keys(legacySettings).length||legacyAuth);return;}
     try{
-      const json=await aesDecrypt(key,this._blob);
-      const o=JSON.parse(json)||{};
-      if(o.v>=2){ this.notes=o.notes||[]; this.folders=o.folders||[]; this.settings=Object.assign({},VAULT_DEF,o.settings||{}); }
-      else { this.notes=o; this.folders=[]; this.settings=Object.assign({},VAULT_DEF); }
-      return true;
-    }catch(e){ return false; }
+      const obj=JSON.parse(raw);
+      if(obj&&obj.__enc===1){
+        this.encrypted=true;this._blob=obj;this.format=Number(obj.fmt)||1;this.auth=obj.auth||legacyAuth;
+        if(this.format<2){this.folders=legacyFolders;this.settings=Object.assign({},VAULT_DEF,legacySettings);this.legacyMeta=true;}
+      }else if(Array.isArray(obj)){
+        /* Legacy plaintext is never rewritten until the user proves the PIN and encryption succeeds. */
+        this.notes=obj;this.folders=legacyFolders;this.settings=Object.assign({},VAULT_DEF,legacySettings);this.auth=legacyAuth;this.legacyMeta=true;
+      }
+    }catch(_){this.notes=[];}
+  },
+  async decryptInto(key){
+    if(!this.encrypted||!this._blob){this.key=key;return true;}
+    try{
+      const json=await aesDecrypt(key,this._blob);const data=JSON.parse(json);
+      if(this.format>=2){
+        if(!data||!Array.isArray(data.notes)||!Array.isArray(data.folders)||!data.settings)throw new Error('invalid vault payload');
+        this.notes=data.notes;this.folders=data.folders;this.settings=Object.assign({},VAULT_DEF,data.settings);
+      }else if(Array.isArray(data)){this.notes=data;this.legacyMeta=true;}
+      else throw new Error('invalid legacy vault');
+      this.settings.unlockMinutes=0;this.key=key;return true;
+    }catch(_){this.key=null;return false;}
   },
   persist(){
-    /* (S-2) 키가 있으면 v2 암호화 저장(노트+폴더+설정), 없으면 평문 */
-    if(this.key){
-      const payload={v:2, notes:this.notes, folders:this.folders, settings:this.settings};
-      const plain=JSON.stringify(payload);
-      aesEncrypt(this.key,plain).then(o=>{
-        o.__enc=1; o.v=2;
-        try{ STORE.setItem('sk.vault',JSON.stringify(o)); this.encrypted=true; this._blob=o; }
-        catch(e){ toast(L('보관 노트 저장 실패(공간 부족)','Vault save failed (storage full)')); }
-      }).catch(()=>{});
-      try{ STORE.removeItem('sk.vault.folders'); }catch(e){}
-      try{ STORE.removeItem('sk.vault.settings'); }catch(e){}
-    }else{
-      try{ STORE.setItem('sk.vault',JSON.stringify(this.notes)); }
-      catch(e){ toast(L('보관 노트 저장 실패(공간 부족)','Vault save failed (storage full)')); }
-      try{ STORE.setItem('sk.vault.folders',JSON.stringify(this.folders)); }catch(e){}
-      try{ STORE.setItem('sk.vault.settings',JSON.stringify(this.settings)); }catch(e){}
-    }
-    scheduleAutoSnap();
+    if(!this.key||!this.auth){toast(L('금고가 잠겨 저장하지 않았습니다','Vault is locked; nothing was saved'));return Promise.resolve(false);}
+    const key=this.key,auth=JSON.parse(JSON.stringify(this.auth));
+    const payload=JSON.stringify({notes:this.notes,folders:this.folders,settings:Object.assign({},this.settings,{unlockMinutes:0})});
+    this._writeChain=this._writeChain.catch(()=>false).then(async()=>{
+      try{
+        const blob=await aesEncrypt(key,payload);blob.__enc=1;blob.fmt=2;blob.auth=auth;
+        STORE.setItem('sk.vault',JSON.stringify(blob));
+        this.encrypted=true;this.format=2;this._blob=blob;this.legacyMeta=false;
+        scheduleAutoSnap();return true;
+      }catch(e){toast(L('보관 노트 저장 실패 — 기존 암호문은 유지했습니다','Vault save failed — the previous ciphertext was retained'));return false;}
+    });
+    return this._writeChain;
   },
-  persistSettings(){STORE.setItem('sk.vault.settings',JSON.stringify(this.settings))},
+  flush(){return this._writeChain.catch(()=>false);},
+  persistSettings(){return this.persist();},
+  wipe(){
+    this.notes=[];this.folders=[];this.settings=Object.assign({},VAULT_DEF);this.key=null;this.auth=null;this.encrypted=false;this.format=0;this._blob=null;this.legacyMeta=false;this.failCount=0;this.lockUntil=0;
+    try{STORE.removeItem('sk.vault');STORE.removeItem('sk.vault.folders');STORE.removeItem('sk.vault.settings');STORE.removeItem('sk.vault.rate');}catch(_){}
+    S.settings.pinHash=null;S.settings.pinSalt=null;
+  },
   async init(){
     this.load();
-    if(!this.settings.fwVer){
-      if(!['l','n','b','x'].includes(this.settings.fontWeight))this.settings.fontWeight=({'300':'l','400':'n','500':'n','600':'x'}[this.settings.fontWeight])||'n';
-      else if(this.settings.fontWeight==='b')this.settings.fontWeight='n';
-      this.settings.fwVer=2;
-    }else if(!['l','n','b','x'].includes(this.settings.fontWeight))this.settings.fontWeight='n';   /* (요구3) v5.2: 새 굵기 키체계 1회 이관 */
-    this.settings.font=migFont(this.settings.font);   /* (요청7) 보관 노트 글자 크기 → pt (v5.3) */
-    try{ if(window.PublicKeyCredential && await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()) this.bio=true }catch(e){}
+    this.settings.font=migFont(this.settings.font);
   },
-  /* (요구11) 진입할 때: '암호 없이 열리는 시간(요청7)' 안이라면 바로 들어감, 아니면 비밀번호 창 */
   open(){
-    // (요청7) 설정한 시간 안에는 비밀번호 없이 바로 재진입
-    if((this.settings.unlockMinutes||0)>0 && Date.now()<this.openUntil){ this.enter(); return; }
-    $('#vGatePass').value=''; ovOpen($('#vGate')); setTimeout(()=>$('#vGatePass').focus(),80);
+    if(this.encrypted&&!hasVaultPin()){toast(L('금고 인증 정보가 없습니다. 비밀번호를 재설정하지 말고 백업으로 복구하세요.','Vault authentication data is missing. Do not reset the password; restore from a backup.'));return;}
+    $('#vGatePass').value='';ovOpen($('#vGate'));setTimeout(()=>$('#vGatePass').focus(),80);
   },
-  /* (요구10) 별도 화면 없이 일반 화면을 '보관 모드'로 전환 → 디자인/동작 완전 동일 */
   enter(){
-    /* (v6.9 요청3·4) 금고 노트는 잠긴 동안 보이지 않으므로, 열릴 때 1회 같은 정리를 한다 */
-    if(!S.settings.fmtVerV){
-      try{
-        let ch=0;
-        (this.notes||[]).forEach(n=>{
-          if(n.fontWeight){delete n.fontWeight;ch++}
-          const c=stripTypeFmt(n.content); if(c!==n.content){n.content=c;ch++}
-          (n.items||[]).forEach(it=>{const t=stripTypeFmt(it.text); if(t!==it.text){it.text=t;ch++}});
-        });
-        S.settings.fmtVerV=1; save(); if(ch) this.persist();
-      }catch(_){}
-    }
-    /* (v6.1) vGate가 ovOpen으로 열린 경우에만 history를 되돌린다 */
-    const g=$('#vGate');
-    if(OVS.indexOf(g)>-1) ovCloseUi(g); else g.classList.remove('show');
-    ui.vault=true; ui.trash=false; ui.folder=''; ui.nofolder=false; ui.search=''; $('#search').value='';
-    ui.view=this.settings.view||'grid';                       // (요청6) 보관 노트 전용 보기
-    // (요청7) 이번에 성공적으로 들어온 시각 기준으로 '암호 없이 열리는 시간' 시작
-    if((this.settings.unlockMinutes||0)>0) this.openUntil=Date.now()+this.settings.unlockMinutes*60000;
-    exitSel(); render();
+    const g=$('#vGate');if(OVS.indexOf(g)>-1)ovCloseUi(g);else g.classList.remove('show');
+    ui.vault=true;ui.trash=false;ui.folder='';ui.nofolder=false;ui.search='';$('#search').value='';ui.view=this.settings.view||'grid';exitSel();render();
   },
-  leave(){ this.key=null;   /* (v6.1) 나갈 때 메모리에서 키 삭제 */
-    /* (v7.0 패치G / 감사 S-1) 평문도 함께 버린다 — 안 그러면 '잠김' 표시인데도 메모리에 내용이 남아
-       화면만 다시 켜거나 자동백업이 도는 순간 금고 노트가 평문으로 새 나간다.
-       '암호 없이 열리는 시간'을 켠 사람은 그 시간 동안 다시 열어주는 것이 기능이니 예외로 둔다. */
-    if(!((this.settings&&this.settings.unlockMinutes>0)||0)) this.notes=[];
-    ui.vault=false; ui.view=S.settings.view||'grid'; ui.folder=''; ui.nofolder=false; ui.trash=false; exitSel(); render(); toast(tr('Vault locked','toast_vault_locked')); },
+  leave(){
+    const fo=$('#folderOverlay'),eo=$('#edOverlay');
+    if(fo){fo.classList.remove('show');const fi=OVS.indexOf(fo);if(fi>-1)OVS.splice(fi,1);const fl=$('#folderList'),fn=$('#folderNotes');if(fl)fl.textContent='';if(fn)fn.textContent='';}
+    if(eo&&eo.classList.contains('show')){eo.classList.remove('show');const ei=OVS.indexOf(eo);if(ei>-1)OVS.splice(ei,1);}
+    this.key=null;this.notes=[];this.folders=[];this.settings=Object.assign({},VAULT_DEF);ui.vault=false;ui.view=S.settings.view||'grid';ui.folder='';ui.nofolder=false;ui.trash=false;ui.editingId=null;exitSel();scheduleReminders();render();toast(tr('Vault locked','toast_vault_locked'));
+  },
   async unlockPass(){
-    if(!S.settings.pinHash){
-      const a=await dlg(tr('Create a new vault password (4 digits recommended):','dlg_pin_new'),{input:true,password:true,okText:tr('Set','dlg_pin_set')});
-      if(a===null||a===undefined)return;
-      if(a.length<4){toast(tr('Enter at least 4 characters','dlg_pin_4'));return}
-      const b=await dlg(tr('Enter again:','dlg_pin_again'),{input:true,password:true,okText:tr('OK','gate_ok')});
-      if(b===null||b===undefined)return;
-      if(a!==b){toast(tr('The two values differ. Try again.','dlg_pin_mismatch'));return}
-      if(VLT.encrypted){toast(L('이전 암호문이 있어 이전 비밀번호 없이는 내용 복구 불가. 백업이 있으면 복구하세요.','Existing vault is encrypted — previous password required to recover; restore from backup if available.'))}
-      await setVaultPin(a);
-      toast(tr('Password set. Please enter it again.','dlg_pin_set_done'));return;
+    if(!hasVaultPin()){
+      const a=await dlg(L('새 금고 비밀번호를 만드세요. 12자 이상 문장형 비밀번호를 권장합니다.','Create a new vault password. Use at least 12 characters.'),{input:true,password:true,okText:L('설정','Set')});
+      if(a===null||a===undefined)return;if(a.length<12){toast(L('12자 이상 입력하세요','Enter at least 12 characters'));return}
+      const b=await dlg(L('한 번 더 입력하세요:','Enter it again:'),{input:true,password:true,okText:L('확인','OK')});
+      if(a!==b){toast(L('두 값이 다릅니다. 다시 시도하세요','The two values differ. Try again.'));return}
+      try{await setVaultPin(a);toast(L('비밀번호가 설정되었습니다. 다시 금고를 열어 주세요.','Password set. Open the vault again.'));}catch(_){toast(L('금고 설정에 실패했습니다','Could not set up the vault'));}return;
     }
-    const v=$('#vGatePass').value;
-    if(!v){toast(tr('Enter the password','dlg_pin_enter'));return}
-    /* (v6.1) 무차별 대입 완화: 5회 실패마다 대기 */
-    if(this.failCount>=5 && Date.now()<this.lockUntil){
-      const sec=Math.ceil((this.lockUntil-Date.now())/1000);
-      toast(L(`너무 여러 번 틀렸습니다. ${sec}초 후 다시 시도하세요.`,`Too many attempts. Try again in ${sec}s.`));return;
+    const v=$('#vGatePass').value;if(!v){toast(tr('Enter the password','dlg_pin_enter'));return}
+    if(this.failCount>=5&&Date.now()<this.lockUntil){const sec=Math.ceil((this.lockUntil-Date.now())/1000);toast(L(`너무 여러 번 틀렸습니다. ${sec}초 후 다시 시도하세요.`,`Too many attempts. Try again in ${sec}s.`));return;}
+    const ok=eqConst(await pinHash(v,this.auth.salt),this.auth.hash);
+    if(!ok){this.failCount=(this.failCount||0)+1;if(this.failCount>=5)this.lockUntil=Date.now()+Math.min(300000,5000*Math.pow(2,this.failCount-5));try{STORE.setItem('sk.vault.rate',JSON.stringify({fails:this.failCount,until:this.lockUntil}));}catch(_){}toast(tr('Wrong password','dlg_pin_wrong'));$('#vGatePass').value='';return;}
+    this.failCount=0;this.lockUntil=0;try{STORE.removeItem('sk.vault.rate');}catch(_){}const key=await pinKey(v,this.auth.salt);const good=await this.decryptInto(key);
+    if(!good){toast(L('보관 노트를 열 수 없습니다(데이터 손상)','Could not decrypt the vault (data damaged)'));return}
+    /* Old 4-digit vault passwords are accepted once only to unlock existing data, then replaced before migration. */
+    if(String(v).length<12){
+      const np=await dlg(L('기존 짧은 비밀번호를 확인했습니다. 계속하려면 새 금고 비밀번호를 12자 이상으로 설정하세요.','Your legacy short password was verified. Set a new vault password of at least 12 characters to continue.'),{input:true,password:true,okText:L('새 비밀번호','New password')});
+      if(np===null||np===undefined||np.length<12){this.key=null;this.notes=[];this.folders=[];toast(L('금고 이전을 취소했습니다. 기존 데이터는 바꾸지 않았습니다.','Vault migration was canceled; existing data was not changed.'));return;}
+      const np2=await dlg(L('새 비밀번호를 다시 입력하세요:','Enter the new password again:'),{input:true,password:true,okText:L('확인','OK')});
+      if(np!==np2){this.key=null;this.notes=[];this.folders=[];toast(L('새 비밀번호가 일치하지 않습니다. 기존 데이터는 바꾸지 않았습니다.','New passwords do not match; existing data was not changed.'));return;}
+      try{await setVaultPin(np,true);}catch(_){this.key=null;this.notes=[];this.folders=[];toast(L('금고 이전 저장에 실패했습니다. 기존 데이터를 유지했습니다.','Vault migration failed; existing data was retained.'));return;}
+    }else if(!this.encrypted||this.format<2||this.legacyMeta){
+      if(!(await this.persist())){toast(L('금고 이관 저장에 실패했습니다. 기존 데이터를 유지했습니다.','Vault migration failed; previous data was retained.'));return;}
+      if(S.settings.pinHash||S.settings.pinSalt){S.settings.pinHash=null;S.settings.pinSalt=null;save();}
+      try{STORE.removeItem('sk.vault.folders');STORE.removeItem('sk.vault.settings');}catch(_){}this.legacyMeta=false;
     }
-    let ok=false;
-    if(S.settings.pinSalt){                       // 새 방식(PBKDF2)
-      ok=eqConst(await pinHash(v,S.settings.pinSalt),S.settings.pinHash);
-    }else{                                        // 구버전(sha256) → 성공하면 자동 업그레이드
-      ok=eqConst(await sha256(v),S.settings.pinHash);
-      if(ok){ await setVaultPin(v,true); }
-    }
-    if(ok){
-      this.failCount=0; this.lockUntil=0; try{STORE.setItem('sk.vault.fail',JSON.stringify({failCount:0,lockUntil:0}));}catch(e){}
-      const key=await pinKey(v,S.settings.pinSalt);
-      const good=await this.decryptInto(key);
-      if(!good){ toast(L('보관 노트를 열 수 없습니다(데이터 손상)','Could not decrypt the vault (data damaged)')); return; }
-      if(!this.encrypted) this.persist();          // 평문이었다면 즉시 암호화 저장
-      this.enter();
-    }else{
-      this.failCount=(this.failCount||0)+1;
-      if(this.failCount>=5) this.lockUntil=Date.now()+Math.min(300000,5000*Math.pow(2,this.failCount-5));
-      try{STORE.setItem('sk.vault.fail',JSON.stringify({failCount:this.failCount,lockUntil:this.lockUntil}));}catch(e){}
-      toast(tr('Wrong password','dlg_pin_wrong'));$('#vGatePass').value='';
-    }
-  },
-  failCount:0, lockUntil:0,
-  b64(buf){return btoa(String.fromCharCode(...new Uint8Array(buf)))},
-  unb64(s){return Uint8Array.from(atob(s),c=>c.charCodeAt(0))},
-  async unlockBio(){
-    try{
-      const saved=STORE.getItem('sk.vcred');
-      if(!saved){
-        const cred=await navigator.credentials.create({publicKey:{
-          challenge:crypto.getRandomValues(new Uint8Array(32)),
-          rp:{name:'soonenote'},
-          user:{id:new TextEncoder().encode('sk-user'),name:'sk',displayName:'soonenote user'},
-          pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],
-          authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required'},
-          timeout:60000}});
-        STORE.setItem('sk.vcred',this.b64(cred.rawId));
-        toast(L('지문이 등록되었습니다','Fingerprint registered'));
-      }else{
-        await navigator.credentials.get({publicKey:{
-          challenge:crypto.getRandomValues(new Uint8Array(32)),
-          allowCredentials:[{type:'public-key',id:this.unb64(saved)}],
-          userVerification:'required',timeout:60000}});
-      }
-      /* (v6.1) 지문은 '화면 잠금 해제'일 뿐, 암호문을 풀 키를 만들어 주지 못한다.
-         암호화된 보관 노트는 반드시 비밀번호가 한 번 필요하다. */
-      if(this.encrypted&&!this.key){
-        toast(L('보관 노트가 암호화되어 있어 처음 한 번은 비밀번호가 필요합니다','The vault is encrypted — your password is required once'));
-        return;
-      }
-      this.enter();
-    }catch(e){ toast(L('지문 인식 실패/취소 — 비밀번호로 해제하세요','Fingerprint failed or canceled — use your password')) }
+    this.enter();
   }
 };
+
 /* (요구2) 심플 암호창: 닫기/지문 버튼 없음 — 확인 버튼 하나. 배경 누르면 닫힘(취소) */
 $('#vGate').addEventListener('click',e=>{ if(e.target.id==='vGate')ovCloseUi($('#vGate')); });
 $('#vPassBtn').onclick=()=>VLT.unlockPass();
@@ -5987,46 +5870,10 @@ const CHEERS={
   }
 };
 
-/* ══════════ (v6.3) 동기화 라이브러리 자동 복구 ══════════
-   vendor/supabase.min.js 가 없어도(= GitHub에 폴더를 안 올렸어도)
-   인터넷에서 같은 버전을 자동으로 받아와 동기화가 되게 한다.
-   · 로컬 파일이 있으면 그대로 사용 (오프라인에서도 동작)
-   · 없을 때만 CDN 두 곳을 차례로 시도
-   · 둘 다 실패하면 그때만 사용자에게 안내                              */
-const SB_VER='2.45.4';
-const SB_CDNS=[
-  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@'+SB_VER+'/dist/umd/supabase.js',
-  'https://unpkg.com/@supabase/supabase-js@'+SB_VER+'/dist/umd/supabase.js'
-];
-let _sbLoading=null, _sbFrom='';
-function loadScriptOnce(url,timeout){
-  return new Promise((res,rej)=>{
-    const el=document.createElement('script');
-    el.src=url; el.async=true;
-    const t=setTimeout(()=>{ el.remove(); rej(new Error('timeout')); }, timeout||12000);
-    el.onload =()=>{ clearTimeout(t); res(true); };
-    el.onerror=()=>{ clearTimeout(t); el.remove(); rej(new Error('load error')); };
-    document.head.appendChild(el);
-  });
-}
-/* 라이브러리를 확보한다. 이미 있으면 즉시 true */
-function ensureSyncLib(){
-  if(SYNC.libOk()){ if(!_sbFrom)_sbFrom='local'; return Promise.resolve(true); }
-  if(_sbLoading) return _sbLoading;
-  _sbLoading=(async()=>{
-    for(const url of SB_CDNS){
-      try{
-        await loadScriptOnce(url);
-        if(SYNC.libOk()){ _sbFrom='cdn'; return true; }
-      }catch(e){ /* 다음 후보 */ }
-    }
-    _sbLoading=null;      // 다음에 다시 시도할 수 있게
-    return SYNC.libOk();
-  })();
-  return _sbLoading;
-}
-/* 앱을 켜면 조용히 미리 확보해 둔다 (로컬에 있으면 아무 일도 안 함) */
-setTimeout(()=>{ if(!SYNC.libOk()) ensureSyncLib(); }, 1200);
+/* ══════════ v7.1 동기화 라이브러리 정책 ══════════
+   외부 CDN 코드를 런타임에 실행하지 않는다. 배포물의 vendor/supabase.min.js만 사용한다. */
+function ensureSyncLib(){return Promise.resolve(SYNC.libOk());}
+setTimeout(()=>{ if(!SYNC.libOk()) console.warn('Local Supabase bundle is unavailable. Sync remains disabled.'); },1200);
 
 /* ══════════ (v6.3) S 배지 동작 ══════════ */
 
@@ -6204,6 +6051,8 @@ ui.view=S.settings.view||'grid';
 purgeOldTrash();
 render();
 VLT.init();
+const _scrubbedLegacyVaultBackups=scrubLegacyVaultBackups();
+if(_scrubbedLegacyVaultBackups)toast(L('보안을 위해 이전 백업의 평문 금고 부분을 제거했습니다. 일반 노트 백업은 남았습니다.','For security, plaintext vault parts were removed from old local backups. Normal-note backups were kept.'));
 applyViewBtn();
 setStatus('','');
 scheduleReminders();
@@ -6264,40 +6113,3 @@ if('serviceWorker' in navigator&&location.protocol.startsWith('http')){
 </script>
 </body>
 </html>
-</script>
-<!-- 4번 JS 기능 연결 -->
-<script>
-(function(){
-  function drawFolderGrid(){
-    const g=$("#folderGrid"); if(!g) return;
-    const folders=FOLDERS();
-    g.innerHTML="";
-    folders.forEach(f=>{
-      const btn=document.createElement("button");
-      btn.style="display:flex;flex-direction:column;align-items:center;gap:.25em;padding:.3em;border:1px solid var(--line);border-radius:.7em;background:var(--card);font-size:.75em;cursor:pointer;";
-      btn.innerHTML="<span style=\"font-size:1.3em;\">📁</span><span>"+(f.name||"")+"</span>";
-      btn.onclick=()=>{ ui.folder=f.id; ui.vault=false; $("#folderNotesWrap").style.display="block"; $("#folderGrid").style.display="none"; render(); };
-      g.appendChild(btn);
-    });
-  }
-  window.drawFolderGrid=drawFolderGrid;
-  const origOpen=openFolderMgr;
-  openFolderMgr=function(){ origOpen(); drawFolderGrid(); $("#folderNotesWrap").style.display="none"; $("#folderGrid").style.display="grid"; };
-  $("#fHomeBtn").onclick=()=>{ ovCloseUi($("#folderOverlay")); ui.vault=false; ui.folder=""; ui.view=S.settings.view||"grid"; render(); };
-  $("#fSearch").addEventListener("input",e=>{ const v=e.target.value.toLowerCase(); $("#folderGrid").innerHTML=""; FOLDERS().filter(f=>f.name.toLowerCase().includes(v)).forEach(f=>{ const b=document.createElement("button"); b.style="display:flex;flex-direction:column;align-items:center;gap:.25em;padding:.3em;border:1px solid var(--line);border-radius:.7em;background:var(--card);font-size:.75em;cursor:pointer;"; b.innerHTML="<span style=\"font-size:1.3em;\">📁</span><span>"+(f.name||"")+"</span>"; b.onclick=()=>{ui.folder=f.id; $("#folderNotesWrap").style.display="block"; $("#folderGrid").style.display="none"; render();}; $("#folderGrid").appendChild(b); }); });
-})();
-</script>
-<!-- 4번 메뉴 기능 기본 연동 (정확히 보고함) -->
-<script>
-(function(){
-  // Select 모드 토글
-  document.body.addEventListener('click',function(e){
-    if(e.target.closest('#fMoreBtn')){ const m=document.getElementById('fMoreMenu'); if(m)m.classList.toggle('show'); }
-    if(e.target.closest('#fMoreMenu button')&&e.target.textContent.indexOf('Select')>=0){
-      document.getElementById('folderOverlay').classList.add('selectmode');
-      const menu=document.getElementById('fMoreMenu'); if(menu)menu.classList.remove('show');
-    }
-  });
-})();
-</script>
-</body></html>
