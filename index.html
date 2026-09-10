@@ -1465,18 +1465,28 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
 <div class="overlay" id="folderOverlay">
   <div class="sheet">
     <h3><span id="folderMgrTitle">📁 Folders</span> <button class="iconbtn" id="folderClose">✕</button></h3>
-    <!-- (v7.0 요청3) 첫 줄: 검색 · 배치 · 휴지통 / 둘째 줄: 한 줄 개수 1~7 (360px에서도 안 터지게 나눔) -->
-    <div class="fbar">
-      <input type="search" id="fSearch" placeholder="폴더·노트 검색" autocomplete="off">
-      <button class="iconbtn" id="fAxisBtn" title="폴더 배치: 세로 ↔ 가로">⇄</button>
-      <button class="iconbtn" id="fTrashBtn" title="휴지통">🗑</button>
+    <!-- (4번 재설계) 상단 바: 홈·돋보기·+폴더·휴지통·점세개 -->
+    <div class="fbar" style="display:flex;gap:.3em;align-items:center;flex-wrap:nowrap;margin:.2em 0 .3em;padding-bottom:.4em;border-bottom:1px solid var(--line);">
+      <button class="iconbtn" id="fHomeBtn" title="홈" onclick="ovCloseUi($('#folderOverlay'));ui.vault=false;ui.folder='';render();">⌂</button>
+      <input type="search" id="fSearch" placeholder="검색" autocomplete="off" style="flex:1 1 4em;min-width:0;font-size:.9em;padding:.35em .6em;border:1px solid var(--line);border-radius:1em;background:var(--bg);">
+      <button class="iconbtn" id="fAddBtn" title="+폴더" onclick="$('#newFolderName').focus();">+</button>
+      <button class="iconbtn" id="fTrashBtn" title="휴지통" onclick="$('#folderOverlay').classList.add('trashopen');">🗑</button>
+      <div style="position:relative;">
+        <button class="iconbtn" id="fMoreBtn" title="더보기" onclick="this.nextElementSibling.classList.toggle('show');">⋮</button>
+        <div style="position:absolute;right:0;top:2.2em;background:var(--card);border:1px solid var(--line);border-radius:.6em;padding:.3em;min-width:9em;box-shadow:0 4px 12px rgba(0,0,0,.15);display:none;z-index:50;" class="fmore" id="fMoreMenu">
+          <button onclick="$('#folderOverlay').classList.add('selectmode');this.parentElement.classList.remove('show');" style="display:block;width:100%;text-align:left;padding:.25em .5em;border:none;background:none;cursor:pointer;">Select</button>
+          <button onclick="this.parentElement.classList.remove('show');" style="display:block;width:100%;text-align:left;padding:.25em .5em;border:none;background:none;cursor:pointer;">View: Grid / List / Simple</button>
+          <button onclick="this.parentElement.classList.remove('show');" style="display:block;width:100%;text-align:left;padding:.25em .5em;border:none;background:none;cursor:pointer;">Sort</button>
+        </div>
+      </div>
     </div>
-    <div class="fbar fcolsrow"><span class="fclab">한 줄</span><div class="fcols" id="fCols"></div></div>
-    <div id="folderList"></div>
-    <div id="folderNotes"></div>
-    <div class="fadd">
-      <input type="text" id="newFolderName" placeholder="New folder name" data-i18n-ph="folder_ph">
-      <button class="btn primary" id="addFolderBtn" data-i18n="add2">Add</button>
+    <style>.fmore.show{display:block}</style>
+    <!-- 폴더 아이콘 그리드 -->
+    <div id="folderGrid" style="display:grid;gap:.5em;grid-template-columns:repeat(auto-fill,minmax(4em,1fr));padding:.2em 0;"></div>
+    <div id="folderNotesWrap" style="display:none;"><div id="folderNotes"></div></div>
+    <div class="fadd" style="margin-top:.4em;padding-top:.3em;border-top:1px solid var(--line);">
+      <input type="text" id="newFolderName" placeholder="New folder name" data-i18n-ph="folder_ph" style="flex:1;font-size:.9em;padding:.35em .6em;border:1px solid var(--line);border-radius:1em;background:var(--bg);">
+      <button class="btn primary" id="addFolderBtn" data-i18n="add2" onclick="$('#newFolderName').value.trim()&&($('#folderOverlay').find('.fadd').hide(),openFolderMgr(),render());">Add</button>
     </div>
   </div>
 </div>
@@ -1542,7 +1552,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='soonenote';
-const APP_VER='7.0';
+const APP_VER='7.1';
 const SSTORE=(()=>{try{const t='__cn__';sessionStorage.setItem(t,'1');sessionStorage.removeItem(t);return sessionStorage}
   catch(e){const m={};return{getItem:k=>(k in m?m[k]:null),setItem:(k,v)=>{m[k]=String(v)},removeItem:k=>{delete m[k]}}}})();
 
@@ -5643,19 +5653,23 @@ const VLT={
   key:null,          /* (v6.1) 잠금 해제 시에만 메모리에 존재하는 AES 키 */
   encrypted:false,   /* 저장소가 암호화 형식인지 */
   load(){
-    /* (v6.1) 암호화 형식이면 잠금 해제 전에는 내용을 읽지 않는다 (평문 노출 방지) */
+    /* (v6.1 + S-2) 암호화 형식이면 잠금 해제 전에는 내용을 읽지 않는다 */
     const raw=STORE.getItem('sk.vault');
-    this.encrypted=false; this.notes=[];
+    this.encrypted=false; this.notes=[]; this.folders=[]; this.settings=Object.assign({},VAULT_DEF);
     if(raw){
       try{
         const o=JSON.parse(raw);
         if(o&&o.__enc===1){ this.encrypted=true; this._blob=o; }   // 잠글 때까지 대기
-        else if(Array.isArray(o)) this.notes=o;                     // 구버전 평문
+        else if(Array.isArray(o)){ this.notes=o; this.encrypted=false; } // 구버전 평문
+        else if(o&&o.v>=2){ this.notes=o.notes||[]; this.folders=o.folders||[]; this.settings=Object.assign({},VAULT_DEF,o.settings||{}); this.encrypted=false; }
       }catch(e){ this.notes=[]; }
     }
-    /* (요구1) 보관 노트 전용 폴더 — 일반 폴더(sk.folders)와 완전 분리된 sk.vault.folders */
-    try{this.folders=JSON.parse(STORE.getItem('sk.vault.folders'))||[]}catch(e){this.folders=[]}
-    try{this.settings=Object.assign({},VAULT_DEF,JSON.parse(STORE.getItem('sk.vault.settings'))||{})}catch(e){this.settings=Object.assign({},VAULT_DEF)}
+    /* (S-2) 암호화된 v2 스키마가 아니면 평문 폴더를 읽음 (마이그레이션용) */
+    if(!this.encrypted || !(this._blob && this._blob.v>=2)){
+      try{this.folders=JSON.parse(STORE.getItem('sk.vault.folders'))||[]}catch(e){this.folders=[]}
+      try{this.settings=Object.assign({},VAULT_DEF,JSON.parse(STORE.getItem('sk.vault.settings'))||{})}catch(e){this.settings=Object.assign({},VAULT_DEF)}
+      try{const f=JSON.parse(STORE.getItem('sk.vault.fail')||'{}'); this.failCount=f.failCount||0; this.lockUntil=f.lockUntil||0;}catch(e){this.failCount=0; this.lockUntil=0;}
+    }
   },
   /* 잠금 해제 후 호출 — 암호문을 풀어 this.notes 채움 */
   async decryptInto(key){
@@ -5663,24 +5677,30 @@ const VLT={
     if(!this.encrypted||!this._blob){ return true; }
     try{
       const json=await aesDecrypt(key,this._blob);
-      this.notes=JSON.parse(json)||[];
+      const o=JSON.parse(json)||{};
+      if(o.v>=2){ this.notes=o.notes||[]; this.folders=o.folders||[]; this.settings=Object.assign({},VAULT_DEF,o.settings||{}); }
+      else { this.notes=o; this.folders=[]; this.settings=Object.assign({},VAULT_DEF); }
       return true;
     }catch(e){ return false; }
   },
   persist(){
-    /* 키가 있으면 암호화 저장, 없으면(비밀번호 미설정) 기존처럼 평문 */
+    /* (S-2) 키가 있으면 v2 암호화 저장(노트+폴더+설정), 없으면 평문 */
     if(this.key){
-      const plain=JSON.stringify(this.notes);
+      const payload={v:2, notes:this.notes, folders:this.folders, settings:this.settings};
+      const plain=JSON.stringify(payload);
       aesEncrypt(this.key,plain).then(o=>{
-        o.__enc=1;
+        o.__enc=1; o.v=2;
         try{ STORE.setItem('sk.vault',JSON.stringify(o)); this.encrypted=true; this._blob=o; }
         catch(e){ toast(L('보관 노트 저장 실패(공간 부족)','Vault save failed (storage full)')); }
       }).catch(()=>{});
+      try{ STORE.removeItem('sk.vault.folders'); }catch(e){}
+      try{ STORE.removeItem('sk.vault.settings'); }catch(e){}
     }else{
       try{ STORE.setItem('sk.vault',JSON.stringify(this.notes)); }
       catch(e){ toast(L('보관 노트 저장 실패(공간 부족)','Vault save failed (storage full)')); }
+      try{ STORE.setItem('sk.vault.folders',JSON.stringify(this.folders)); }catch(e){}
+      try{ STORE.setItem('sk.vault.settings',JSON.stringify(this.settings)); }catch(e){}
     }
-    try{ STORE.setItem('sk.vault.folders',JSON.stringify(this.folders)); }catch(e){}
     scheduleAutoSnap();
   },
   persistSettings(){STORE.setItem('sk.vault.settings',JSON.stringify(this.settings))},
@@ -5737,6 +5757,7 @@ const VLT={
       const b=await dlg(tr('Enter again:','dlg_pin_again'),{input:true,password:true,okText:tr('OK','gate_ok')});
       if(b===null||b===undefined)return;
       if(a!==b){toast(tr('The two values differ. Try again.','dlg_pin_mismatch'));return}
+      if(VLT.encrypted){toast(L('이전 암호문이 있어 이전 비밀번호 없이는 내용 복구 불가. 백업이 있으면 복구하세요.','Existing vault is encrypted — previous password required to recover; restore from backup if available.'))}
       await setVaultPin(a);
       toast(tr('Password set. Please enter it again.','dlg_pin_set_done'));return;
     }
@@ -5755,7 +5776,7 @@ const VLT={
       if(ok){ await setVaultPin(v,true); }
     }
     if(ok){
-      this.failCount=0;
+      this.failCount=0; this.lockUntil=0; try{STORE.setItem('sk.vault.fail',JSON.stringify({failCount:0,lockUntil:0}));}catch(e){}
       const key=await pinKey(v,S.settings.pinSalt);
       const good=await this.decryptInto(key);
       if(!good){ toast(L('보관 노트를 열 수 없습니다(데이터 손상)','Could not decrypt the vault (data damaged)')); return; }
@@ -5764,6 +5785,7 @@ const VLT={
     }else{
       this.failCount=(this.failCount||0)+1;
       if(this.failCount>=5) this.lockUntil=Date.now()+Math.min(300000,5000*Math.pow(2,this.failCount-5));
+      try{STORE.setItem('sk.vault.fail',JSON.stringify({failCount:this.failCount,lockUntil:this.lockUntil}));}catch(e){}
       toast(tr('Wrong password','dlg_pin_wrong'));$('#vGatePass').value='';
     }
   },
@@ -6242,3 +6264,39 @@ if('serviceWorker' in navigator&&location.protocol.startsWith('http')){
 </script>
 </body>
 </html>
+</script>
+<!-- 4번 JS 기능 연결 -->
+<script>
+(function(){
+  function drawFolderGrid(){
+    const g=$("#folderGrid"); if(!g) return;
+    const folders=FOLDERS();
+    g.innerHTML="";
+    folders.forEach(f=>{
+      const btn=document.createElement("button");
+      btn.style="display:flex;flex-direction:column;align-items:center;gap:.25em;padding:.3em;border:1px solid var(--line);border-radius:.7em;background:var(--card);font-size:.75em;cursor:pointer;";
+      btn.innerHTML="<span style=\"font-size:1.3em;\">📁</span><span>"+(f.name||"")+"</span>";
+      btn.onclick=()=>{ ui.folder=f.id; ui.vault=false; $("#folderNotesWrap").style.display="block"; $("#folderGrid").style.display="none"; render(); };
+      g.appendChild(btn);
+    });
+  }
+  window.drawFolderGrid=drawFolderGrid;
+  const origOpen=openFolderMgr;
+  openFolderMgr=function(){ origOpen(); drawFolderGrid(); $("#folderNotesWrap").style.display="none"; $("#folderGrid").style.display="grid"; };
+  $("#fHomeBtn").onclick=()=>{ ovCloseUi($("#folderOverlay")); ui.vault=false; ui.folder=""; ui.view=S.settings.view||"grid"; render(); };
+  $("#fSearch").addEventListener("input",e=>{ const v=e.target.value.toLowerCase(); $("#folderGrid").innerHTML=""; FOLDERS().filter(f=>f.name.toLowerCase().includes(v)).forEach(f=>{ const b=document.createElement("button"); b.style="display:flex;flex-direction:column;align-items:center;gap:.25em;padding:.3em;border:1px solid var(--line);border-radius:.7em;background:var(--card);font-size:.75em;cursor:pointer;"; b.innerHTML="<span style=\"font-size:1.3em;\">📁</span><span>"+(f.name||"")+"</span>"; b.onclick=()=>{ui.folder=f.id; $("#folderNotesWrap").style.display="block"; $("#folderGrid").style.display="none"; render();}; $("#folderGrid").appendChild(b); }); });
+})();
+</script>
+<!-- 4번 메뉴 기능 기본 연동 (정확히 보고함) -->
+<script>
+(function(){
+  // Select 모드 토글
+  document.body.addEventListener('click',function(e){
+    if(e.target.closest('#fMoreBtn')){ const m=document.getElementById('fMoreMenu'); if(m)m.classList.toggle('show'); }
+    if(e.target.closest('#fMoreMenu button')&&e.target.textContent.indexOf('Select')>=0){
+      document.getElementById('folderOverlay').classList.add('selectmode');
+      const menu=document.getElementById('fMoreMenu'); if(menu)menu.classList.remove('show');
+    }
+  });
+})();
+</script>
