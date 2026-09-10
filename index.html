@@ -2976,7 +2976,7 @@ function render(){
     FOLDERS().forEach(f=>{
       const b=document.createElement('button');b.className='chip'+(ui.folder===f.id&&!ui.nofolder&&!ui.trash?' on':'');
       const cnt=VLT.notes.filter(n=>!n.deleted&&n.folder===f.id).length;
-      b.textContent=`${f.name} (${cnt})`;b.onclick=()=>{ui.folder=f.id;ui.nofolder=false;ui.trash=false;exitSel();render()};
+      b.textContent=`${f.name} (${cnt})`;b.onclick=()=>{ui.folder=f.id;ui.nofolder=false;ui.trash=false;exitSel();openFolderMgr();render()};
       b.oncontextmenu=e=>{e.preventDefault();openFolderMgr()};
       bar.append(b);
     });
@@ -3008,7 +3008,7 @@ function render(){
       const b=document.createElement('button');b.className='chip'+(ui.folder===f.id&&!ui.nofolder&&!ui.trash&&!searching?' on':'');
       const cnt=S.notes.filter(n=>!n.deleted&&n.folder===f.id).length;
       b.textContent=(favIds.includes(f.id)?'★ ':'')+`${f.name} (${cnt})`;
-      b.onclick=()=>{ui.folder=f.id;ui.nofolder=false;ui.trash=false;exitSel();render()};
+      b.onclick=()=>{ui.folder=f.id;ui.nofolder=false;ui.trash=false;exitSel();openFolderMgr();render()};
       b.oncontextmenu=e=>{e.preventDefault();openFolderMgr()};
       bar.append(b);
     });
