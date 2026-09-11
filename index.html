@@ -132,7 +132,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-uAwzcl3Ag1nnjvo7lKTxWtWfGoL0/y9b/lW6X5u9Kds='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-Ii0S32eFOh+vfp9cECNGqYfncdw7B3kZ4y09TptXcAo='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
 <!-- (요구3) 전화기 화면에 딱 맞게 · 자동 확대(핀치 줌 포함) 완전 금지 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#f5f2ef">
@@ -713,9 +713,9 @@ html[data-theme="dark"] mark{background:#8a6f62;color:#fff}
 .fh-note-copy,.fh-trash-copy{flex:1;min-width:0;display:flex;flex-direction:column;gap:.1em}.fh-note-title,.fh-trash-title{font-size:.79em;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.fh-note-meta,.fh-trash-meta{font-size:.6em;color:var(--sub);font-weight:650;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .fh-trash-row .btn{font-size:.63em;padding:.4em .5em;min-height:2.15em;white-space:nowrap}
 #folderDetailGrid{display:grid;grid-template-columns:repeat(var(--cols,2),minmax(0,1fr));gap:1mm;align-content:start}
-#folderDetailGrid.list{display:flex;flex-direction:column;gap:1mm}#folderDetailGrid.titles{display:flex;flex-direction:column;gap:1mm}
-#folderDetailGrid.list .note,#folderDetailGrid.titles .note{aspect-ratio:auto}
-#folderDetailGrid.titles .tinner{display:block;padding:.22em .6em .3em}#folderDetailGrid.titles .note .body{font-size:11pt;-webkit-line-clamp:1;line-height:1.35;flex:none}#folderDetailGrid.titles .note .prog{display:none}#folderDetailGrid.titles .ttl{font-size:.8em;font-weight:800}
+#folderDetailGrid.folder-note-list{display:flex;flex-direction:column;gap:1mm}#folderDetailGrid.folder-note-titles{display:flex;flex-direction:column;gap:1mm}
+#folderDetailGrid.folder-note-list .note,#folderDetailGrid.folder-note-titles .note{aspect-ratio:auto}
+#folderDetailGrid.folder-note-titles .tinner{display:block;padding:.22em .6em .3em}#folderDetailGrid.folder-note-titles .note .body{font-size:11pt;-webkit-line-clamp:1;line-height:1.35;flex:none}#folderDetailGrid.folder-note-titles .note .prog{display:none}#folderDetailGrid.folder-note-titles .ttl{font-size:.8em;font-weight:800}
 #folderDetailGrid .note,#folderDetailGrid .note *{user-select:none!important;-webkit-user-select:none!important;-webkit-touch-callout:none;touch-action:manipulation}
 #folderDetailGrid .note{cursor:pointer;-webkit-tap-highlight-color:rgba(0,0,0,0)}
 .fh-detail-label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -899,7 +899,7 @@ html[data-theme="dark"] #edBody a,html[data-theme="dark"] #edBody a.nlink{color:
 /* 컬러 선택 팝오버(사각 컬러박스용) */
 /* (요청) Type(서식) 팝오버 — 글자크기·볼드·이탤릭·밑줄·줄간격 */
 /* (v6.5) T(서식) 창이 글자를 가릴 때 손가락으로 옮길 수 있게 */
-#edTypePop{position:fixed;z-index:70;top:auto;right:auto;background:var(--card);
+#edTypePop{position:fixed;z-index:71;top:auto;right:auto;background:var(--card);
   border:1px solid var(--line);border-radius:.6em;box-shadow:0 8px 24px rgba(0,0,0,.28);
   /* (v6.7) 고정 폭 280px 이라 오른쪽이 남았다 → 폭을 줄이고 슬라이더가 남는 폭을 채운다 */
   padding:0 .55em .5em;width:min(92vw,272px);   /* (v7.0) B I U + 색 3 + ⊘ 한 줄 기준 */
@@ -1145,6 +1145,16 @@ html[data-theme="dark"] #folderOverlay:not(.vault-folder),html[data-theme="dark"
 #edTypePop{width:168px;padding:0 .46em .36em}#tpHandle{margin:0 -.49em .28em;padding:.36em .48em .30em;gap:.28em}#tpHandle .bar{width:1.45em}#tpHandle .txt{font-size:.53em}.tprow{margin:.20em 0;gap:.30em}#edTypePop .tprow.tp1{gap:.30em}#edTypePop .tprow.tp1 .tpbiu{height:2.05em}.tprow.tpcolors{justify-content:center;gap:.55em;padding:.04em 0 .08em}#edTypePop .tpdot{width:1.62em;height:1.62em}
 /* v7.4 decision: Vault bar is 125% of the v7.3 compact bar, not a return to its old oversized version. */
 #folderNav.vault{padding:.09em .40em;padding-bottom:calc(.11em + env(safe-area-inset-bottom))}#folderNav.vault .folderbar{padding:.125em .05em .03em}#folderNav.vault .chip{font-size:.75em;min-height:1.84em;padding:.16em .34em}#folderNav.vault #fab{width:1.80em;height:1.80em;font-size:1.55em;margin-bottom:.38em;transform:translate(2mm,2mm) scale(.70)}#folderNav.vault #fab:active{transform:translate(2mm,2mm) scale(.64)}
+
+/* ══════════ v7.5 Back / Vault session / equal Folder note cards ══════════ */
+#tpClose{position:absolute;z-index:2;top:.22em;right:.26em;width:1.52em;height:1.52em;padding:0;border:0;border-radius:50%;background:var(--card);color:var(--sub);font-size:1.02em;line-height:1;font-weight:800;display:grid;place-items:center;box-shadow:0 1px 4px rgba(50,40,35,.13)}#tpClose:active{background:var(--accent);color:#4a332e;transform:scale(.9)}
+/* Detail cards intentionally have the main screen's 1mm outer gutter and full mobile content width; their settings remain folderNote*. */
+#folderDetailGrid{width:calc(100% + 1.44em);margin-left:-.72em;padding:1mm;gap:1mm}
+.vault-folder-icon{font-size:1.16em!important;min-width:2.05em;padding-left:.34em!important;padding-right:.34em!important}
+/* v7.5 requested +10% height from v7.4 Vault strip, retaining the contextual Vault Notes FAB. */
+#folderNav.vault{padding:.10em .44em;padding-bottom:calc(.12em + env(safe-area-inset-bottom))}#folderNav.vault .folderbar{padding:.14em .05em .04em}#folderNav.vault .chip{font-size:.79em;min-height:1.92em;padding:.17em .37em}#folderNav.vault #fab{width:1.98em;height:1.98em;font-size:1.70em;margin-bottom:.42em;transform:translate(2mm,2mm) scale(.70)}#folderNav.vault #fab:active{transform:translate(2mm,2mm) scale(.64)}
+@media(min-width:640px){#folderOverlay .sheet{padding-left:max(.9em,calc((100vw - 1000px)/2));padding-right:max(.9em,calc((100vw - 1000px)/2))}.fh-top,.fh-tools,.fh-tabs,.fh-select-actions,#fhSelectList,#fhTrashList,#folderDetailGrid{max-width:1000px}#folderDetailGrid{width:calc(100% + 1.8em);margin-left:-.9em}}
+@media(min-width:1029px){#folderDetailGrid{width:100%;margin-left:0}}
 </style>
 </head>
 <body>
@@ -1600,7 +1610,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='soonenote';
-const APP_VER='7.4';
+const APP_VER='7.5';
 const SSTORE=(()=>{try{const t='__cn__';sessionStorage.setItem(t,'1');sessionStorage.removeItem(t);return sessionStorage}
   catch(e){const m={};return{getItem:k=>(k in m?m[k]:null),setItem:(k,v)=>{m[k]=String(v)},removeItem:k=>{delete m[k]}}}})();
 
@@ -2902,7 +2912,7 @@ window.addEventListener('popstate',()=>{
   }
 
   /* 4) 보관 모드 → 일반 노트 */
-  if(ui.vault){ VLT.leave(); histPush(); return }
+  if(ui.vault){ VLT.exitView(); histPush(); return }
 
   /* 5) 여기까지 오면 정말 첫 화면 — 두 번 눌러야 종료 */
   const now=Date.now();
@@ -3026,22 +3036,15 @@ function render(){
   if(ui.vault){
     // (요구10) 보관 모드: 일반 화면과 동일 UI, 폴더바만 '보관' 표시 + 나가기
     const back=document.createElement('button');back.className='chip';back.textContent=tr('← Normal notes','chip_backnormal');
-    back.onclick=()=>{VLT.leave()};bar.append(back);
+    back.onclick=()=>{VLT.exitView()};bar.append(back);
     /* (요청3) Vault에도 폴더 바(전체/노트/폴더/추가) — 일반 화면과 동일 */
     const all=document.createElement('button');all.className='chip mchip'+(ui.folder===''&&!ui.nofolder&&!ui.trash?' on':'');
     all.textContent=tr('All','chip_all');all.onclick=()=>{ui.folder='';ui.nofolder=false;ui.trash=false;exitSel();render()};bar.append(all);
     const nfc=document.createElement('button');nfc.className='chip mchip'+(ui.nofolder&&!ui.trash?' on':'');
     nfc.textContent=tr('Notes','chip_notes');nfc.title=tr('Notes','chip_notes');
     nfc.onclick=()=>{ui.folder='';ui.nofolder=true;ui.trash=false;exitSel();render()};bar.append(nfc);
-    FOLDERS().forEach(f=>{
-      const b=document.createElement('button');b.className='chip'+(ui.folder===f.id&&!ui.nofolder&&!ui.trash?' on':'');
-      const cnt=VLT.notes.filter(n=>!n.deleted&&n.folder===f.id).length;
-      b.textContent=`${f.name} (${cnt})`;b.onclick=()=>{ui.folder=f.id;ui.nofolder=false;ui.trash=false;exitSel();render()};
-      b.oncontextmenu=e=>{e.preventDefault();openFolderMgr()};
-      bar.append(b);
-    });
     const pinv=document.createElement('div');pinv.className='pinrow';bar.append(pinv);
-    const add=document.createElement('button');add.className='chip';add.textContent=tr('+ Folder','chip_addfolder');add.title=tr('Vault folders','vault_folder_mgr');add.onclick=openFolderMgr;pinv.append(add);
+    const folders=document.createElement('button');folders.className='chip vault-folder-icon';folders.textContent='📁';folders.title=tr('Vault folders','vault_folder_mgr');folders.setAttribute('aria-label',folders.title);folders.onclick=openFolderMgr;pinv.append(folders);
     /* (요청) 상단바 로고 텍스트("SK노트") 제거 — 검색창이 넓게 차지 */
     const lt=$('#logoText'); if(lt){lt.innerHTML='';lt.title=tr('🔐 Vault','vault_title');}
   }else{
@@ -3455,7 +3458,7 @@ const remTimers={};
 function scheduleReminders(){
   Object.values(remTimers).forEach(clearTimeout);
   for(const k in remTimers)delete remTimers[k];
-  [...S.notes,...VLT.notes].filter(n=>!n.deleted&&n.remindAt&&n.remindAt>Date.now()).forEach(n=>{
+  [...S.notes,...(ui.vault?VLT.notes:[])].filter(n=>!n.deleted&&n.remindAt&&n.remindAt>Date.now()).forEach(n=>{
     const ms=n.remindAt-Date.now();
     if(ms<2147483647) remTimers[n.id]=setTimeout(()=>fireReminder(n.id),ms);
   });
@@ -3662,7 +3665,7 @@ $('#edKebab').onclick=e=>{e.stopPropagation();$('#edColorPop').classList.remove(
 /* (v6.2 요청5) 바깥을 눌러 팝업을 닫을 때도, 팝업을 열며 쌓아둔 history 한 칸을 되돌린다.
    그래야 '뒤로가기 한 번 = 한 단계'가 정확히 유지된다. */
 document.addEventListener('click',()=>{
-  const open=['#edColorPop','#edMenu','#edTypePop'].filter(x=>$(x)&&$(x).classList.contains('show'));
+  const open=['#edColorPop','#edMenu'].filter(x=>$(x)&&$(x).classList.contains('show'));
   if(!open.length)return;
   open.forEach(x=>$(x).classList.remove('show'));
   histPop();
@@ -4110,6 +4113,8 @@ function buildTypePop(){
   const hd=document.createElement('div'); hd.id='tpHandle';
   hd.innerHTML='<span class="bar"></span><span class="txt">'+L('끌어서 이동','DRAG TO MOVE')+'</span><span class="bar"></span>';
   p.append(hd);
+  const close=document.createElement('button');close.type='button';close.id='tpClose';close.setAttribute('aria-label',L('서식 닫기','Close format'));close.title=L('닫기','Close');close.textContent='×';
+  close.onclick=e=>{e.preventDefault();e.stopPropagation();p.classList.remove('show');histPop();};p.append(close);
   makeTypePopDraggable(p,hd);
   /* (v6.9 요청3) '크기' 슬라이더는 없앤다 - 글자 크기는 설정 화면(전역)에서만 조절한다. */
   /* B / I / U */
@@ -4419,13 +4424,12 @@ function updateTpVals(){
   const lr=$('#tpLhRange'); if(lr)lr.value=String(typeLh);
 }
 $('#edTypeBtn').onclick=e=>{e.stopPropagation();
-  tpSaveRange();                                     /* (v6.7) 창을 열기 전 선택을 먼저 기억 */
-  buildTypePop();updateTpVals();renderTpPal();                        /* (v6.9) 열 때 팔레트 갱신 */
+  const tp=$('#edTypePop');
+  if(tp.classList.contains('show'))return;  /* v7.5: only X or Back closes an open T popup */
+  tpSaveRange();buildTypePop();updateTpVals();renderTpPal();
   $('#edColorPop').classList.remove('show');$('#edMenu').classList.remove('show');
-  const tp=$('#edTypePop'); const willOpen=!tp.classList.contains('show');
-  tp.classList.toggle('show'); if(willOpen)histPush();      /* (v6.2 요청5) */
-  /* (v6.5) position:fixed 로 바뀌었으므로 열 때 위치를 잡아 준다 */
-  if(willOpen) requestAnimationFrame(()=>placeTypePop(tp));
+  tp.classList.add('show');histPush();
+  requestAnimationFrame(()=>placeTypePop(tp));
 };
 $('#edTypePop').onclick=e=>e.stopPropagation();
 
@@ -4646,7 +4650,7 @@ function renderFolderHub(){setFolderHubPage('hub');vaultFolderStatus();const sc=
 function sortDetailNotes(arr){const sort=folderNoteSort(curSettings());return arr.sort((a,b)=>{if(sort==='color')return(a.color||0)-(b.color||0)||b.updatedAt-a.updatedAt;if(sort==='updated')return(b.pinned?1:0)-(a.pinned?1:0)||b.updatedAt-a.updatedAt;if(sort==='created')return(b.pinned?1:0)-(a.pinned?1:0)||b.createdAt-a.createdAt;if(sort==='title')return(a.title||'').localeCompare(b.title||'',locale());return(b.pinned?1:0)-(a.pinned?1:0)||(a.sortIndex||0)-(b.sortIndex||0)})}
 function hq(txt,q){const raw=esc(txt||'');if(!q)return raw;try{return raw.replace(new RegExp(esc(q).replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'),m=>'<mark>'+m+'</mark>')}catch(_){return raw}}
 function folderNoteCard(n,q){const dark=isDark(),PAL=dark?COLORS_D:COLORS,HEAD=dark?HEADS_D:HEADS_L,el=document.createElement('div');el.className='note';el.dataset.id=n.id;el.style.setProperty('--nc',PAL[n.color||0]);el.style.setProperty('--tc',HEAD[n.color||0]);let body='';if(n.type==='check'){const done=(n.items||[]).filter(i=>i.done).length,tot=(n.items||[]).length;body=`<div class="body">${(n.items||[]).slice(0,4).map(i=>`${i.done?'☑':'☐'} ${hq(i.text,q)}`).join('<br>')}</div><div class="prog">☑ ${done}/${tot}</div>`}else body=`<div class="body">${hq(plain(n.content||'').slice(0,160),q)}</div>`;const rem=n.remindAt&&n.remindAt>Date.now();el.innerHTML=`<div class="thead"><div class="ttl">${hq(n.title,q)||L('제목 없음','No title')}</div><span class="badges">${n.pinned?'📌':''}${rem?'⏰':''}${n.type==='check'?'☑️':''}</span></div><div class="tinner">${body}</div>`;el.onclick=()=>openEditor(n.id);return el}
-function renderFolderDetail(){const f=folderRaw();if(!f||f.deleted){folderHubBack();return}setFolderHubPage('detail');vaultFolderStatus();$('#fdTitle').textContent=folderName(f);$('#fdSearch').placeholder=L('이 폴더에서 노트 검색','Search this folder');$('#fdSearchRow').classList.toggle('hidden',!folderHub.detailSearchOpen);const q=$('#fdSearch').value.trim().toLowerCase(),g=$('#folderDetailGrid'),sc=curSettings(),view=folderNoteView(sc);g.className=view;g.style.setProperty('--folder-note-cols',prefGrid(sc,'folderNoteBox','2'));g.innerHTML='';const arr=sortDetailNotes(NOTES().filter(n=>!n.deleted&&n.folder===f.id&&fHit(n,q)));arr.forEach(n=>g.append(folderNoteCard(n,q)));if(!arr.length){const e=document.createElement('div');e.className='fh-empty';e.textContent=q?L('검색 결과가 없습니다.','Nothing found.'):L('이 폴더에는 아직 노트가 없습니다. 상단의 ＋로 새 노트를 만드세요.','This folder has no notes yet. Use ＋ at the top to create one.');g.append(e)}}
+function renderFolderDetail(){const f=folderRaw();if(!f||f.deleted){folderHubBack();return}setFolderHubPage('detail');vaultFolderStatus();$('#fdTitle').textContent=folderName(f);$('#fdSearch').placeholder=L('이 폴더에서 노트 검색','Search this folder');$('#fdSearchRow').classList.toggle('hidden',!folderHub.detailSearchOpen);const q=$('#fdSearch').value.trim().toLowerCase(),g=$('#folderDetailGrid'),sc=curSettings(),view=folderNoteView(sc);g.className='folder-note-'+view;g.style.setProperty('--folder-note-cols',prefGrid(sc,'folderNoteBox','2'));g.innerHTML='';const arr=sortDetailNotes(NOTES().filter(n=>!n.deleted&&n.folder===f.id&&fHit(n,q)));arr.forEach(n=>g.append(folderNoteCard(n,q)));if(!arr.length){const e=document.createElement('div');e.className='fh-empty';e.textContent=q?L('검색 결과가 없습니다.','Nothing found.'):L('이 폴더에는 아직 노트가 없습니다. 상단의 ＋로 새 노트를 만드세요.','This folder has no notes yet. Use ＋ at the top to create one.');g.append(e)}}
 function openFolderDetail(id){folderHub.id=id;folderHub.detailSearchOpen=false;$('#fdSearch').value='';setFolderHubPage('detail');renderFolderDetail()}
 function moreButton(label,fn,cls){const b=document.createElement('button');b.type='button';b.textContent=label;if(cls)b.className=cls;b.onclick=fn;return b}function moreHead(t){const d=document.createElement('div');d.className='morehead';d.textContent=t;return d}
 function setFolderView(v){const sc=curSettings();sc.folderView=v;if(v==='grid-s')sc.folderBox='4';if(v==='grid-m')sc.folderBox='3';if(v==='grid-l')sc.folderBox='2';persistFolderState().catch(()=>{});renderFolderHub()}
@@ -5750,7 +5754,7 @@ const VLT={
   persistSettings(){return this.persist();},
   autoLockValue(){const v=String((this.settings&&this.settings.vaultAutoLock)||'5');return ['1','5','15','30'].includes(v)?v:'5';},
   clearAutoLock(){clearTimeout(this._autoTimer);this._autoTimer=null;this._autoUntil=0;},
-  armAutoLock(){this.clearAutoLock();const m=parseInt(this.autoLockValue(),10)||0;if(!m||!ui.vault||!this.key)return;this._autoUntil=Date.now()+m*60000;this._autoTimer=setTimeout(()=>{if(ui.vault&&this.key){toast(L('Vault 시간이 만료되어 잠갔습니다.','Vault auto-lock time expired.'));this.leave();}},m*60000);},
+  armAutoLock(){this.clearAutoLock();const m=parseInt(this.autoLockValue(),10)||0;if(!m||!this.key)return;this._autoUntil=Date.now()+m*60000;this._autoTimer=setTimeout(()=>{if(this.key){toast(L('Vault 시간이 만료되어 잠갔습니다.','Vault auto-lock time expired.'));this.leave();}},m*60000);},
   async setAutoLock(v){if(!['1','5','15','30'].includes(String(v)))return;const old=this.settings.vaultAutoLock;this.settings.vaultAutoLock=String(v);if(!(await this.persist())){this.settings.vaultAutoLock=old;toast(L('자동 잠금 설정을 저장하지 못했습니다.','Could not save auto-lock setting.'));return;}this.armAutoLock();toast(L('Vault 자동 잠금을 '+v+'분으로 설정했습니다.','Vault auto-lock set to '+v+' minutes.'));},
   wipe(){
     this.notes=[];this.folders=[];this.settings=Object.assign({},VAULT_DEF);this.key=null;this.auth=null;this.encrypted=false;this.format=0;this._blob=null;this.legacyMeta=false;this.failCount=0;this.lockUntil=0;this.clearAutoLock();this.pendingTransfer=null;
@@ -5762,12 +5766,17 @@ const VLT={
     this.settings.font=migFont(this.settings.font);
   },
   open(){
+    if(this.key&&this.auth){this.enter();return;}
     if(this.encrypted&&!hasVaultPin()){toast(L('Vault 인증 정보가 없습니다. 비밀번호를 재설정하지 말고 백업으로 복구하세요.','Vault authentication data is missing. Do not reset the password; restore from a backup.'));return;}
     $('#vGatePass').value='';ovOpen($('#vGate'));setTimeout(()=>$('#vGatePass').focus(),80);
   },
   enter(){
     const g=$('#vGate');if(OVS.indexOf(g)>-1)ovCloseUi(g);else g.classList.remove('show');
     ui.vault=true;ui.trash=false;ui.folder='';ui.nofolder=false;ui.search='';$('#search').value='';ui.view=this.settings.view||'grid';exitSel();render();this.armAutoLock();
+  },
+  exitView(){
+    if(!this.key){this.leave();return;}
+    ui.vault=false;ui.view=S.settings.view||'grid';ui.folder='';ui.nofolder=false;ui.trash=false;ui.search='';$('#search').value='';ui.editingId=null;exitSel();scheduleReminders();render();toast(L('Vault는 설정한 자동 잠금 시간까지 잠금 해제 상태입니다.','Vault remains unlocked until the selected auto-lock time.'));
   },
   leave(){
     this.clearAutoLock();this.pendingTransfer=null;
@@ -6172,8 +6181,20 @@ if(document.readyState==='complete') setTimeout(bootRestoreSession,0);
 else addEventListener('load',()=>setTimeout(bootRestoreSession,0));
 histPush();
 /* (v6) 자동 백업 확정: 탭을 닫거나 화면이 숨겨질 때 바로 스냅샷 저장 */
-addEventListener('pagehide',()=>{ try{autoSnapshot(true);}catch(e){} });
-document.addEventListener('visibilitychange',()=>{ if(document.hidden){ try{autoSnapshot(true);}catch(e){} } });
+function resetToFirstNotesScreen(hardLock=false){
+  try{if(hardLock&&ui.vault&&VLT&&VLT.key)VLT.leave();}catch(_){}
+  OVS.splice(0).forEach(el=>el&&el.classList&&el.classList.remove('show'));
+  ['#edOverlay','#folderOverlay','#setOverlay','#acOverlay','#bkOverlay','#pinOverlay','#vGate','#remindOverlay','#dlg'].forEach(sel=>{const el=$(sel);if(el)el.classList.remove('show')});
+  ui.folder='';ui.nofolder=false;ui.search='';ui.trash=false;ui.editingId=null;ui.edEdit=false;ui.selMode=false;ui.selected.clear();ui.vault=false;ui.view=S.settings.view||'grid';
+  try{folderHub.id='';folderHub.page='hub';folderHub.select.clear();folderHub.selectMode='notes';folderHub.trashTab='notes';}catch(_){}
+  const q=$('#search');if(q)q.value='';render();applyViewBtn();
+}
+addEventListener('pageshow',e=>{if(e.persisted)resetToFirstNotesScreen();});
+addEventListener('pagehide',()=>{ try{autoSnapshot(true);}catch(e){} try{if(VLT&&VLT.key)VLT.leave();}catch(_){} });
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden){try{autoSnapshot(true);}catch(_){}}
+  else if(document.readyState==='complete')resetToFirstNotesScreen(false);
+});
 /* ═══════════════ PWA ═══════════════ */
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){
   addEventListener('load',()=>{
