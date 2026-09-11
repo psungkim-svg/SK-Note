@@ -1,8 +1,8 @@
 /* soonenote — Service Worker (오프라인 지원)
    v6.1 수정: HTML은 네트워크 우선(network-first) → 새 버전 배포 시 즉시 반영.
    나머지 정적 파일만 캐시 우선(cache-first).
-   v7.3: independent Folder/Vault preferences and safe Vault auto-lock; cache version raised to retire prior assets. */
-const VERSION = '7.3';
+   v7.4: local pinned-note notification, Folder polish, and cache version raised to retire prior assets. */
+const VERSION = '7.4';
 const CACHE = 'soonenote-v' + VERSION;
 const ASSETS = [
   './', './index.html', './manifest.webmanifest',
@@ -73,4 +73,14 @@ self.addEventListener('fetch', e => {
       }).catch(() => hit)
     )
   );
+});
+
+
+/* Local pinned-note notifications are best-effort; no server Push or note plaintext is stored here. */
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  event.waitUntil(clients.matchAll({type:'window',includeUncontrolled:true}).then(list => {
+    const open=list.find(c => 'focus' in c);
+    return open ? open.focus() : clients.openWindow('./');
+  }));
 });

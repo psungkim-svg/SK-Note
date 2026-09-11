@@ -132,7 +132,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-5HXxkW5CrN1qJhhe0obApqPjsYDuVaYzDg/j7Dfrmxo='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-uAwzcl3Ag1nnjvo7lKTxWtWfGoL0/y9b/lW6X5u9Kds='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
 <!-- (요구3) 전화기 화면에 딱 맞게 · 자동 확대(핀치 줌 포함) 완전 금지 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#f5f2ef">
@@ -1129,6 +1129,22 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
 #fhFolderGrid.view-grid-l .fh-folder{flex-direction:column;justify-content:flex-start;min-height:7.15em;padding:.62em .4em;text-align:center}
 #fhFolderGrid.view-grid-l .fh-folder .fi{font-size:2.15em}
 #fhFolderGrid.view-grid-l .fh-folder .fc{margin-top:auto;margin-left:0}
+
+/* ══════════ v7.4 Folder polish · local pin notice ══════════ */
+#folderOverlay:not(.vault-folder),#folderOverlay:not(.vault-folder)>.sheet{background:#e6f1e5}
+#folderOverlay:not(.vault-folder) .fh-top{background:rgba(255,255,255,.32);border-radius:.78em;padding:.28em .36em .45em}
+#folderOverlay.vault-folder,#folderOverlay.vault-folder>.sheet{background:var(--bg)}
+html[data-theme="dark"] #folderOverlay:not(.vault-folder),html[data-theme="dark"] #folderOverlay:not(.vault-folder)>.sheet{background:#26352c}
+.fh-home-btn{background:linear-gradient(145deg,#fff8df,#e6f1e5)!important;border:1px solid #c6d9c5!important;box-shadow:0 2px 6px rgba(78,111,85,.16)}
+.fh-home-btn:active{background:linear-gradient(145deg,#f5d9bd,#dbead9)!important}
+.fh-home-svg{display:block;width:1.34em;height:1.34em;filter:drop-shadow(0 1px 0 rgba(99,76,45,.12))}.fh-home-svg .home-roof{fill:#df9a86}.fh-home-svg .home-wall{fill:#f6d487}.fh-home-svg .home-door{fill:#86ad8c}.fh-home-svg .home-sun{fill:#e8b95c}
+.fh-folder .fi{color:#d9a246}.fh-folder-svg .folder-tab{fill:#f9dc8f;stroke:#d9a246;stroke-width:1.15}.fh-folder-svg .folder-body{fill:#efbd58;stroke:#d9a246;stroke-width:1.15}.fh-folder-svg .folder-line{fill:none;stroke:#fff0bf;stroke-width:1.05}
+.fh-folder.rename-armed{transform:scale(.96);box-shadow:0 0 0 3px rgba(218,162,70,.34),0 7px 18px rgba(80,65,35,.18)}
+#folderOverlay .sheet{position:relative}#fhFab{position:absolute;right:.85em;bottom:max(.85em,env(safe-area-inset-bottom));z-index:12;width:1.7em;height:1.7em;padding:0;display:flex;align-items:center;justify-content:center;border-radius:50%;border:none;background:var(--accent);color:#4a332e;font-size:1.6em;font-weight:700;line-height:1;box-shadow:0 4px 12px rgba(90,75,65,.28);transform:translate(2mm,0) scale(.8);transition:transform .15s}#fhFab:active{transform:translate(2mm,1mm) scale(.72)}
+#fdTitle{cursor:pointer;text-decoration:underline dotted transparent;text-underline-offset:.19em}#fdTitle:active,#fdTitle:focus{outline:none;text-decoration-color:var(--sub)}
+#edTypePop{width:168px;padding:0 .46em .36em}#tpHandle{margin:0 -.49em .28em;padding:.36em .48em .30em;gap:.28em}#tpHandle .bar{width:1.45em}#tpHandle .txt{font-size:.53em}.tprow{margin:.20em 0;gap:.30em}#edTypePop .tprow.tp1{gap:.30em}#edTypePop .tprow.tp1 .tpbiu{height:2.05em}.tprow.tpcolors{justify-content:center;gap:.55em;padding:.04em 0 .08em}#edTypePop .tpdot{width:1.62em;height:1.62em}
+/* v7.4 decision: Vault bar is 125% of the v7.3 compact bar, not a return to its old oversized version. */
+#folderNav.vault{padding:.09em .40em;padding-bottom:calc(.11em + env(safe-area-inset-bottom))}#folderNav.vault .folderbar{padding:.125em .05em .03em}#folderNav.vault .chip{font-size:.75em;min-height:1.84em;padding:.16em .34em}#folderNav.vault #fab{width:1.80em;height:1.80em;font-size:1.55em;margin-bottom:.38em;transform:translate(2mm,2mm) scale(.70)}#folderNav.vault #fab:active{transform:translate(2mm,2mm) scale(.64)}
 </style>
 </head>
 <body>
@@ -1478,7 +1494,7 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
     <div id="folderHub">
       <section class="folder-page" id="folderHubPage" aria-label="Folders">
         <div class="fh-top">
-          <button class="iconbtn textico" id="fhHome" title="Home" aria-label="Home"><svg class="fh-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10H3z"/><path d="M9 20v-6h6v6"/></svg></button>
+          <button class="iconbtn fh-home-btn" id="fhHome" title="Home" aria-label="Home"><svg class="fh-home-svg" viewBox="0 0 24 24" aria-hidden="true"><path class="home-roof" d="m2.8 10 9.2-7.3 9.2 7.3-1.5 1.9L12 5.8l-7.7 6.1z"/><path class="home-wall" d="M5.2 10.3 12 5l6.8 5.3v8.4a1.3 1.3 0 0 1-1.3 1.3H6.5a1.3 1.3 0 0 1-1.3-1.3z"/><path class="home-door" d="M9.5 20v-5.3h5V20z"/><circle class="home-sun" cx="18.3" cy="5.2" r="1.6"/></svg></button>
           <h3 id="fhTitle">Folders</h3>
           <button class="iconbtn" id="fhSearchBtn" title="Search" aria-label="Search"><svg class="fh-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="5.5"/><path d="m15.1 15.1 4.3 4.3"/></svg></button>
           <button class="iconbtn textico" id="fhAddBtn" title="Add folder" aria-label="Add folder">＋</button>
@@ -1494,7 +1510,7 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
       <section class="folder-page hidden" id="folderDetailPage" aria-label="Folder notes">
         <div class="fh-top">
           <button class="iconbtn textico" id="fdBack" title="Back to folders" aria-label="Back to folders">←</button>
-          <h3 class="fh-detail-label" id="fdTitle">Folder</h3>
+          <h3 class="fh-detail-label" id="fdTitle" role="button" tabindex="0" title="Rename folder" aria-label="Rename folder">Folder</h3>
           <button class="iconbtn" id="fdSearchBtn" title="Search" aria-label="Search"><svg class="fh-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="5.5"/><path d="m15.1 15.1 4.3 4.3"/></svg></button>
           <button class="iconbtn textico" id="fdAddBtn" title="Add note" aria-label="Add note">＋</button>
           <button class="iconbtn" id="fdViewBtn" title="View" aria-label="View">▦</button>
@@ -1519,6 +1535,7 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
         <div id="fhTrashList"></div>
       </section>
     </div>
+    <button id="fhFab" class="hidden" title="Add folder" aria-label="Add folder">+</button>
   </div>
 </div>
 
@@ -1583,7 +1600,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='soonenote';
-const APP_VER='7.3';
+const APP_VER='7.4';
 const SSTORE=(()=>{try{const t='__cn__';sessionStorage.setItem(t,'1');sessionStorage.removeItem(t);return sessionStorage}
   catch(e){const m={};return{getItem:k=>(k in m?m[k]:null),setItem:(k,v)=>{m[k]=String(v)},removeItem:k=>{delete m[k]}}}})();
 
@@ -3454,6 +3471,21 @@ function fireReminder(id){
   }catch(e){toast(title)}
 }
 
+async function closePinnedNotification(noteId){
+  try{const reg=navigator.serviceWorker&&await navigator.serviceWorker.getRegistration();if(reg&&reg.getNotifications){(await reg.getNotifications({tag:'sk-pinned-'+noteId})).forEach(n=>n.close());}}catch(_){}
+}
+async function showPinnedNotification(n){
+  if(!('Notification' in window)){toast(L('이 브라우저는 시스템 알림을 지원하지 않습니다. 상단 고정은 앱 안에서만 유지됩니다.','This browser does not support system notifications. The note remains pinned in the app.'));return false;}
+  let permission=Notification.permission;
+  if(permission==='default'){try{permission=await Notification.requestPermission();}catch(_){permission='denied';}}
+  if(permission!=='granted'){toast(L('알림 권한이 없어 앱 안에서만 상단 고정했습니다. 브라우저/휴대폰 설정에서 알림을 허용할 수 있습니다.','Notifications are not permitted, so the note is pinned only in the app. You can enable notifications in browser or phone settings.'));return false;}
+  const vault=!!ui.vault;
+  const title=vault?'🔐 Vault':'📌 '+(n.title||APP_NAME);
+  const body=vault?L('고정한 Vault 노트가 있습니다. 내용은 알림에 표시하지 않습니다.','A Vault note is pinned. Its contents are not shown in notifications.'):plain(n.content||'').replace(/\s+/g,' ').trim().slice(0,100)||L('고정한 노트','Pinned note');
+  const opt={body,icon:'icons/icon-192.png',tag:'sk-pinned-'+n.id,renotify:true,requireInteraction:true,data:{noteId:n.id,vault}};
+  try{const reg=navigator.serviceWorker&&await navigator.serviceWorker.getRegistration();if(reg&&reg.showNotification)await reg.showNotification(title,opt);else new Notification(title,opt);toast(L('상단 고정과 함께 휴대폰 알림을 보냈습니다. 운영체제가 알림을 지우거나 묶을 수 있습니다.','Pinned and sent a phone notification. Your OS may group or dismiss it.'));return true;}catch(_){toast(L('상단 고정은 되었지만 시스템 알림을 표시하지 못했습니다.','The note is pinned, but the system notification could not be shown.'));return false;}
+}
+
 /* ═══════════════ 에디터 (전체화면 · 보기/편집 모드) ═══════════════ */
 let edSaveTimer=null;
 function newNote(type,folderOverride){
@@ -4081,7 +4113,7 @@ function buildTypePop(){
   makeTypePopDraggable(p,hd);
   /* (v6.9 요청3) '크기' 슬라이더는 없앤다 - 글자 크기는 설정 화면(전역)에서만 조절한다. */
   /* B / I / U */
-  const r2=document.createElement('div');r2.className='tprow tp1';r2.innerHTML='<span class="tplab">'+L('서식','Style')+'</span>';
+  const r2=document.createElement('div');r2.className='tprow tp1';
   [['bold','B','b'],['italic','I','i'],['underline','U','u']].forEach(([cmd,lab,cls])=>{
     const b=document.createElement('button');b.className='tpbiu '+cls;b.textContent=lab;
     b.onclick=e=>{e.preventDefault();e.stopPropagation();execTypeCmd(cmd);b.classList.toggle('on')};
@@ -4160,25 +4192,21 @@ function buildTypePop(){
     n.content=ed.innerHTML;n.updatedAt=Date.now();n.dirty=true;schedSave();
     toast(L('글자색을 지웠습니다','Colour cleared'));
   };
-    TP_COLORS.forEach(t=>{
+    const r3=document.createElement('div');r3.className='tprow tpcolors';
+  TP_COLORS.forEach(t=>{
     const b=document.createElement('button');b.className='tpdot';b.style.background=t.c;
     b.title=L(t.ko,t.en);b.setAttribute('aria-label',L(t.ko,t.en));
     b.onpointerdown=e=>{e.preventDefault();tpSaveRange()};
     b.onclick=e=>{e.preventDefault();e.stopPropagation();tpColorApply(t.c)};
-    r2.append(b);
+    r3.append(b);
   });
   const cl=document.createElement('button');cl.className='tpdot clear';cl.textContent='⊘';
   cl.title=L('글자색 지움','Clear text colour');
   cl.onpointerdown=e=>{e.preventDefault();tpSaveRange()};
   cl.onclick=e=>{e.preventDefault();e.stopPropagation();tpColorClear()};
-  r2.append(cl);
+  r3.append(cl);
   p.append(r2);
-  /* 안내 */
-  const tip=document.createElement('div');
-  tip.style.cssText='font-size:.56em;color:var(--sub);padding:.1em .2em .3em;line-height:1.3';
-  tip.textContent=L('바꿀 글자를 먼저 드래그해서 고르세요 · 점 3개는 글자색, 노트 색은 아래 🎨',
-                    'Select the text first · the three dots are text colour, 🎨 below is the note colour');
-  p.append(tip);
+  p.append(r3);
 }
 /* (v6.9 요청3) T창 안의 노트 색 팔레트 — 아래 #edColorBtn 과 같은 상태를 보이며 둘 다 같은 값 쓴다 */
 function renderTpPal(){
@@ -4438,7 +4466,7 @@ function buildKebab(){
   const m=$('#edMenu');m.innerHTML='';
   const item=(emo,label,fn,cls)=>{const b=document.createElement('button');b.className='menuitem'+(cls?' '+cls:'');
     b.innerHTML=`<span class="emo">${emo}</span> ${label}`;b.onclick=()=>{m.classList.remove('show');histPop();fn()};m.append(b)};
-  item('📌',n.pinned?L('고정 해제','Unpin'):L('상단 고정','Pin to top'),()=>{n.pinned=!n.pinned;n.updatedAt=Date.now();n.dirty=true;schedSave();toast(n.pinned?L('고정했습니다','Pinned to top'):L('고정을 해제했습니다','Unpinned'))});
+  item('📌',n.pinned?L('고정 해제','Unpin'):L('상단 고정','Pin to top'),async()=>{n.pinned=!n.pinned;n.updatedAt=Date.now();n.dirty=true;schedSave();if(n.pinned)await showPinnedNotification(n);else{await closePinnedNotification(n.id);toast(L('상단 고정을 해제했습니다.','Unpinned.'));}});
   item('⏰',L('알림 설정','Reminder'),()=>openRemind(n.id));
   item('📤',L('공유','Share'),()=>shareNote(n));
   item('📑',L('전체 텍스트 선택','Select all text'),()=>{          // (요청1) 입력한 텍스트만 선택
@@ -4576,7 +4604,7 @@ $('#addItemBtn').onclick=()=>{const n=cur();n.items.push({text:'',done:false});s
   const inputs=$$('#edItems .itxt');inputs[inputs.length-1].focus()};
 
 /* ═══════════════ 폴더 v7.3 — 독립 보기·정렬 / Hub → 메인 카드 상세 ═══════════════ */
-const FH_ICONS={folder:'<svg class="fh-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6.5h6l2 2H21v9.7A1.8 1.8 0 0 1 19.2 20H4.8A1.8 1.8 0 0 1 3 18.2z"/><path d="M3 8.5h18"/></svg>'};
+const FH_ICONS={folder:'<svg class="fh-svg fh-folder-svg" viewBox="0 0 24 24" aria-hidden="true"><path class="folder-tab" d="M3.1 7.6V6.4A1.8 1.8 0 0 1 4.9 4.6h4.2l2 2h7.9a1.8 1.8 0 0 1 1.8 1.8v1.1z"/><path class="folder-body" d="M3 8.2h18v9.9a1.8 1.8 0 0 1-1.8 1.8H4.8A1.8 1.8 0 0 1 3 18.1z"/><path class="folder-line" d="M3.2 10.1h17.6"/></svg>'};
 const FOLDER_VIEWS=['grid-s','grid-m','grid-l','list','titles'];
 const FOLDER_SORTS=['name','recent','count'];
 const NOTE_VIEWS=['grid','list','titles'];
@@ -4593,6 +4621,9 @@ function folderNoteSort(sc){const v=String((sc&&sc.folderNoteSort)||'color');ret
 function persistFolderState(){return ui.vault?VLT.persist():Promise.resolve(save())}
 function setFolderHubPage(page){
   folderHub.page=page;
+  const overlay=$('#folderOverlay'),fab=$('#fhFab');
+  if(overlay)overlay.classList.toggle('vault-folder',ui.vault);
+  if(fab){const visible=page==='hub'||page==='detail';fab.classList.toggle('hidden',!visible);fab.title=page==='detail'?L('새 노트','Add note'):L('새 폴더','Add folder');fab.setAttribute('aria-label',fab.title);}
   [['folderHubPage','hub'],['folderDetailPage','detail'],['folderSelectPage','select'],['folderTrashPage','trash']].forEach(([id,p])=>$('#'+id).classList.toggle('hidden',p!==page));
   closeFolderMore();
 }
@@ -4601,8 +4632,17 @@ function setFolderSearch(which,on){const hub=which==='hub',row=$(hub?'#fhSearchR
 function folderHome(){folderHub.id='';folderHub.select.clear();ui.folder='';ui.nofolder=false;ui.trash=false;ui.search='';$('#search').value='';exitSel();render();setFolderHubPage('hub');ovCloseUi($('#folderOverlay'));}
 function openFolderMgr(){closeVaultMainMore();folderHub.id='';folderHub.select.clear();folderHub.selectMode='notes';folderHub.trashTab='notes';folderHub.searchOpen=false;folderHub.detailSearchOpen=false;folderHub.addOpen=false;$('#fhSearch').value='';$('#fdSearch').value='';$('#fsSearch').value='';setFolderHubPage('hub');renderFolderHub();ovOpen($('#folderOverlay'))}
 function folderHubBack(){if(folderHub.page==='detail'){folderHub.id='';setFolderHubPage('hub');renderFolderHub();return}if(folderHub.page==='select'&&folderHub.selectMode==='move'){folderHub.selectMode='notes';renderFolderSelect();return}if(folderHub.page==='select'||folderHub.page==='trash'){setFolderHubPage('hub');renderFolderHub()}}
+function bindFolderTileRename(button,folder){
+  let timer=null,longPress=false;
+  const clear=()=>{if(timer){clearTimeout(timer);timer=null;}};
+  button.addEventListener('pointerdown',e=>{if(e.button!==undefined&&e.button!==0)return;longPress=false;clear();timer=setTimeout(()=>{timer=null;longPress=true;button.classList.add('rename-armed');if(navigator.vibrate)try{navigator.vibrate(18)}catch(_){}renameFolderById(folder.id);},560);});
+  ['pointerup','pointercancel','pointerleave','pointermove'].forEach(ev=>button.addEventListener(ev,clear));
+  button.onclick=e=>{if(longPress){e.preventDefault();e.stopPropagation();longPress=false;button.classList.remove('rename-armed');return;}openFolderDetail(folder.id);};
+  button.title=L('길게 눌러 이름 변경','Long press to rename');
+  button.setAttribute('aria-label',folderName(folder)+L(', 길게 눌러 이름 변경',', long press to rename'));
+}
 function sortFolderCollection(list){const mode=folderSort(curSettings());return list.sort((a,b)=>{const ac=NOTES().filter(n=>!n.deleted&&n.folder===a.id).length,bc=NOTES().filter(n=>!n.deleted&&n.folder===b.id).length;if(mode==='recent')return(b.createdAt||0)-(a.createdAt||0);if(mode==='count')return bc-ac||folderName(a).localeCompare(folderName(b),locale());return folderName(a).localeCompare(folderName(b),locale())})}
-function renderFolderHub(){setFolderHubPage('hub');vaultFolderStatus();const sc=curSettings();$('#fhTitle').textContent=ui.vault?'Vault':L('폴더','Folders');$('#fhSearch').placeholder=L('폴더 또는 노트 검색','Search folders or notes');$('#fhAddInput').placeholder=L('새 폴더 이름','New folder name');$('#fhAddRow').classList.toggle('hidden',!folderHub.addOpen);$('#fhSearchRow').classList.toggle('hidden',!folderHub.searchOpen);const q=$('#fhSearch').value.trim().toLowerCase(),grid=$('#fhFolderGrid'),view=folderView(sc);grid.className='view-'+view;grid.style.setProperty('--folder-hub-cols',prefGrid(sc,'folderBox','3'));grid.innerHTML='';let arr=ALL_FOLDERS().filter(f=>!f.deleted);if(q)arr=arr.filter(f=>folderName(f).toLowerCase().includes(q)||NOTES().some(n=>!n.deleted&&n.folder===f.id&&fHit(n,q)));sortFolderCollection(arr).forEach(f=>{const b=document.createElement('button');b.type='button';b.className='fh-folder';b.dataset.id=f.id;const count=NOTES().filter(n=>!n.deleted&&n.folder===f.id).length,icon=document.createElement('span'),name=document.createElement('span'),meta=document.createElement('span');icon.className='fi';icon.innerHTML=FH_ICONS.folder;name.className='fn';name.textContent=folderName(f);meta.className='fc';meta.textContent=L('노트 ','notes ')+count;b.append(icon,name,meta);b.onclick=()=>openFolderDetail(f.id);grid.append(b)});if(!arr.length){const e=document.createElement('div');e.className='fh-empty';e.textContent=q?L('찾는 폴더나 노트가 없습니다.','No matching folders or notes.'):L('아직 폴더가 없습니다. 상단의 ＋로 새 폴더를 만드세요.','No folders yet. Use ＋ at the top to create one.');grid.append(e)}}
+function renderFolderHub(){setFolderHubPage('hub');vaultFolderStatus();const sc=curSettings();$('#fhTitle').textContent=ui.vault?'Vault':L('폴더','Folders');$('#fhSearch').placeholder=L('폴더 또는 노트 검색','Search folders or notes');$('#fhAddInput').placeholder=L('새 폴더 이름','New folder name');$('#fhAddRow').classList.toggle('hidden',!folderHub.addOpen);$('#fhSearchRow').classList.toggle('hidden',!folderHub.searchOpen);const q=$('#fhSearch').value.trim().toLowerCase(),grid=$('#fhFolderGrid'),view=folderView(sc);grid.className='view-'+view;grid.style.setProperty('--folder-hub-cols',prefGrid(sc,'folderBox','3'));grid.innerHTML='';let arr=ALL_FOLDERS().filter(f=>!f.deleted);if(q)arr=arr.filter(f=>folderName(f).toLowerCase().includes(q)||NOTES().some(n=>!n.deleted&&n.folder===f.id&&fHit(n,q)));sortFolderCollection(arr).forEach(f=>{const b=document.createElement('button');b.type='button';b.className='fh-folder';b.dataset.id=f.id;const count=NOTES().filter(n=>!n.deleted&&n.folder===f.id).length,icon=document.createElement('span'),name=document.createElement('span'),meta=document.createElement('span');icon.className='fi';icon.innerHTML=FH_ICONS.folder;name.className='fn';name.textContent=folderName(f);meta.className='fc';meta.textContent=L('노트 ','notes ')+count;b.append(icon,name,meta);bindFolderTileRename(b,f);grid.append(b)});if(!arr.length){const e=document.createElement('div');e.className='fh-empty';e.textContent=q?L('찾는 폴더나 노트가 없습니다.','No matching folders or notes.'):L('아직 폴더가 없습니다. 상단의 ＋로 새 폴더를 만드세요.','No folders yet. Use ＋ at the top to create one.');grid.append(e)}}
 function sortDetailNotes(arr){const sort=folderNoteSort(curSettings());return arr.sort((a,b)=>{if(sort==='color')return(a.color||0)-(b.color||0)||b.updatedAt-a.updatedAt;if(sort==='updated')return(b.pinned?1:0)-(a.pinned?1:0)||b.updatedAt-a.updatedAt;if(sort==='created')return(b.pinned?1:0)-(a.pinned?1:0)||b.createdAt-a.createdAt;if(sort==='title')return(a.title||'').localeCompare(b.title||'',locale());return(b.pinned?1:0)-(a.pinned?1:0)||(a.sortIndex||0)-(b.sortIndex||0)})}
 function hq(txt,q){const raw=esc(txt||'');if(!q)return raw;try{return raw.replace(new RegExp(esc(q).replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'),m=>'<mark>'+m+'</mark>')}catch(_){return raw}}
 function folderNoteCard(n,q){const dark=isDark(),PAL=dark?COLORS_D:COLORS,HEAD=dark?HEADS_D:HEADS_L,el=document.createElement('div');el.className='note';el.dataset.id=n.id;el.style.setProperty('--nc',PAL[n.color||0]);el.style.setProperty('--tc',HEAD[n.color||0]);let body='';if(n.type==='check'){const done=(n.items||[]).filter(i=>i.done).length,tot=(n.items||[]).length;body=`<div class="body">${(n.items||[]).slice(0,4).map(i=>`${i.done?'☑':'☐'} ${hq(i.text,q)}`).join('<br>')}</div><div class="prog">☑ ${done}/${tot}</div>`}else body=`<div class="body">${hq(plain(n.content||'').slice(0,160),q)}</div>`;const rem=n.remindAt&&n.remindAt>Date.now();el.innerHTML=`<div class="thead"><div class="ttl">${hq(n.title,q)||L('제목 없음','No title')}</div><span class="badges">${n.pinned?'📌':''}${rem?'⏰':''}${n.type==='check'?'☑️':''}</span></div><div class="tinner">${body}</div>`;el.onclick=()=>openEditor(n.id);return el}
@@ -4656,7 +4696,16 @@ function renderMore(which){
 function closeFolderMore(){['#fhMoreMenu','#fdMoreMenu'].forEach(sel=>{const e=$(sel);if(e)e.classList.add('hidden')});folderHub.more='';folderHub.sub=''}
 function openDetailViewMenu(){const menu=$('#fdViewMenu'),sc=curSettings();closeFolderMore();menu.innerHTML='';menu.classList.toggle('hidden',!menu.classList.contains('hidden'));if(menu.classList.contains('hidden'))return;[['grid',L('Grid','Grid')],['list',L('List','List')],['titles',L('Simple list','Simple list')]].forEach(([v,t])=>menu.append(moreButton((folderNoteView(sc)===v?'✓  ':'')+t,()=>setFolderDetailView(v))))}function closeDetailViewMenu(){$('#fdViewMenu').classList.add('hidden')}
 async function addFolderFromHub(){const v=$('#fhAddInput').value.trim();if(!v)return;const f={id:uid(),name:v.slice(0,80),createdAt:Date.now(),_synced:false,deleted:false};ALL_FOLDERS().push(f);const saved=await persistFolderState();if(!saved){const a=ALL_FOLDERS();a.splice(a.indexOf(f),1);toast(L('폴더를 저장하지 못했습니다.','Could not save the folder.'));return}if(!ui.vault)syncSoon();$('#fhAddInput').value='';folderHub.addOpen=false;renderFolderHub();toast(L('새 폴더를 만들었습니다.','Folder created.'))}
-async function renameCurrentFolder(){const f=folderRaw();if(!f)return;const v=await dlg(L('새 폴더 이름','New folder name'),{input:true,def:f.name,okText:L('변경','Rename')});if(!v)return;const old=f.name;f.name=v.slice(0,80);f._synced=false;const saved=await persistFolderState();if(!saved){f.name=old;toast(L('폴더 이름을 저장하지 못했습니다.','Could not save the folder name.'));return}if(!ui.vault)syncSoon();closeFolderMore();renderFolderDetail()}
+async function renameFolderById(id){
+  const f=ALL_FOLDERS().find(x=>x.id===id);if(!f||f.deleted)return;
+  const v=await dlg(L('새 폴더 이름','New folder name'),{input:true,def:f.name,okText:L('변경','Rename')});if(v===null||v===undefined||!String(v).trim())return;
+  const old=f.name;f.name=String(v).trim().slice(0,80);f._synced=false;
+  const saved=await persistFolderState();
+  if(!saved){f.name=old;toast(L('폴더 이름을 저장하지 못했습니다.','Could not save the folder name.'));return}
+  if(!ui.vault)syncSoon();closeFolderMore();
+  if(folderHub.page==='detail'&&folderHub.id===id)renderFolderDetail();else renderFolderHub();
+}
+async function renameCurrentFolder(){return renameFolderById(folderHub.id)}
 async function trashCurrentFolder(){const f=folderRaw();if(!f)return;if(!await dlg(L(`'${folderName(f)}' 폴더를 휴지통으로 옮길까요?\n폴더 안 노트의 연결은 유지되어 복원할 수 있습니다.`,`Move '${folderName(f)}' to folder trash? Note links are kept so it can be restored.`),{danger:true,okText:L('휴지통으로','Move to trash')}))return;const before={deleted:!!f.deleted,deletedAt:f.deletedAt||0,synced:f._synced,syncDelete:!!f._syncDelete};f.deleted=true;f.deletedAt=Date.now();f._synced=true;f._syncDelete=!ui.vault;const saved=await persistFolderState();if(!saved){f.deleted=before.deleted;f.deletedAt=before.deletedAt;f._synced=before.synced;f._syncDelete=before.syncDelete;toast(L('폴더를 저장하지 못했습니다.','Could not save the folder.'));return}if(!ui.vault)syncSoon();closeFolderMore();folderHubBack();render();toast(L('폴더를 휴지통으로 옮겼습니다.','Folder moved to trash.'))}
 function renderFolderSelect(){setFolderHubPage('select');const list=$('#fhSelectList');if(folderHub.selectMode==='move'){renderFolderMoveTargets();return}$('#fsTitle').textContent=L('저장된 모든 노트 선택','Select all saved notes');$('#fsSearchRow').classList.remove('hidden');$('.fh-select-actions').classList.remove('hidden');const q=$('#fsSearch').value.trim().toLowerCase(),arr=NOTES().filter(n=>!n.deleted&&fHit(n,q));list.innerHTML='';arr.forEach(n=>{const row=document.createElement('label');row.className='fh-note-row';const cb=document.createElement('input');cb.type='checkbox';cb.checked=folderHub.select.has(n.id);cb.onchange=()=>{if(cb.checked)folderHub.select.add(n.id);else folderHub.select.delete(n.id);updateFolderSelectionUI()};const cp=document.createElement('span');cp.className='fh-note-copy';const title=document.createElement('span');title.className='fh-note-title';title.textContent=(n.type==='check'?'☑ ':'')+(n.title||L('제목 없음','No title'));const f=ALL_FOLDERS().find(x=>x.id===n.folder),meta=document.createElement('span');meta.className='fh-note-meta';meta.textContent=(f?'📁 '+folderName(f):L('폴더 없음','No folder'))+' · '+new Date(n.updatedAt||Date.now()).toLocaleDateString();cp.append(title,meta);row.append(cb,cp);list.append(row)});if(!arr.length){const e=document.createElement('div');e.className='fh-empty';e.textContent=L('선택할 노트가 없습니다.','No notes to select.');list.append(e)}updateFolderSelectionUI()}
 function updateFolderSelectionUI(){const arr=NOTES().filter(n=>!n.deleted&&fHit(n,$('#fsSearch').value.trim().toLowerCase())),count=folderHub.select.size;$('#fsCount').textContent=L(count+'개 선택',''+count+' selected');$('#fsMove').disabled=!count;$('#fsDelete').disabled=!count;$('#fsAll').textContent=arr.length&&arr.every(n=>folderHub.select.has(n.id))?'☐':'☑'}
@@ -4675,7 +4724,7 @@ async function restoreTrashFolder(id){const f=ALL_FOLDERS().find(x=>x.id===id);i
 async function deleteTrashFolder(id){const f=ALL_FOLDERS().find(x=>x.id===id);if(!f)return;if(!await dlg(L(`'${folderName(f)}' 폴더를 영구 삭제할까요? 연결된 노트는 '폴더 없음'으로 남습니다.`,`Delete '${folderName(f)}' forever? Linked notes will remain with no folder.`),{danger:true,okText:L('삭제','Delete')}))return;const coll=ALL_FOLDERS(),i=coll.indexOf(f),affected=NOTES().filter(n=>n.folder===id).map(n=>[n,n.folder,n.updatedAt,!!n.dirty]),queue=[...(S.settings.folderDeletes||[])];if(!ui.vault)S.settings.folderDeletes=[...new Set([...queue,id])];affected.forEach(([n])=>{n.folder='';n.updatedAt=Date.now();n.dirty=true});coll.splice(i,1);const saved=await persistFolderState();if(!saved){coll.splice(i,0,f);affected.forEach(([n,old,at,dirty])=>{n.folder=old;n.updatedAt=at;n.dirty=dirty});S.settings.folderDeletes=queue;toast(L('영구 삭제를 저장하지 못했습니다.','Could not save deletion.'));return}if(!ui.vault)syncSoon();renderFolderTrash();render()}
 function renderVaultMainMore(){const menu=$('#vaultMainMore'),sc=VLT.settings;menu.innerHTML='';menu.classList.toggle('hidden',!menu.classList.contains('hidden'));if(menu.classList.contains('hidden'))return;const add=(label,fn,cls)=>menu.append(moreButton(label,fn,cls));add(L('저장된 모든 노트 선택','Select all saved notes'),()=>{openFolderMgr();openAllNoteSelect()});add(L('노트 이동','Move notes'),()=>{openFolderMgr();openAllNoteSelect()});add(L('보기 방식','View'),()=>{folderHub.sub=folderHub.sub==='vhomeview'?'':'vhomeview';renderVaultMainMore()});if(folderHub.sub==='vhomeview'){const d=document.createElement('div');d.className='subchoices';[['grid',L('Grid','Grid')],['list',L('List','List')],['titles',L('Simple list','Simple list')]].forEach(([v,t])=>d.append(moreButton((sc.view===v?'✓  ':'')+t,()=>{sc.view=v;ui.view=v;VLT.persistSettings();render();renderVaultMainMore()})));menu.append(d)}add(L('정렬','Sort'),()=>{folderHub.sub=folderHub.sub==='vhomesort'?'':'vhomesort';renderVaultMainMore()});if(folderHub.sub==='vhomesort'){const d=document.createElement('div');d.className='subchoices';NOTE_SORTS.forEach(v=>d.append(moreButton((sc.sort===v?'✓  ':'')+({color:L('색상','Color'),updated:L('최근 수정','Recently updated'),created:L('최근 생성','Recently created'),title:L('제목','Title'),manual:L('수동 순서','Manual order')}[v]),()=>{sc.sort=v;VLT.persistSettings();render();renderVaultMainMore()})));menu.append(d)}add(L('노트 한 줄 개수','Notes per row'),()=>{folderHub.sub=folderHub.sub==='vhomecols'?'':'vhomecols';renderVaultMainMore()});if(folderHub.sub==='vhomecols'){const d=document.createElement('div');d.className='subchoices';['1','2','3','4'].forEach(v=>d.append(moreButton((String(sc.box)===v?'✓  ':'')+v,()=>{sc.box=v;VLT.persistSettings();render();renderVaultMainMore()})));menu.append(d)}const al=document.createElement('div');al.className='subchoices';al.append(moreHead(L('Vault 자동 잠금','Vault auto-lock')));const select=document.createElement('select');select.id='vaultAutoQuick';['1','5','15','30'].forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v+L('분',' min');select.append(o)});select.value=VLT.autoLockValue();select.onchange=()=>VLT.setAutoLock(select.value);al.append(select);menu.append(al)}
 function closeVaultMainMore(){$('#vaultMainMore').classList.add('hidden');folderHub.sub=''}
-$('#fhHome').onclick=folderHome;$('#fhSearchBtn').onclick=()=>setFolderSearch('hub',!folderHub.searchOpen);$('#fhSearchClose').onclick=()=>setFolderSearch('hub',false);$('#fhSearch').addEventListener('input',renderFolderHub);$('#fhAddBtn').onclick=()=>{folderHub.addOpen=!folderHub.addOpen;renderFolderHub();if(folderHub.addOpen)setTimeout(()=>$('#fhAddInput').focus(),20)};$('#fhAddClose').onclick=()=>{folderHub.addOpen=false;$('#fhAddInput').value='';renderFolderHub()};$('#fhAddSave').onclick=addFolderFromHub;$('#fhAddInput').addEventListener('keydown',e=>{if(e.key==='Enter')addFolderFromHub()});$('#fhTrashBtn').onclick=openFolderTrash;$('#fhMoreBtn').onclick=()=>renderMore('hub');$('#fdBack').onclick=folderHubBack;$('#fdSearchBtn').onclick=()=>setFolderSearch('detail',!folderHub.detailSearchOpen);$('#fdSearchClose').onclick=()=>setFolderSearch('detail',false);$('#fdSearch').addEventListener('input',renderFolderDetail);$('#fdAddBtn').onclick=()=>{const f=folderRaw();if(!f)return;const n=newNote('note',f.id);openEditor(n.id)};$('#fdViewBtn').onclick=openDetailViewMenu;$('#fdTrashBtn').onclick=openFolderTrash;$('#fdMoreBtn').onclick=()=>renderMore('detail');$('#fsBack').onclick=folderHubBack;$('#fsAll').onclick=()=>{const arr=NOTES().filter(n=>!n.deleted&&fHit(n,$('#fsSearch').value.trim().toLowerCase())),all=arr.length&&arr.every(n=>folderHub.select.has(n.id));if(all)arr.forEach(n=>folderHub.select.delete(n.id));else arr.forEach(n=>folderHub.select.add(n.id));renderFolderSelect()};$('#fsSearch').addEventListener('input',renderFolderSelect);$('#fsSearchClear').onclick=()=>{$('#fsSearch').value='';renderFolderSelect()};$('#fsMove').onclick=()=>{if(!folderHub.select.size)return;folderHub.selectMode='move';renderFolderSelect()};$('#fsDelete').onclick=deleteSelectedNotes;$('#ftBack').onclick=folderHubBack;$('#ftNotesTab').onclick=()=>{folderHub.trashTab='notes';renderFolderTrash()};$('#ftFoldersTab').onclick=()=>{folderHub.trashTab='folders';renderFolderTrash()};$('#btnVaultMore').onclick=renderVaultMainMore;
+$('#fhHome').onclick=folderHome;$('#fhSearchBtn').onclick=()=>setFolderSearch('hub',!folderHub.searchOpen);$('#fhSearchClose').onclick=()=>setFolderSearch('hub',false);$('#fhSearch').addEventListener('input',renderFolderHub);$('#fhAddBtn').onclick=()=>{folderHub.addOpen=!folderHub.addOpen;renderFolderHub();if(folderHub.addOpen)setTimeout(()=>$('#fhAddInput').focus(),20)};$('#fhAddClose').onclick=()=>{folderHub.addOpen=false;$('#fhAddInput').value='';renderFolderHub()};$('#fhAddSave').onclick=addFolderFromHub;$('#fhAddInput').addEventListener('keydown',e=>{if(e.key==='Enter')addFolderFromHub()});$('#fhTrashBtn').onclick=openFolderTrash;$('#fhMoreBtn').onclick=()=>renderMore('hub');$('#fdBack').onclick=folderHubBack;$('#fdTitle').onclick=renameCurrentFolder;$('#fdTitle').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();renameCurrentFolder()}};$('#fdSearchBtn').onclick=()=>setFolderSearch('detail',!folderHub.detailSearchOpen);$('#fdSearchClose').onclick=()=>setFolderSearch('detail',false);$('#fdSearch').addEventListener('input',renderFolderDetail);$('#fdAddBtn').onclick=()=>{const f=folderRaw();if(!f)return;const n=newNote('note',f.id);openEditor(n.id)};$('#fdViewBtn').onclick=openDetailViewMenu;$('#fdTrashBtn').onclick=openFolderTrash;$('#fdMoreBtn').onclick=()=>renderMore('detail');$('#fsBack').onclick=folderHubBack;$('#fsAll').onclick=()=>{const arr=NOTES().filter(n=>!n.deleted&&fHit(n,$('#fsSearch').value.trim().toLowerCase())),all=arr.length&&arr.every(n=>folderHub.select.has(n.id));if(all)arr.forEach(n=>folderHub.select.delete(n.id));else arr.forEach(n=>folderHub.select.add(n.id));renderFolderSelect()};$('#fsSearch').addEventListener('input',renderFolderSelect);$('#fsSearchClear').onclick=()=>{$('#fsSearch').value='';renderFolderSelect()};$('#fsMove').onclick=()=>{if(!folderHub.select.size)return;folderHub.selectMode='move';renderFolderSelect()};$('#fsDelete').onclick=deleteSelectedNotes;$('#ftBack').onclick=folderHubBack;$('#ftNotesTab').onclick=()=>{folderHub.trashTab='notes';renderFolderTrash()};$('#ftFoldersTab').onclick=()=>{folderHub.trashTab='folders';renderFolderTrash()};$('#btnVaultMore').onclick=renderVaultMainMore;$('#fhFab').onclick=()=>{if(folderHub.page==='hub'){folderHub.addOpen=true;renderFolderHub();setTimeout(()=>$('#fhAddInput').focus(),20);return;}if(folderHub.page==='detail'){const f=folderRaw();if(f)openEditor(newNote('note',f.id).id);}};
 
 
 /* ═══════════════ Supabase 동기화 ═══════════════ */
