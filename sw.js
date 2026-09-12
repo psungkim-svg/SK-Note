@@ -2,7 +2,7 @@
    v6.1 수정: HTML은 네트워크 우선(network-first) → 새 버전 배포 시 즉시 반영.
    나머지 정적 파일만 캐시 우선(cache-first).
    v7.5: reliable Back stack, timed Vault re-entry, and cache version raised to retire prior assets. */
-const VERSION = '7.5';
+const VERSION = '7.5.2';
 const CACHE = 'soonenote-v' + VERSION;
 const ASSETS = [
   './', './index.html', './manifest.webmanifest',
@@ -50,7 +50,9 @@ self.addEventListener('fetch', e => {
         .then(res => {
           if (res && res.ok) {
             const copy = res.clone();
-            caches.open(CACHE).then(c => c.put('./index.html', copy)).catch(() => {});
+            /* (v7.5.1) 루트 './' 캐시도 함께 갱신 — install 시점 문서는 오프라인
+               폴백으로만 남지 않게 한다. */
+            caches.open(CACHE).then(c => { c.put('./index.html', copy); return c.put('./', copy); }).catch(() => {});
           }
           return res;
         })

@@ -1,8 +1,20 @@
 <!DOCTYPE html>
 <!--
 ═══════════════════════════════════════════════════════════════
-  soonenote  —  V7.3
+  soonenote  —  V7.5.1
   (V6.0 → ... → V6.6 → V6.7 → V6.7.1)
+
+  V7.5.1 changes  (2026-09)  ← security & robustness patch
+   1. Vault reminder notifications no longer carry note title/body (generic text only),
+      matching the pinned-notification policy in SECURITY_NOTES.
+   2. Vault auto-lock deadline is re-checked on foreground return / bfcache restore,
+      so a frozen background timer can't leave the vault past its real deadline.
+   3. Programmatic back uses a counter instead of a boolean, fixing a missed
+      history.back() when two layers closed within 300ms.
+   4. On-device backup save now reports failure; export toasts distinguish
+      "file saved" from "on-device copy failed (storage full)".
+   5. Service worker refreshes the cached root document ('./') on successful
+      network navigation, not only './index.html'.
 
   V7.3 changes  (2026-09)  ← independent views and safe Vault auto-lock
    1. Vault v2 encrypts notes, folders, and vault settings in one AES-GCM envelope; backups retain ciphertext only.
@@ -132,7 +144,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-Ii0S32eFOh+vfp9cECNGqYfncdw7B3kZ4y09TptXcAo='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-q1xisLeV32CvBA8N0LfcIaI9+U6gP9eqXjMhcljnXlI='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
 <!-- (요구3) 전화기 화면에 딱 맞게 · 자동 확대(핀치 줌 포함) 완전 금지 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#f5f2ef">
@@ -1431,7 +1443,6 @@ html[data-theme="dark"] #folderOverlay:not(.vault-folder),html[data-theme="dark"
       </div>
       <div class="setrow"><label data-i18n="font_weight">Note font weight</label>
         <select id="stFontWeight">
-          <option value="l" data-i18n="fw_l">Light (300)</option>
           <option value="n" data-i18n="fw_n">Normal (500) — recommended</option>
           <option value="b" data-i18n="fw_b">Bold (700)</option>
           <option value="x" data-i18n="fw_x">Black (900)</option>
@@ -1610,7 +1621,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='soonenote';
-const APP_VER='7.5';
+const APP_VER='7.5.2';
 const SSTORE=(()=>{try{const t='__cn__';sessionStorage.setItem(t,'1');sessionStorage.removeItem(t);return sessionStorage}
   catch(e){const m={};return{getItem:k=>(k in m?m[k]:null),setItem:(k,v)=>{m[k]=String(v)},removeItem:k=>{delete m[k]}}}})();
 
@@ -1757,7 +1768,7 @@ const I18N={
   delete_from_editor:{en:'Delete'},
   no_folder_lbl:{en:'(No folder)'},regular_note:{en:'Regular note'},
   move_note_q:{en:'{t} — move to folder number:'},folder_move_confirm:{en:'Folder changed'},invalid_num:{en:'Invalid number'},
-  rename:{en:'Rename'},delete:{en:'Delete'},rename_q:{en:'New folder name'},delete_folder_q:{en:"Delete folder '{n}'? Its notes move to 'All'."},
+  rename:{en:'Rename'},rename_q:{en:'New folder name'},delete_folder_q:{en:"Delete folder '{n}'? Its notes move to 'All'."},
   empty_folders:{en:'No folders yet. Add one below.'},folders_mgr:{en:'📁 Folders'},
   remind_choose:{en:'Choose a time'},remind_future:{en:'Choose a time in the future'},
   remind_set_toast:{en:'Reminder set: {t}'},remind_cleared:{en:'Reminder cleared'},item_ph:{en:'Type an item'},
@@ -2553,7 +2564,7 @@ function migFont(f){ if(f==null)return '12'; if(FONT_KEYS_PT[f]!=null)return Str
 /* (요구3) 본문 굵기 4단계 — 단계 간 차이가 확실하게 구분되도록 (v5.2):
    가벼움 300(Light) · 보통 500(Medium) · 굵게 700(Bold) · 매우굵게 900(Black).
    FONT_WEIGHTS 맵이 '글자 키(l/n/b/x) ↔ 숫자 값' 변환의 유일한 기준. 모든 저장·로드·적용은 이 맵을 거침 */
-const FONT_WEIGHTS={l:'300',n:'500',b:'700',x:'900'};   /* 가벼움·보통·굵게·매우굵게 — 간격이 확실하게 나뉜 새 굵기 */
+const FONT_WEIGHTS={n:'500',b:'700',x:'900'};   /* (v7.5.2 요청3) 3단계: 보통·굵게·매우굵게 — Light(300) 폐지 */
 /* (v6.7) fontLs(자간, px) · fontLh(줄간격) 추가. 기본값은 V6.6과 똑같이 보이는 값 */
 /* (v6.8 STEP2) favA/favB = 하단바에 고정해 두는 즐겨찾기 폴더 ID 2개.
    폴더 데이터에는 손대지 않는다. 예전 설정에 이 값이 없으면 아래 기본값('')이 자동으로 채워진다. */
@@ -2607,6 +2618,8 @@ function load(){
     else if(S.settings.fontWeight==='b')S.settings.fontWeight='n';
     S.settings.fwVer=2;
   }else if(!['l','n','b','x'].includes(S.settings.fontWeight))S.settings.fontWeight='n';
+  /* (v7.5.2 요청3) Light(300) 단계 폐지 — 저장된 'l'은 'n'(500)으로 이관 (fwVer=3 마커) */
+  if((S.settings.fwVer||0)<3){ if(S.settings.fontWeight==='l')S.settings.fontWeight='n'; S.settings.fwVer=3; }
   if(!['1','2','3','4'].includes(String(S.settings.box)))S.settings.box='4';
   if(!['1','2','3','4','5','6','7'].includes(String(S.settings.fldCols)))S.settings.fldCols=S.settings.box;
   if(!['grid-s','grid-m','grid-l','list','titles'].includes(String(S.settings.folderView)))S.settings.folderView='grid-m';
@@ -2815,20 +2828,22 @@ function hl(escaped){
 
 /* ═══════════════ 뒤로 가기 (요구16: Back = 이전 화면) ═══════════════ */
 const OVS=[];
-let suppressPop=false, lastBackHint=0;
+let suppressPops=0, lastBackHint=0;
 function histPush(){ try{history.pushState({sk:1},'')}catch(e){} }
 /* (v6.1 버그수정) 예전에는 setTimeout(...,0)으로 suppressPop을 껐는데,
    popstate 이벤트가 그보다 늦게 도착하는 경우가 있어 '내가 부른 back'을
    '사용자가 누른 뒤로가기'로 오인했다.
    → Vault를 열자마자 곧바로 VLT.leave()가 불려 잠금이 풀리자마자 다시 잠기고
      복호화 키까지 지워지는 문제가 있었다.
-   이제 플래그는 popstate 핸들러가 직접 끄고, 타임아웃은 안전망(300ms)으로만 둔다. */
+   이제 플래그는 popstate 핸들러가 직접 끄고, 타임아웃은 안전망(300ms)으로만 둔다.
+   (v7.5.1) boolean → 카운터: 300ms 안에 여러 겹을 연속 닫으면(빠른 Back 2연타)
+   두 번째 history.back()이 건너뛰어져 '죽은 Back' 한 번이 남던 문제를 해소.
+   호출마다 back() 1회, 도착하는 popstate도 1회씩 소모한다. */
 function histPop(){
-  if(suppressPop)return;
-  suppressPop=true;
+  suppressPops++;
   try{history.back()}catch(e){}
   clearTimeout(histPop._t);
-  histPop._t=setTimeout(()=>{suppressPop=false},300);
+  histPop._t=setTimeout(()=>{suppressPops=0},300);
 }
 function ovOpen(el){ if(el.classList.contains('show'))return; el.classList.add('show'); OVS.push(el); histPush(); }
 function ovCloseUi(el){ const i=OVS.indexOf(el); if(i>-1)OVS.splice(i,1); el.classList.remove('show'); histPop(); }
@@ -2862,10 +2877,10 @@ const LIGHT_POPUPS=[
   {sel:'#edColorPop',  close:()=>$('#edColorPop').classList.remove('show')},
   {sel:'#edTypePop',   close:()=>$('#edTypePop').classList.remove('show')},
   {sel:'#addMenu',     close:()=>$('#addMenu').classList.remove('show')},
-  {sel:'#fhMoreMenu',   close:()=>closeFolderMore(),hidden:true},
-  {sel:'#fdMoreMenu',   close:()=>closeFolderMore(),hidden:true},
-  {sel:'#fdViewMenu',   close:()=>closeDetailViewMenu(),hidden:true},
-  {sel:'#vaultMainMore',close:()=>closeVaultMainMore(),hidden:true}
+  {sel:'#fhMoreMenu',   close:()=>closeFolderMore(false),hidden:true},
+  {sel:'#fdMoreMenu',   close:()=>closeFolderMore(false),hidden:true},
+  {sel:'#fdViewMenu',   close:()=>closeDetailViewMenu(false),hidden:true},
+  {sel:'#vaultMainMore',close:()=>closeVaultMainMore(false),hidden:true}
 ];
 /* 지금 열려 있는 가벼운 팝업이 있으면 하나 닫고 true */
 function closeTopLightPopup(){
@@ -2876,42 +2891,31 @@ function closeTopLightPopup(){
   /* 이미지 확대 미리보기는 .hidden 방식 */
   const ip=$('#imgPrev');
   if(ip&&!ip.classList.contains('hidden')){ ip.classList.add('hidden'); return true; }
-  /* 선택된 이미지가 있으면 선택만 해제 */
-  if(typeof selImg!=='undefined' && selImg){ deselectImg(); return true; }
   return false;
 }
-/* 지금 뒤로가기로 닫을 것이 남아 있는가? */
-function hasSomethingToClose(){
-  for(const p of LIGHT_POPUPS){
-    const el=$(p.sel); if(el&&((p.hidden&&!el.classList.contains('hidden'))||(!p.hidden&&el.classList.contains('show'))))return true;
-  }
-  const ip=$('#imgPrev'); if(ip&&!ip.classList.contains('hidden'))return true;
-  if(typeof selImg!=='undefined' && selImg)return true;
-  if(ui.selMode)return true;
-  if(OVS.length)return true;
-  if(ui.vault)return true;
-  return false;
-}
-
+/* v7.5.2 — Back 아키텍처(결정적):
+   원칙 1) 모든 화면 단계(오버레이, 폴더 하위 페이지, 팝업/메뉴)는 정확히 1개의 history slot을 가진다.
+   원칙 2) popstate(사용자 Back)는 상위 1단계만 닫는다 — 이 핸들러에서는 pushState를 절대 하지 않는다.
+   원칙 3) 프로그래밍 열기=open 시 histPush, 프로그래밍 닫기=close 시 histPop(1 slot 소모).
+   원칙 4) slot 없는 가상 상태(선택 모드/이미지 선택/보관 모드 진입)만 Back 시 net-0으로 재보상. */
 window.addEventListener('popstate',()=>{
-  if(suppressPop){ suppressPop=false; clearTimeout(histPop._t); return }
+  if(suppressPops>0){ suppressPops--; clearTimeout(histPop._t); return }
 
-  /* 1) 가벼운 팝업부터 — 한 번에 하나씩만 */
-  if(closeTopLightPopup()){ histPush(); return }
+  /* 1) 가벼운 팝업(각자 slot 보유) — 브라우저가 slot을 이미 소비했으므로 닫기만 */
+  if(closeTopLightPopup()){ return }
 
-  /* 2) 선택 모드 해제 */
+  /* 2) slot 없는 가상 상태 — 닫고 slot을 다시 확보(net 0) */
   if(ui.selMode){ exitSel(true); histPush(); return }
+  if(typeof selImg!=='undefined'&&selImg){ deselectImg(); histPush(); return }
 
-  /* 3) 오버레이 한 겹 닫기. 폴더 상세에서는 먼저 목록으로 돌아간다. */
+  /* 3) 오버레이 한 겹 닫기. 폴더 안에서는 하위 페이지 slot을 먼저 소모(상세→hub 등) */
   if(OVS.length){
-    if(OVS[OVS.length-1]===$('#folderOverlay')&&folderHub&&folderHub.page!=='hub'){folderHubBack();histPush();return;}
+    if(OVS[OVS.length-1]===$('#folderOverlay')&&folderHub&&folderHub.page!=='hub'){ folderHubBack(); return }
     ovCloseTop();
-    /* 아직 남은 화면이 있으면 history 자리를 다시 확보해 둔다 */
-    if(hasSomethingToClose()) histPush();
     return;
   }
 
-  /* 4) 보관 모드 → 일반 노트 */
+  /* 4) 보관 모드 → 일반 노트 (가상 상태: net-0 보상) */
   if(ui.vault){ VLT.exitView(); histPush(); return }
 
   /* 5) 여기까지 오면 정말 첫 화면 — 두 번 눌러야 종료 */
@@ -3464,9 +3468,13 @@ function scheduleReminders(){
   });
 }
 function fireReminder(id){
-  const n=[...S.notes,...VLT.notes].find(x=>x.id===id);if(!n||n.deleted)return;
-  const title='⏰ '+(n.title||APP_NAME);
-  const body=n.type==='check'?(n.items||[]).map(i=>(i.done?'☑ ':'☐ ')+i.text).join('  '):plain(n.content).slice(0,90);
+  /* (v7.5.1 보안보완) Vault 노트 알림은 제목·본문을 절대 포함하지 않는다 — 일반 안내만.
+     (pin 알림과 동일한 규칙. SECURITY_NOTES의 Vault notification policy와 일치시킨다.) */
+  const inVault=VLT.notes.some(x=>x.id===id);
+  const n=(inVault?VLT.notes:S.notes).find(x=>x.id===id);if(!n||n.deleted)return;
+  const title=inVault?L('🔐 Vault 알림','🔐 Vault reminder'):'⏰ '+(n.title||APP_NAME);
+  const body=inVault?L('보관함 노트의 알림 시간입니다. 내용은 표시하지 않습니다.','A vault note reminder is due. Content is not shown.')
+                    :(n.type==='check'?(n.items||[]).map(i=>(i.done?'☑ ':'☐ ')+i.text).join('  '):plain(n.content).slice(0,90));
   try{
     if('Notification' in window && Notification.permission==='granted'){
       new Notification(title,{body,icon:'icons/icon-192.png'});
@@ -3654,11 +3662,14 @@ $('#edPencil').onclick=()=>{
     setTimeout(()=>{nb.scrollTop=nb.scrollHeight},0);
   }
 };
-$('#edColorBtn').onclick=e=>{e.stopPropagation();$('#edMenu').classList.remove('show');
+$('#edColorBtn').onclick=e=>{e.stopPropagation();
+  if($('#edMenu').classList.contains('show')){$('#edMenu').classList.remove('show');histPop();}   /* (v7.5.2) 다른 팝업 slot 소모 */
   const el=$('#edColorPop'); const willOpen=!el.classList.contains('show');
   el.classList.toggle('show'); if(willOpen)histPush();      /* (v6.2 요청5) 뒤로가기 한 단계 확보 */
 };
-$('#edKebab').onclick=e=>{e.stopPropagation();$('#edColorPop').classList.remove('show');buildKebab();
+$('#edKebab').onclick=e=>{e.stopPropagation();
+  if($('#edColorPop').classList.contains('show')){$('#edColorPop').classList.remove('show');histPop();}  /* (v7.5.2) */
+  buildKebab();
   const el=$('#edMenu'); const willOpen=!el.classList.contains('show');
   el.classList.toggle('show'); if(willOpen)histPush();      /* (v6.2 요청5) */
 };
@@ -3672,6 +3683,19 @@ document.addEventListener('click',()=>{
 });
 $('#edColorPop').onclick=e=>e.stopPropagation();
 $('#edMenu').onclick=e=>e.stopPropagation();
+/* (v7.5.2 요청4) ⋮ 버튼이 여는 메뉴박스(폴더 hub/상세 ⋮, 보기 방식, 보관 ⋮) —
+   배경(메뉴·트리거 버튼이 아닌 곳)을 누르면 닫힌다. slot도 정확히 소모. */
+document.addEventListener('click',e=>{
+  const t=e.target;
+  const openMenu=['#fhMoreMenu','#fdMoreMenu','#fdViewMenu','#vaultMainMore']
+    .find(sel=>$(sel)&&!$(sel).classList.contains('hidden'));
+  if(!openMenu)return;
+  const trigger=openMenu==='#fhMoreMenu'?'#fhMoreBtn':openMenu==='#fdMoreMenu'?'#fdMoreBtn':openMenu==='#fdViewMenu'?'#fdViewBtn':'#btnVaultMore';
+  if(t&&t.closest&&(t.closest(openMenu)||t.closest(trigger)))return;
+  if(openMenu==='#vaultMainMore')closeVaultMainMore();
+  else if(openMenu==='#fdViewMenu')closeDetailViewMenu();
+  else closeFolderMore();
+});
 
 /* 제목 박스: 누르면 첫째 줄 자동입력 (요구6) */
 $('#edTitle').addEventListener('focus',()=>{
@@ -4489,7 +4513,7 @@ function buildKebab(){
 /* 노트별 본문 굵기 적용: 현재 노트값(또는 전역)을 FONT_WEIGHTS로 변환해 --notefw에 덮어씀 */
 function applyEditorWeight(n){
   const sc=curSettings();
-  const fw=FONT_WEIGHTS[(n&&n.fontWeight)||sc.fontWeight]||'500';
+  const fw=FONT_WEIGHTS[sc.fontWeight]||'500';   /* (v7.5.2 요청4) 전역 설정만 적용 — 모든 노트 동일 */
   document.documentElement.dataset.notefw=fw;
 }
 function moveFromVault(n){
@@ -4633,7 +4657,16 @@ function setFolderHubPage(page){
 }
 function vaultFolderStatus(){['#fhVaultStatus','#fdVaultStatus'].forEach(sel=>{const e=$(sel);if(e)e.classList.toggle('hidden',!ui.vault)});}
 function setFolderSearch(which,on){const hub=which==='hub',row=$(hub?'#fhSearchRow':'#fdSearchRow'),input=$(hub?'#fhSearch':'#fdSearch');if(hub)folderHub.searchOpen=on;else folderHub.detailSearchOpen=on;row.classList.toggle('hidden',!on);if(on)setTimeout(()=>input.focus(),20);if(!on){input.value='';hub?renderFolderHub():renderFolderDetail();}}
-function folderHome(){folderHub.id='';folderHub.select.clear();ui.folder='';ui.nofolder=false;ui.trash=false;ui.search='';$('#search').value='';exitSel();render();setFolderHubPage('hub');ovCloseUi($('#folderOverlay'));}
+/* v7.5.2 — 폴더 오버레이를 프로그래밍으로 닫을 때 slot(오버레이 1 + 하위 페이지 1)을 정확히 소모한다 */
+function closeFolderOverlayNow(){
+  const fo=$('#folderOverlay');
+  if(!fo||!fo.classList.contains('show'))return;
+  if(folderHub&&['detail','select','trash'].includes(folderHub.page))histPop();
+  fo.classList.remove('show');
+  const fi=OVS.indexOf(fo);if(fi>-1)OVS.splice(fi,1);
+  histPop();
+}
+function folderHome(){const hadSub=['detail','select','trash'].includes(folderHub.page);folderHub.id='';folderHub.select.clear();ui.folder='';ui.nofolder=false;ui.trash=false;ui.search='';$('#search').value='';exitSel();render();setFolderHubPage('hub');if(hadSub)histPop();ovCloseUi($('#folderOverlay'));}
 function openFolderMgr(){closeVaultMainMore();folderHub.id='';folderHub.select.clear();folderHub.selectMode='notes';folderHub.trashTab='notes';folderHub.searchOpen=false;folderHub.detailSearchOpen=false;folderHub.addOpen=false;$('#fhSearch').value='';$('#fdSearch').value='';$('#fsSearch').value='';setFolderHubPage('hub');renderFolderHub();ovOpen($('#folderOverlay'))}
 function folderHubBack(){if(folderHub.page==='detail'){folderHub.id='';setFolderHubPage('hub');renderFolderHub();return}if(folderHub.page==='select'&&folderHub.selectMode==='move'){folderHub.selectMode='notes';renderFolderSelect();return}if(folderHub.page==='select'||folderHub.page==='trash'){setFolderHubPage('hub');renderFolderHub()}}
 function bindFolderTileRename(button,folder){
@@ -4651,7 +4684,7 @@ function sortDetailNotes(arr){const sort=folderNoteSort(curSettings());return ar
 function hq(txt,q){const raw=esc(txt||'');if(!q)return raw;try{return raw.replace(new RegExp(esc(q).replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'),m=>'<mark>'+m+'</mark>')}catch(_){return raw}}
 function folderNoteCard(n,q){const dark=isDark(),PAL=dark?COLORS_D:COLORS,HEAD=dark?HEADS_D:HEADS_L,el=document.createElement('div');el.className='note';el.dataset.id=n.id;el.style.setProperty('--nc',PAL[n.color||0]);el.style.setProperty('--tc',HEAD[n.color||0]);let body='';if(n.type==='check'){const done=(n.items||[]).filter(i=>i.done).length,tot=(n.items||[]).length;body=`<div class="body">${(n.items||[]).slice(0,4).map(i=>`${i.done?'☑':'☐'} ${hq(i.text,q)}`).join('<br>')}</div><div class="prog">☑ ${done}/${tot}</div>`}else body=`<div class="body">${hq(plain(n.content||'').slice(0,160),q)}</div>`;const rem=n.remindAt&&n.remindAt>Date.now();el.innerHTML=`<div class="thead"><div class="ttl">${hq(n.title,q)||L('제목 없음','No title')}</div><span class="badges">${n.pinned?'📌':''}${rem?'⏰':''}${n.type==='check'?'☑️':''}</span></div><div class="tinner">${body}</div>`;el.onclick=()=>openEditor(n.id);return el}
 function renderFolderDetail(){const f=folderRaw();if(!f||f.deleted){folderHubBack();return}setFolderHubPage('detail');vaultFolderStatus();$('#fdTitle').textContent=folderName(f);$('#fdSearch').placeholder=L('이 폴더에서 노트 검색','Search this folder');$('#fdSearchRow').classList.toggle('hidden',!folderHub.detailSearchOpen);const q=$('#fdSearch').value.trim().toLowerCase(),g=$('#folderDetailGrid'),sc=curSettings(),view=folderNoteView(sc);g.className='folder-note-'+view;g.style.setProperty('--folder-note-cols',prefGrid(sc,'folderNoteBox','2'));g.innerHTML='';const arr=sortDetailNotes(NOTES().filter(n=>!n.deleted&&n.folder===f.id&&fHit(n,q)));arr.forEach(n=>g.append(folderNoteCard(n,q)));if(!arr.length){const e=document.createElement('div');e.className='fh-empty';e.textContent=q?L('검색 결과가 없습니다.','Nothing found.'):L('이 폴더에는 아직 노트가 없습니다. 상단의 ＋로 새 노트를 만드세요.','This folder has no notes yet. Use ＋ at the top to create one.');g.append(e)}}
-function openFolderDetail(id){folderHub.id=id;folderHub.detailSearchOpen=false;$('#fdSearch').value='';setFolderHubPage('detail');renderFolderDetail()}
+function openFolderDetail(id){if($('#folderOverlay').classList.contains('show')){closeFolderMore();closeDetailViewMenu();if(folderHub.page!=='detail')histPush();}folderHub.id=id;folderHub.detailSearchOpen=false;$('#fdSearch').value='';setFolderHubPage('detail');renderFolderDetail()}
 function moreButton(label,fn,cls){const b=document.createElement('button');b.type='button';b.textContent=label;if(cls)b.className=cls;b.onclick=fn;return b}function moreHead(t){const d=document.createElement('div');d.className='morehead';d.textContent=t;return d}
 function setFolderView(v){const sc=curSettings();sc.folderView=v;if(v==='grid-s')sc.folderBox='4';if(v==='grid-m')sc.folderBox='3';if(v==='grid-l')sc.folderBox='2';persistFolderState().catch(()=>{});renderFolderHub()}
 function setFolderBox(v){const sc=curSettings();sc.folderBox=v;sc.folderView='grid-'+({1:'l',2:'l',3:'m',4:'s'}[v]||'m');persistFolderState().catch(()=>{});renderFolderHub()}
@@ -4659,11 +4692,15 @@ function setFolderSort(v){curSettings().folderSort=v;persistFolderState().catch(
 function setFolderDetailView(v){curSettings().folderNoteView=v;persistFolderState().catch(()=>{});closeDetailViewMenu();renderFolderDetail()}
 function setFolderNoteBox(v){curSettings().folderNoteBox=v;persistFolderState().catch(()=>{});renderFolderDetail()}
 function setFolderNoteSort(v){curSettings().folderNoteSort=v;persistFolderState().catch(()=>{});renderFolderDetail()}
-function openAllNoteSelect(){folderHub.selectMode='notes';folderHub.select.clear();setFolderHubPage('select');renderFolderSelect()}
+function openAllNoteSelect(){if($('#folderOverlay').classList.contains('show')){closeFolderMore();if(folderHub.page!=='select')histPush();}folderHub.selectMode='notes';folderHub.select.clear();setFolderHubPage('select');renderFolderSelect()}
 function renderMore(which){
   const hub=which==='hub',menu=$(hub?'#fhMoreMenu':'#fdMoreMenu'),sc=curSettings();
-  ['#fhMoreMenu','#fdMoreMenu'].forEach(sel=>$(sel).classList.add('hidden'));
-  closeDetailViewMenu();menu.innerHTML='';menu.classList.remove('hidden');folderHub.more=which;
+  const wasOpen=!menu.classList.contains('hidden');
+  const other=$(hub?'#fdMoreMenu':'#fhMoreMenu');
+  if(other&&!other.classList.contains('hidden')){other.classList.add('hidden');histPop();}
+  closeDetailViewMenu();
+  menu.innerHTML='';menu.classList.remove('hidden');if(!wasOpen)histPush();
+  folderHub.more=which;
   menu.append(moreButton(L('저장된 모든 노트 선택','Select all saved notes'),openAllNoteSelect));
   menu.append(moreButton(L('노트 이동','Move notes'),openAllNoteSelect));
   if(hub){
@@ -4697,8 +4734,15 @@ function renderMore(which){
     menu.append(moreButton(L('폴더를 휴지통으로','Move folder to trash'),trashCurrentFolder,'danger'));
   }
 }
-function closeFolderMore(){['#fhMoreMenu','#fdMoreMenu'].forEach(sel=>{const e=$(sel);if(e)e.classList.add('hidden')});folderHub.more='';folderHub.sub=''}
-function openDetailViewMenu(){const menu=$('#fdViewMenu'),sc=curSettings();closeFolderMore();menu.innerHTML='';menu.classList.toggle('hidden',!menu.classList.contains('hidden'));if(menu.classList.contains('hidden'))return;[['grid',L('Grid','Grid')],['list',L('List','List')],['titles',L('Simple list','Simple list')]].forEach(([v,t])=>menu.append(moreButton((folderNoteView(sc)===v?'✓  ':'')+t,()=>setFolderDetailView(v))))}function closeDetailViewMenu(){$('#fdViewMenu').classList.add('hidden')}
+/* v7.5.2 — ⋮ 메뉴도 각 1 history slot: 닫는 경로가 소모(Back은 브라우저가 이미 소모 → consume=false) */
+function closeMenuSlot(sel,consume=true){const e=$(sel);if(e&&!e.classList.contains('hidden')){e.classList.add('hidden');if(consume)histPop();}}
+function closeFolderMore(consume=true){closeMenuSlot('#fhMoreMenu',consume);closeMenuSlot('#fdMoreMenu',consume);folderHub.more='';folderHub.sub=''}
+function openDetailViewMenu(){const menu=$('#fdViewMenu'),sc=curSettings();
+  if(!menu.classList.contains('hidden')){closeDetailViewMenu();return;}
+  closeFolderMore();
+  menu.innerHTML='';
+  [['grid',L('Grid','Grid')],['list',L('List','List')],['titles',L('Simple list','Simple list')]].forEach(([v,t])=>menu.append(moreButton((folderNoteView(sc)===v?'✓  ':'')+t,()=>setFolderDetailView(v))));
+  menu.classList.remove('hidden');histPush();}function closeDetailViewMenu(consume=true){closeMenuSlot('#fdViewMenu',consume)}
 async function addFolderFromHub(){const v=$('#fhAddInput').value.trim();if(!v)return;const f={id:uid(),name:v.slice(0,80),createdAt:Date.now(),_synced:false,deleted:false};ALL_FOLDERS().push(f);const saved=await persistFolderState();if(!saved){const a=ALL_FOLDERS();a.splice(a.indexOf(f),1);toast(L('폴더를 저장하지 못했습니다.','Could not save the folder.'));return}if(!ui.vault)syncSoon();$('#fhAddInput').value='';folderHub.addOpen=false;renderFolderHub();toast(L('새 폴더를 만들었습니다.','Folder created.'))}
 async function renameFolderById(id){
   const f=ALL_FOLDERS().find(x=>x.id===id);if(!f||f.deleted)return;
@@ -4714,10 +4758,10 @@ async function trashCurrentFolder(){const f=folderRaw();if(!f)return;if(!await d
 function renderFolderSelect(){setFolderHubPage('select');const list=$('#fhSelectList');if(folderHub.selectMode==='move'){renderFolderMoveTargets();return}$('#fsTitle').textContent=L('저장된 모든 노트 선택','Select all saved notes');$('#fsSearchRow').classList.remove('hidden');$('.fh-select-actions').classList.remove('hidden');const q=$('#fsSearch').value.trim().toLowerCase(),arr=NOTES().filter(n=>!n.deleted&&fHit(n,q));list.innerHTML='';arr.forEach(n=>{const row=document.createElement('label');row.className='fh-note-row';const cb=document.createElement('input');cb.type='checkbox';cb.checked=folderHub.select.has(n.id);cb.onchange=()=>{if(cb.checked)folderHub.select.add(n.id);else folderHub.select.delete(n.id);updateFolderSelectionUI()};const cp=document.createElement('span');cp.className='fh-note-copy';const title=document.createElement('span');title.className='fh-note-title';title.textContent=(n.type==='check'?'☑ ':'')+(n.title||L('제목 없음','No title'));const f=ALL_FOLDERS().find(x=>x.id===n.folder),meta=document.createElement('span');meta.className='fh-note-meta';meta.textContent=(f?'📁 '+folderName(f):L('폴더 없음','No folder'))+' · '+new Date(n.updatedAt||Date.now()).toLocaleDateString();cp.append(title,meta);row.append(cb,cp);list.append(row)});if(!arr.length){const e=document.createElement('div');e.className='fh-empty';e.textContent=L('선택할 노트가 없습니다.','No notes to select.');list.append(e)}updateFolderSelectionUI()}
 function updateFolderSelectionUI(){const arr=NOTES().filter(n=>!n.deleted&&fHit(n,$('#fsSearch').value.trim().toLowerCase())),count=folderHub.select.size;$('#fsCount').textContent=L(count+'개 선택',''+count+' selected');$('#fsMove').disabled=!count;$('#fsDelete').disabled=!count;$('#fsAll').textContent=arr.length&&arr.every(n=>folderHub.select.has(n.id))?'☐':'☑'}
 function renderFolderMoveTargets(){$('#fsTitle').textContent=L('선택한 노트를 어디로 옮길까요?','Move selected notes to…');$('#fsSearchRow').classList.add('hidden');$('.fh-select-actions').classList.add('hidden');const list=$('#fhSelectList');list.innerHTML='';const add=(id,name,sub,cb)=>{const b=document.createElement('button');b.className='fh-trash-row';b.style.width='100%';b.style.textAlign='left';b.type='button';b.innerHTML=`<span class="fi">${FH_ICONS.folder}</span><span class="fh-trash-copy"><span class="fh-trash-title">${esc(name)}</span><span class="fh-trash-meta">${esc(sub||'')}</span></span>`;b.onclick=cb||(()=>moveSelectedNotes(id));list.append(b)};add('',L('폴더 없음','No folder'),L('선택한 노트를 폴더 밖으로','Move selected notes out of folders'));sortFolderCollection(ALL_FOLDERS().filter(f=>!f.deleted)).forEach(f=>add(f.id,folderName(f),L('이 폴더로 이동','Move to this folder')));if(!ui.vault)add('__vault__','Vault',L('비밀번호 확인 후 암호화해 이동','Unlock and encrypt before moving'),startSelectedMoveToVault)}
-async function moveSelectedNotes(folderId){const ids=[...folderHub.select];if(!ids.length)return;const changed=NOTES().filter(n=>ids.includes(n.id)).map(n=>[n,n.folder]);changed.forEach(([n])=>{n.folder=folderId;n.updatedAt=Date.now();n.dirty=true});const saved=await persistFolderState();if(!saved){changed.forEach(([n,old])=>n.folder=old);toast(L('노트를 옮기지 못했습니다.','Could not move notes.'));return}if(!ui.vault)syncSoon();folderHub.select.clear();folderHub.selectMode='notes';setFolderHubPage('hub');renderFolderHub();render();toast(L('선택한 노트를 옮겼습니다.','Selected notes moved.'))}
+async function moveSelectedNotes(folderId){const ids=[...folderHub.select];if(!ids.length)return;const changed=NOTES().filter(n=>ids.includes(n.id)).map(n=>[n,n.folder]);changed.forEach(([n])=>{n.folder=folderId;n.updatedAt=Date.now();n.dirty=true});const saved=await persistFolderState();if(!saved){changed.forEach(([n,old])=>n.folder=old);toast(L('노트를 옮기지 못했습니다.','Could not move notes.'));return}if(!ui.vault)syncSoon();folderHub.select.clear();const fromMove=folderHub.selectMode==='move';folderHub.selectMode='notes';if(fromMove)histPop();histPop();setFolderHubPage('hub');renderFolderHub();render();toast(L('선택한 노트를 옮겼습니다.','Selected notes moved.'))}
 function startSelectedMoveToVault(){const ids=[...folderHub.select];if(!ids.length)return;VLT.pendingTransfer={ids};VLT.open()}
-async function deleteSelectedNotes(){const ids=[...folderHub.select];if(!ids.length)return;if(!await dlg(L(`선택한 ${ids.length}개 노트를 휴지통으로 옮길까요?`,`Move ${ids.length} selected note(s) to trash?`),{danger:true,okText:L('휴지통으로','Move to trash')}))return;const changed=NOTES().filter(n=>ids.includes(n.id)).map(n=>[n,!!n.deleted,n.updatedAt]);changed.forEach(([n])=>{n.deleted=true;n.updatedAt=Date.now();n.dirty=true});const saved=await persistFolderState();if(!saved){changed.forEach(([n,del,at])=>{n.deleted=del;n.updatedAt=at});toast(L('노트를 저장하지 못했습니다.','Could not save notes.'));return}if(!ui.vault)syncSoon();folderHub.select.clear();setFolderHubPage('hub');renderFolderHub();render();toast(L('선택한 노트를 휴지통으로 옮겼습니다.','Selected notes moved to trash.'))}
-function openFolderTrash(){folderHub.trashTab='notes';setFolderHubPage('trash');renderFolderTrash()}
+async function deleteSelectedNotes(){const ids=[...folderHub.select];if(!ids.length)return;if(!await dlg(L(`선택한 ${ids.length}개 노트를 휴지통으로 옮길까요?`,`Move ${ids.length} selected note(s) to trash?`),{danger:true,okText:L('휴지통으로','Move to trash')}))return;const changed=NOTES().filter(n=>ids.includes(n.id)).map(n=>[n,!!n.deleted,n.updatedAt]);changed.forEach(([n])=>{n.deleted=true;n.updatedAt=Date.now();n.dirty=true});const saved=await persistFolderState();if(!saved){changed.forEach(([n,del,at])=>{n.deleted=del;n.updatedAt=at});toast(L('노트를 저장하지 못했습니다.','Could not save notes.'));return}if(!ui.vault)syncSoon();folderHub.select.clear();histPop();setFolderHubPage('hub');renderFolderHub();render();toast(L('선택한 노트를 휴지통으로 옮겼습니다.','Selected notes moved to trash.'))}
+function openFolderTrash(){if($('#folderOverlay').classList.contains('show')){closeFolderMore();if(folderHub.page!=='trash')histPush();}folderHub.trashTab='notes';setFolderHubPage('trash');renderFolderTrash()}
 function renderFolderTrash(){setFolderHubPage('trash');$('#ftTitle').textContent=L('휴지통','Trash');$('#ftNotesTab').textContent=L('노트','Notes');$('#ftFoldersTab').textContent=L('폴더','Folders');$('#ftNotesTab').classList.toggle('on',folderHub.trashTab==='notes');$('#ftFoldersTab').classList.toggle('on',folderHub.trashTab==='folders');const box=$('#fhTrashList');box.innerHTML='';if(folderHub.trashTab==='notes'){const arr=NOTES().filter(n=>n.deleted).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));arr.forEach(n=>box.append(trashNoteRow(n)));if(!arr.length)trashEmpty(box,L('휴지통에 노트가 없습니다.','No notes in trash.'))}else{const arr=ALL_FOLDERS().filter(f=>f.deleted).sort((a,b)=>(b.deletedAt||0)-(a.deletedAt||0));arr.forEach(f=>box.append(trashFolderRow(f)));if(!arr.length)trashEmpty(box,L('휴지통에 폴더가 없습니다.','No folders in trash.'))}}
 function trashEmpty(box,msg){const e=document.createElement('div');e.className='fh-empty';e.textContent=msg;box.append(e)}
 function trashNoteRow(n){const row=document.createElement('div');row.className='fh-trash-row';const cp=document.createElement('span');cp.className='fh-trash-copy';const t=document.createElement('span');t.className='fh-trash-title';t.textContent=(n.type==='check'?'☑ ':'')+(n.title||L('제목 없음','No title'));const m=document.createElement('span');m.className='fh-trash-meta';m.textContent=new Date(n.updatedAt||Date.now()).toLocaleDateString();cp.append(t,m);const restore=moreButton(L('복원','Restore'),()=>restoreTrashNote(n.id));restore.className='btn';const del=moreButton(L('영구 삭제','Delete forever'),()=>deleteTrashNote(n.id));del.className='btn danger';row.append(cp,restore,del);return row}
@@ -4726,9 +4770,9 @@ async function deleteTrashNote(id){if(!await dlg(L('이 노트를 영구 삭제�
 function trashFolderRow(f){const row=document.createElement('div');row.className='fh-trash-row';const cp=document.createElement('span');cp.className='fh-trash-copy';const t=document.createElement('span');t.className='fh-trash-title';t.innerHTML=FH_ICONS.folder+' '+esc(folderName(f));const m=document.createElement('span');m.className='fh-trash-meta';m.textContent=L('연결된 노트 ','linked notes ')+NOTES().filter(n=>n.folder===f.id).length;cp.append(t,m);const restore=moreButton(L('복원','Restore'),()=>restoreTrashFolder(f.id));restore.className='btn';const del=moreButton(L('영구 삭제','Delete forever'),()=>deleteTrashFolder(f.id));del.className='btn danger';row.append(cp,restore,del);return row}
 async function restoreTrashFolder(id){const f=ALL_FOLDERS().find(x=>x.id===id);if(!f)return;const before={deleted:!!f.deleted,deletedAt:f.deletedAt||0,synced:f._synced,syncDelete:!!f._syncDelete,queue:[...(S.settings.folderDeletes||[])]};f.deleted=false;f.deletedAt=0;f._syncDelete=false;f._synced=false;S.settings.folderDeletes=(S.settings.folderDeletes||[]).filter(x=>x!==id);if(!(await persistFolderState())){f.deleted=before.deleted;f.deletedAt=before.deletedAt;f._synced=before.synced;f._syncDelete=before.syncDelete;S.settings.folderDeletes=before.queue;toast(L('복원 저장에 실패했습니다.','Could not save restoration.'));return}if(!ui.vault)syncSoon();renderFolderTrash();render()}
 async function deleteTrashFolder(id){const f=ALL_FOLDERS().find(x=>x.id===id);if(!f)return;if(!await dlg(L(`'${folderName(f)}' 폴더를 영구 삭제할까요? 연결된 노트는 '폴더 없음'으로 남습니다.`,`Delete '${folderName(f)}' forever? Linked notes will remain with no folder.`),{danger:true,okText:L('삭제','Delete')}))return;const coll=ALL_FOLDERS(),i=coll.indexOf(f),affected=NOTES().filter(n=>n.folder===id).map(n=>[n,n.folder,n.updatedAt,!!n.dirty]),queue=[...(S.settings.folderDeletes||[])];if(!ui.vault)S.settings.folderDeletes=[...new Set([...queue,id])];affected.forEach(([n])=>{n.folder='';n.updatedAt=Date.now();n.dirty=true});coll.splice(i,1);const saved=await persistFolderState();if(!saved){coll.splice(i,0,f);affected.forEach(([n,old,at,dirty])=>{n.folder=old;n.updatedAt=at;n.dirty=dirty});S.settings.folderDeletes=queue;toast(L('영구 삭제를 저장하지 못했습니다.','Could not save deletion.'));return}if(!ui.vault)syncSoon();renderFolderTrash();render()}
-function renderVaultMainMore(){const menu=$('#vaultMainMore'),sc=VLT.settings;menu.innerHTML='';menu.classList.toggle('hidden',!menu.classList.contains('hidden'));if(menu.classList.contains('hidden'))return;const add=(label,fn,cls)=>menu.append(moreButton(label,fn,cls));add(L('저장된 모든 노트 선택','Select all saved notes'),()=>{openFolderMgr();openAllNoteSelect()});add(L('노트 이동','Move notes'),()=>{openFolderMgr();openAllNoteSelect()});add(L('보기 방식','View'),()=>{folderHub.sub=folderHub.sub==='vhomeview'?'':'vhomeview';renderVaultMainMore()});if(folderHub.sub==='vhomeview'){const d=document.createElement('div');d.className='subchoices';[['grid',L('Grid','Grid')],['list',L('List','List')],['titles',L('Simple list','Simple list')]].forEach(([v,t])=>d.append(moreButton((sc.view===v?'✓  ':'')+t,()=>{sc.view=v;ui.view=v;VLT.persistSettings();render();renderVaultMainMore()})));menu.append(d)}add(L('정렬','Sort'),()=>{folderHub.sub=folderHub.sub==='vhomesort'?'':'vhomesort';renderVaultMainMore()});if(folderHub.sub==='vhomesort'){const d=document.createElement('div');d.className='subchoices';NOTE_SORTS.forEach(v=>d.append(moreButton((sc.sort===v?'✓  ':'')+({color:L('색상','Color'),updated:L('최근 수정','Recently updated'),created:L('최근 생성','Recently created'),title:L('제목','Title'),manual:L('수동 순서','Manual order')}[v]),()=>{sc.sort=v;VLT.persistSettings();render();renderVaultMainMore()})));menu.append(d)}add(L('노트 한 줄 개수','Notes per row'),()=>{folderHub.sub=folderHub.sub==='vhomecols'?'':'vhomecols';renderVaultMainMore()});if(folderHub.sub==='vhomecols'){const d=document.createElement('div');d.className='subchoices';['1','2','3','4'].forEach(v=>d.append(moreButton((String(sc.box)===v?'✓  ':'')+v,()=>{sc.box=v;VLT.persistSettings();render();renderVaultMainMore()})));menu.append(d)}const al=document.createElement('div');al.className='subchoices';al.append(moreHead(L('Vault 자동 잠금','Vault auto-lock')));const select=document.createElement('select');select.id='vaultAutoQuick';['1','5','15','30'].forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v+L('분',' min');select.append(o)});select.value=VLT.autoLockValue();select.onchange=()=>VLT.setAutoLock(select.value);al.append(select);menu.append(al)}
-function closeVaultMainMore(){$('#vaultMainMore').classList.add('hidden');folderHub.sub=''}
-$('#fhHome').onclick=folderHome;$('#fhSearchBtn').onclick=()=>setFolderSearch('hub',!folderHub.searchOpen);$('#fhSearchClose').onclick=()=>setFolderSearch('hub',false);$('#fhSearch').addEventListener('input',renderFolderHub);$('#fhAddBtn').onclick=()=>{folderHub.addOpen=!folderHub.addOpen;renderFolderHub();if(folderHub.addOpen)setTimeout(()=>$('#fhAddInput').focus(),20)};$('#fhAddClose').onclick=()=>{folderHub.addOpen=false;$('#fhAddInput').value='';renderFolderHub()};$('#fhAddSave').onclick=addFolderFromHub;$('#fhAddInput').addEventListener('keydown',e=>{if(e.key==='Enter')addFolderFromHub()});$('#fhTrashBtn').onclick=openFolderTrash;$('#fhMoreBtn').onclick=()=>renderMore('hub');$('#fdBack').onclick=folderHubBack;$('#fdTitle').onclick=renameCurrentFolder;$('#fdTitle').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();renameCurrentFolder()}};$('#fdSearchBtn').onclick=()=>setFolderSearch('detail',!folderHub.detailSearchOpen);$('#fdSearchClose').onclick=()=>setFolderSearch('detail',false);$('#fdSearch').addEventListener('input',renderFolderDetail);$('#fdAddBtn').onclick=()=>{const f=folderRaw();if(!f)return;const n=newNote('note',f.id);openEditor(n.id)};$('#fdViewBtn').onclick=openDetailViewMenu;$('#fdTrashBtn').onclick=openFolderTrash;$('#fdMoreBtn').onclick=()=>renderMore('detail');$('#fsBack').onclick=folderHubBack;$('#fsAll').onclick=()=>{const arr=NOTES().filter(n=>!n.deleted&&fHit(n,$('#fsSearch').value.trim().toLowerCase())),all=arr.length&&arr.every(n=>folderHub.select.has(n.id));if(all)arr.forEach(n=>folderHub.select.delete(n.id));else arr.forEach(n=>folderHub.select.add(n.id));renderFolderSelect()};$('#fsSearch').addEventListener('input',renderFolderSelect);$('#fsSearchClear').onclick=()=>{$('#fsSearch').value='';renderFolderSelect()};$('#fsMove').onclick=()=>{if(!folderHub.select.size)return;folderHub.selectMode='move';renderFolderSelect()};$('#fsDelete').onclick=deleteSelectedNotes;$('#ftBack').onclick=folderHubBack;$('#ftNotesTab').onclick=()=>{folderHub.trashTab='notes';renderFolderTrash()};$('#ftFoldersTab').onclick=()=>{folderHub.trashTab='folders';renderFolderTrash()};$('#btnVaultMore').onclick=renderVaultMainMore;$('#fhFab').onclick=()=>{if(folderHub.page==='hub'){folderHub.addOpen=true;renderFolderHub();setTimeout(()=>$('#fhAddInput').focus(),20);return;}if(folderHub.page==='detail'){const f=folderRaw();if(f)openEditor(newNote('note',f.id).id);}};
+function renderVaultMainMore(){const menu=$('#vaultMainMore'),sc=VLT.settings;const wasOpen=!menu.classList.contains('hidden');menu.innerHTML='';if(!wasOpen)histPush();menu.classList.remove('hidden');const add=(label,fn,cls)=>menu.append(moreButton(label,fn,cls));add(L('저장된 모든 노트 선택','Select all saved notes'),()=>{openFolderMgr();openAllNoteSelect()});add(L('노트 이동','Move notes'),()=>{openFolderMgr();openAllNoteSelect()});add(L('보기 방식','View'),()=>{folderHub.sub=folderHub.sub==='vhomeview'?'':'vhomeview';renderVaultMainMore()});if(folderHub.sub==='vhomeview'){const d=document.createElement('div');d.className='subchoices';[['grid',L('Grid','Grid')],['list',L('List','List')],['titles',L('Simple list','Simple list')]].forEach(([v,t])=>d.append(moreButton((sc.view===v?'✓  ':'')+t,()=>{sc.view=v;ui.view=v;VLT.persistSettings();render();renderVaultMainMore()})));menu.append(d)}add(L('정렬','Sort'),()=>{folderHub.sub=folderHub.sub==='vhomesort'?'':'vhomesort';renderVaultMainMore()});if(folderHub.sub==='vhomesort'){const d=document.createElement('div');d.className='subchoices';NOTE_SORTS.forEach(v=>d.append(moreButton((sc.sort===v?'✓  ':'')+({color:L('색상','Color'),updated:L('최근 수정','Recently updated'),created:L('최근 생성','Recently created'),title:L('제목','Title'),manual:L('수동 순서','Manual order')}[v]),()=>{sc.sort=v;VLT.persistSettings();render();renderVaultMainMore()})));menu.append(d)}add(L('노트 한 줄 개수','Notes per row'),()=>{folderHub.sub=folderHub.sub==='vhomecols'?'':'vhomecols';renderVaultMainMore()});if(folderHub.sub==='vhomecols'){const d=document.createElement('div');d.className='subchoices';['1','2','3','4'].forEach(v=>d.append(moreButton((String(sc.box)===v?'✓  ':'')+v,()=>{sc.box=v;VLT.persistSettings();render();renderVaultMainMore()})));menu.append(d)}const al=document.createElement('div');al.className='subchoices';al.append(moreHead(L('Vault 자동 잠금','Vault auto-lock')));const select=document.createElement('select');select.id='vaultAutoQuick';['1','5','15','30'].forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v+L('분',' min');select.append(o)});select.value=VLT.autoLockValue();select.onchange=()=>VLT.setAutoLock(select.value);al.append(select);menu.append(al)}
+function closeVaultMainMore(consume=true){closeMenuSlot('#vaultMainMore',consume);folderHub.sub=''}
+$('#fhHome').onclick=folderHome;$('#fhSearchBtn').onclick=()=>setFolderSearch('hub',!folderHub.searchOpen);$('#fhSearchClose').onclick=()=>setFolderSearch('hub',false);$('#fhSearch').addEventListener('input',renderFolderHub);$('#fhAddBtn').onclick=()=>{folderHub.addOpen=!folderHub.addOpen;renderFolderHub();if(folderHub.addOpen)setTimeout(()=>$('#fhAddInput').focus(),20)};$('#fhAddClose').onclick=()=>{folderHub.addOpen=false;$('#fhAddInput').value='';renderFolderHub()};$('#fhAddSave').onclick=addFolderFromHub;$('#fhAddInput').addEventListener('keydown',e=>{if(e.key==='Enter')addFolderFromHub()});$('#fhTrashBtn').onclick=openFolderTrash;$('#fhMoreBtn').onclick=()=>renderMore('hub');const folderBackBtn=()=>{const before=folderHub.page,wasMove=folderHub.selectMode==='move';folderHubBack();if($('#folderOverlay').classList.contains('show')){if(before!=='hub'&&folderHub.page==='hub')histPop();else if(before==='select'&&wasMove&&folderHub.selectMode==='notes')histPop();}};$('#fdBack').onclick=folderBackBtn;$('#fdTitle').onclick=renameCurrentFolder;$('#fdTitle').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();renameCurrentFolder()}};$('#fdSearchBtn').onclick=()=>setFolderSearch('detail',!folderHub.detailSearchOpen);$('#fdSearchClose').onclick=()=>setFolderSearch('detail',false);$('#fdSearch').addEventListener('input',renderFolderDetail);$('#fdAddBtn').onclick=()=>{const f=folderRaw();if(!f)return;const n=newNote('note',f.id);openEditor(n.id)};$('#fdViewBtn').onclick=openDetailViewMenu;$('#fdTrashBtn').onclick=openFolderTrash;$('#fdMoreBtn').onclick=()=>renderMore('detail');$('#fsBack').onclick=folderBackBtn;$('#fsAll').onclick=()=>{const arr=NOTES().filter(n=>!n.deleted&&fHit(n,$('#fsSearch').value.trim().toLowerCase())),all=arr.length&&arr.every(n=>folderHub.select.has(n.id));if(all)arr.forEach(n=>folderHub.select.delete(n.id));else arr.forEach(n=>folderHub.select.add(n.id));renderFolderSelect()};$('#fsSearch').addEventListener('input',renderFolderSelect);$('#fsSearchClear').onclick=()=>{$('#fsSearch').value='';renderFolderSelect()};$('#fsMove').onclick=()=>{if(!folderHub.select.size)return;if(folderHub.selectMode!=='move')histPush();folderHub.selectMode='move';renderFolderSelect()};$('#fsDelete').onclick=deleteSelectedNotes;$('#ftBack').onclick=folderBackBtn;$('#ftNotesTab').onclick=()=>{folderHub.trashTab='notes';renderFolderTrash()};$('#ftFoldersTab').onclick=()=>{folderHub.trashTab='folders';renderFolderTrash()};$('#btnVaultMore').onclick=()=>{const m=$('#vaultMainMore');if(!m.classList.contains('hidden')){closeVaultMainMore();return;}renderVaultMainMore()};$('#fhFab').onclick=()=>{if(folderHub.page==='hub'){folderHub.addOpen=true;renderFolderHub();setTimeout(()=>$('#fhAddInput').focus(),20);return;}if(folderHub.page==='detail'){const f=folderRaw();if(f)openEditor(newNote('note',f.id).id);}};
 
 
 /* ═══════════════ Supabase 동기화 ═══════════════ */
@@ -5443,11 +5487,12 @@ function saveLocalBackup(data){
   const list=localBackups();
   list.unshift({at:Date.now(),name:backupName(),data});
   const maxBk=12;
-  try{ STORE.setItem('sk.backups',JSON.stringify(list.slice(0,maxBk))); }
+  try{ STORE.setItem('sk.backups',JSON.stringify(list.slice(0,maxBk))); return true; }
   catch(e){ /* 용량 초과(이미지 등) 시 오래된 것부터 줄이며 재시도 — 새 백업은 반드시 남김 */
     let l=list;
-    while(l.length>1){ l=l.slice(0,l.length-1); try{ STORE.setItem('sk.backups',JSON.stringify(l)); return; }catch(e2){} }
-    try{ STORE.setItem('sk.backups',JSON.stringify([list[0]])); }catch(e3){}
+    while(l.length>1){ l=l.slice(0,l.length-1); try{ STORE.setItem('sk.backups',JSON.stringify(l)); return true; }catch(e2){} }
+    try{ STORE.setItem('sk.backups',JSON.stringify([list[0]])); return true; }catch(e3){}
+    return false;   /* (v7.5.1) 기기 내 저장 최종 실패 — 호출부가 사용자에게 알려야 한다 */
   }
 }
 /* 백업 데이터를 실제 노트에 반영(병합) */
@@ -5459,6 +5504,7 @@ async function applyBackup(d, onlyIds){
   d.notes.forEach(sn=>{
     if(!want(sn.id))return;
     if(sn.color>=NCOLORS||sn.color<0)sn.color=((sn.color%NCOLORS)+NCOLORS)%NCOLORS;
+    delete sn.fontWeight;   /* (v7.5.2 요청4) 노트별 굵기 오버라이드 복원 차단 — 전역 설정이 모든 노트에 동일 적용 */
     const local=S.notes.find(n=>n.id===sn.id);
     if(!local){S.notes.push(Object.assign({},sn,{dirty:true}));added++}
     else if((sn.updatedAt||0)>local.updatedAt){Object.assign(local,sn,{dirty:true});updated++}
@@ -5469,7 +5515,7 @@ async function applyBackup(d, onlyIds){
   if(Array.isArray(d.vaultNotes)&&d.vaultNotes.length){
     if(!VLT.key){vskip=true;}
     else{
-      d.vaultNotes.forEach(vn=>{if(!want(vn.id))return;const local=VLT.notes.find(n=>n.id===vn.id);
+      d.vaultNotes.forEach(vn=>{if(!want(vn.id))return;delete vn.fontWeight;const local=VLT.notes.find(n=>n.id===vn.id);
         if(!local){VLT.notes.push(vn);vadded++}else if((vn.updatedAt||0)>local.updatedAt){Object.assign(local,vn);vadded++}});
       if(!onlyIds)(d.vaultFolders||[]).forEach(vf=>{if(!VLT.folders.find(f=>f.id===vf.id))VLT.folders.push(vf)});
       if(!(await VLT.persist()))throw new Error('vault save failed');
@@ -5517,9 +5563,10 @@ function scheduleAutoSnap(){ clearTimeout(autoSnapTimer); autoSnapTimer=setTimeo
 $('#stExport').onclick=async()=>{
   await VLT.flush();
   const payload=buildBackup();
-  saveLocalBackup(payload);
+  const inDevice=saveLocalBackup(payload);
   downloadBackup(payload);
-  toast(payload.vault
+  if(!inDevice)toast(L('⚠ 백업 파일은 내려받았지만, 저장 공간 부족으로 기기 내 목록에 보관하지 못했습니다. 오래된 노트·백업을 정리하세요.','⚠ Backup file downloaded, but it could not be kept in the on-device list (storage full). Delete old notes/backups.'));
+  else toast(payload.vault
         ? L('백업 저장: 일반 노트 + 🔐 암호화된 Vault 스냅샷','Backup saved: normal notes + encrypted vault snapshot')
         : L('백업 저장: 일반 노트만 (Vault 스냅샷 없음)','Backup saved: normal notes only (no vault snapshot)'));
 };
@@ -5620,8 +5667,12 @@ async function doApply(d, ids){
   try{
     const r=await applyBackup(d,ids);
     ovCloseUi($('#bkOverlay'));
+    /* (v7.5.1) Vault 스냅샷은 별도 확인 버튼이므로 '모두 복구'에서 복구가 됐다고 오해하지 않게 안내 */
+    const vhint=(!ids&&validVaultSnapshot(d.vault))
+      ? L(' · 🔐 Vault는 별도 확인 버튼으로 복구됩니다',' · Vault is restored separately via its confirm button')
+      : '';
     toast(L(`복구 완료: 추가 ${r.added} · 갱신 ${r.updated}${r.vadded?` · 보관 ${r.vadded}`:''}${r.vskip?' · 🔐 Vault는 잠겨서 건드리지 않음':''}`,
-            `Restored: added ${r.added}, updated ${r.updated}${r.vadded?` · vault ${r.vadded}`:''}${r.vskip?' · vault skipped (locked)':''}`));
+            `Restored: added ${r.added}, updated ${r.updated}${r.vadded?` · vault ${r.vadded}`:''}${r.vskip?' · vault skipped (locked)':''}`)+vhint);
   }catch(e){ toast(L('올바른 백업이 아닙니다','Not a valid backup')); }
 }
 
@@ -5638,13 +5689,14 @@ $('#stExportEn').onclick=async()=>{
       const handle=await window.showSaveFilePicker({suggestedName:name,
         types:[{description:'soonenote backup',accept:{'application/json':['.json']}}]});
       const w=await handle.createWritable();await w.write(json);await w.close();
-      saveLocalBackup(payload);
-      toast(IS_KO?'선택한 위치(Google Drive 등)에 저장했습니다':'Saved to the chosen location');
+      if(!saveLocalBackup(payload))toast(L('⚠ 파일은 선택한 위치에 저장했지만, 기기 내 사본은 저장 공간 부족으로 보관하지 못했습니다.','⚠ File saved to the chosen location, but the on-device copy could not be kept (storage full).'));
+      else toast(IS_KO?'선택한 위치(Google Drive 등)에 저장했습니다':'Saved to the chosen location');
       return;
     }
   }catch(e){ if(e&&e.name==='AbortError')return; }
-  downloadBackup(payload);saveLocalBackup(payload);
-  toast(IS_KO?'이 브라우저는 위치 선택을 지원하지 않아 다운로드로 저장했습니다':'Saved as download');
+  downloadBackup(payload);
+  if(!saveLocalBackup(payload))toast(L('⚠ 다운로드로 저장했지만, 기기 내 사본은 저장 공간 부족으로 보관하지 못했습니다.','⚠ Saved as download, but the on-device copy could not be kept (storage full).'));
+  else toast(IS_KO?'이 브라우저는 위치 선택을 지원하지 않아 다운로드로 저장했습니다':'Saved as download');
 };
 /* 📥 Import Notes: 외부에 저장된 백업 파일 가져오기 */
 $('#stImportEn').onclick=()=>$('#importFile').click();
@@ -5730,7 +5782,7 @@ const VLT={
       const json=await aesDecrypt(key,this._blob);const data=JSON.parse(json);
       if(this.format>=2){
         if(!data||!Array.isArray(data.notes)||!Array.isArray(data.folders)||!data.settings)throw new Error('invalid vault payload');
-        this.notes=data.notes;this.folders=data.folders;this.settings=Object.assign({},VAULT_DEF,data.settings);
+        this.notes=data.notes;this.folders=data.folders;this.settings=Object.assign({},VAULT_DEF,data.settings);if(this.settings.fontWeight==='l')this.settings.fontWeight='n';   /* (v7.5.2 요청3) */
       }else if(Array.isArray(data)){this.notes=data;this.legacyMeta=true;}
       else throw new Error('invalid legacy vault');
       this.settings.unlockMinutes=0;if(!['1','5','15','30'].includes(String(this.settings.vaultAutoLock)))this.settings.vaultAutoLock='5';this.key=key;return true;
@@ -5764,9 +5816,15 @@ const VLT={
   async init(){
     this.load();
     this.settings.font=migFont(this.settings.font);
+    if(this.settings.fontWeight==='l')this.settings.fontWeight='n';   /* (v7.5.2 요청3) */
   },
   open(){
-    if(this.key&&this.auth){this.enter();return;}
+    /* v7.5.2 — warmpath 진입 전에 deadline 점검: 타이머가 백그라운드에서 동결되어
+       실제 만료를 넘긴 세션(예: 화면 오프 중 1분 설정)은 즉시 잠금 후 게이트로 */
+    if(this.key&&this.auth){
+      if(this._autoUntil&&Date.now()>this._autoUntil){this.leave();}
+      else{this.enter();return;}
+    }
     if(this.encrypted&&!hasVaultPin()){toast(L('Vault 인증 정보가 없습니다. 비밀번호를 재설정하지 말고 백업으로 복구하세요.','Vault authentication data is missing. Do not reset the password; restore from a backup.'));return;}
     $('#vGatePass').value='';ovOpen($('#vGate'));setTimeout(()=>$('#vGatePass').focus(),80);
   },
@@ -5780,8 +5838,9 @@ const VLT={
   },
   leave(){
     this.clearAutoLock();this.pendingTransfer=null;
-    const fo=$('#folderOverlay'),eo=$('#edOverlay');
-    if(fo){fo.classList.remove('show');const fi=OVS.indexOf(fo);if(fi>-1)OVS.splice(fi,1);const fl=$('#fhFolderGrid'),fn=$('#folderDetailGrid'),fs=$('#fhSelectList'),ft=$('#fhTrashList');if(fl)fl.textContent='';if(fn)fn.textContent='';if(fs)fs.textContent='';if(ft)ft.textContent='';}
+    const eo=$('#edOverlay');
+    closeFolderOverlayNow();
+    {const fl=$('#fhFolderGrid'),fn=$('#folderDetailGrid'),fs=$('#fhSelectList'),ft=$('#fhTrashList');if(fl)fl.textContent='';if(fn)fn.textContent='';if(fs)fs.textContent='';if(ft)ft.textContent='';}
     if(eo&&eo.classList.contains('show')){eo.classList.remove('show');const ei=OVS.indexOf(eo);if(ei>-1)OVS.splice(ei,1);}
     this.key=null;this.notes=[];this.folders=[];this.settings=Object.assign({},VAULT_DEF);ui.vault=false;ui.view=S.settings.view||'grid';ui.folder='';ui.nofolder=false;ui.trash=false;ui.editingId=null;exitSel();scheduleReminders();render();toast(tr('Vault locked','toast_vault_locked'));
   },
@@ -5815,7 +5874,7 @@ const VLT={
     this.enter();
   }
 };
-function vaultTransferCloseFolderHub(){const fo=$('#folderOverlay');if(fo&&fo.classList.contains('show')){fo.classList.remove('show');const i=OVS.indexOf(fo);if(i>-1)OVS.splice(i,1);}}
+function vaultTransferCloseFolderHub(){closeFolderOverlayNow()}
 async function finishPendingVaultTransfer(){const job=VLT.pendingTransfer;if(!job||!Array.isArray(job.ids))return true;const source=S.notes.filter(n=>job.ids.includes(n.id)&&!n.deleted);if(!source.length){VLT.pendingTransfer=null;return true;}const copies=source.map(n=>Object.assign({},n,{id:uid(),folder:'',updatedAt:Date.now(),dirty:true}));VLT.notes.unshift(...copies);if(!(await VLT.persist())){VLT.notes=VLT.notes.filter(n=>!copies.some(c=>c.id===n.id));toast(L('Vault 저장에 실패해 이동하지 않았습니다.','Vault save failed; notes were not moved.'));return false;}const before=S.notes.slice();S.notes=S.notes.filter(n=>!job.ids.includes(n.id));if(!save()){S.notes=before;toast(L('일반 노트 저장에 실패했습니다. Vault에 복사본은 안전하게 남았습니다.','Normal-note save failed; encrypted Vault copies were kept.'));VLT.pendingTransfer=null;return false;}job.ids.forEach(id=>SYNC.hardDelete(id));VLT.pendingTransfer=null;folderHub.select.clear();vaultTransferCloseFolderHub();render();toast(L('선택한 노트를 Vault로 암호화해 옮겼습니다.','Selected notes were encrypted and moved to Vault.'));return true;}
 
 /* (요구2) 심플 암호창: 닫기/지문 버튼 없음 — 확인 버튼 하나. 배경 누르면 닫힘(취소) */
@@ -6183,17 +6242,30 @@ histPush();
 /* (v6) 자동 백업 확정: 탭을 닫거나 화면이 숨겨질 때 바로 스냅샷 저장 */
 function resetToFirstNotesScreen(hardLock=false){
   try{if(hardLock&&ui.vault&&VLT&&VLT.key)VLT.leave();}catch(_){}
+  /* v7.5.2 — 강제 닫히는 화면마다 1 slot씩(폴더 하위 페이지 추가 1) 정확히 소모 */
+  const hadFolderSub=$('#folderOverlay')&&OVS.includes($('#folderOverlay'))&&['detail','select','trash'].includes(folderHub.page);
+  const closeCount=OVS.length+(hadFolderSub?1:0);
   OVS.splice(0).forEach(el=>el&&el.classList&&el.classList.remove('show'));
+  for(let i=0;i<closeCount;i++)histPop();
   ['#edOverlay','#folderOverlay','#setOverlay','#acOverlay','#bkOverlay','#pinOverlay','#vGate','#remindOverlay','#dlg'].forEach(sel=>{const el=$(sel);if(el)el.classList.remove('show')});
   ui.folder='';ui.nofolder=false;ui.search='';ui.trash=false;ui.editingId=null;ui.edEdit=false;ui.selMode=false;ui.selected.clear();ui.vault=false;ui.view=S.settings.view||'grid';
   try{folderHub.id='';folderHub.page='hub';folderHub.select.clear();folderHub.selectMode='notes';folderHub.trashTab='notes';}catch(_){}
   const q=$('#search');if(q)q.value='';render();applyViewBtn();
 }
-addEventListener('pageshow',e=>{if(e.persisted)resetToFirstNotesScreen();});
-addEventListener('pagehide',()=>{ try{autoSnapshot(true);}catch(e){} try{if(VLT&&VLT.key)VLT.leave();}catch(_){} });
+addEventListener('pageshow',e=>{if(e.persisted){try{if(VLT&&VLT.key&&VLT._autoUntil&&Date.now()>VLT._autoUntil)VLT.leave();}catch(_){} resetToFirstNotesScreen();}});
+/* v7.5.2 — pagehide는 더 이상 Vault key를 지우지 않는다.
+   app 백그라운딩(PWA 홈 화면 전환, 브라우저 탭 전환)은 "닫힘"이 아닌 일시 중지에 해당하며,
+   자동 잠금 deadline(_autoUntil)이 유일한 잠금 기준이다. foreground 복귀 시 pageshow/visibilitychange
+   deadline 점검과 VLT.open() 진입 점검이 만료된 세션을 잠금한다. key는 프로세스 종료 시에만 소멸. */
+addEventListener('pagehide',()=>{ try{autoSnapshot(true);}catch(e){} });
 document.addEventListener('visibilitychange',()=>{
   if(document.hidden){try{autoSnapshot(true);}catch(_){}}
-  else if(document.readyState==='complete')resetToFirstNotesScreen(false);
+  else if(document.readyState==='complete'){
+    /* (v7.5.1) 백그라운드 동결로 auto-lock timer가 실제 만료를 넘겨 쌓인 경우,
+       foreground 복귀 즉시 deadline을 점검해 잠금(예: 화면 오프 중 1분 설정). */
+    try{if(VLT&&VLT.key&&VLT._autoUntil&&Date.now()>VLT._autoUntil)VLT.leave();}catch(_){}
+    resetToFirstNotesScreen(false);
+  }
 });
 /* ═══════════════ PWA ═══════════════ */
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){
