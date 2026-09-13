@@ -1,8 +1,16 @@
 <!DOCTYPE html>
 <!--
 ═══════════════════════════════════════════════════════════════
-  soonenote  —  V7.5.3
+  soonenote  —  V7.5.4
   (V6.0 → ... → V6.6 → V6.7 → V6.7.1)
+
+  V7.5.4 changes  (2026-09)  ← user-feedback round 5 (3 items)
+   1. Note font weight stages: 500/700/900 → 500/600/700 (Normal/SemiBold/Bold).
+   2. Selection bar: new Move (이동) button left of the trash button — move selected
+      notes to a folder / out of folders / to Vault from the main screen or any
+      folder detail (normal + Vault). Reuses the existing move flow & slot model.
+   3. Saving a note with content but an empty title now stores the title as
+      '제목 없음' (No title) instead of an empty string.
 
   V7.5.3 changes  (2026-09)  ← user-feedback round 4 (4 items)
    1. Vault warm session now survives page reload / app restart until the auto-lock
@@ -162,7 +170,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-hL58TG49dKikUVOOcnvhJBeVFCnQnaTufYUYMmvI1eU='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-ieEG1Fqfh/TnApBTul41EnwskGLTNwgFxjh2X4XtMMs='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
 <!-- (요구3) 전화기 화면에 딱 맞게 · 자동 확대(핀치 줌 포함) 완전 금지 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#f5f2ef">
@@ -1195,6 +1203,7 @@ html[data-theme="dark"] #folderOverlay:not(.vault-folder),html[data-theme="dark"
   <button class="sbtn" id="selAll">☑ <span class="lbl" data-i18n="select_all">All</span></button>
   <span class="cnt" id="selCount">0<span data-i18n="sel_count"> selected</span></span>
   <button class="sbtn restore" id="selRestore" style="display:none"><span class="ic">↺</span> <span class="lbl" data-i18n="restore">Restore</span></button>
+  <button class="sbtn" id="selMove" style="display:none">📤 <span class="lbl" data-i18n="move">Move</span></button>   <!-- (v7.5.4 요청2) 휴지통 좌측: 이동 -->
   <button class="sbtn" id="selDelete">🗑️ <span class="lbl" data-i18n="delete">Delete</span></button>
 </div>
 
@@ -1463,8 +1472,8 @@ html[data-theme="dark"] #folderOverlay:not(.vault-folder),html[data-theme="dark"
       <div class="setrow"><label data-i18n="font_weight">Note font weight</label>
         <select id="stFontWeight">
           <option value="n" data-i18n="fw_n">Normal (500) — recommended</option>
-          <option value="b" data-i18n="fw_b">Bold (700)</option>
-          <option value="x" data-i18n="fw_x">Black (900)</option>
+          <option value="b" data-i18n="fw_b">SemiBold (600)</option>
+          <option value="x" data-i18n="fw_x">Bold (700)</option>
         </select>
       </div>
       <div class="setrow"><label data-i18n="box_size">Box size (columns)</label>
@@ -1640,7 +1649,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='soonenote';
-const APP_VER='7.5.3';
+const APP_VER='7.5.4';
 const SSTORE=(()=>{try{const t='__cn__';sessionStorage.setItem(t,'1');sessionStorage.removeItem(t);return sessionStorage}
   catch(e){const m={};return{getItem:k=>(k in m?m[k]:null),setItem:(k,v)=>{m[k]=String(v)},removeItem:k=>{delete m[k]}}}})();
 
@@ -1697,7 +1706,7 @@ function computeLang(){                  // 반드시 load() 이후에 호출
 }
 const LANG_NAMES={ko:'한국어',en:'English',ja:'日本語',zh:'中文（简体）',es:'Español'};
 const I18N={
-  cancel:{en:'Cancel'},sel_count:{en:' selected'},restore:{en:'Restore'},delete:{en:'Delete'},
+  cancel:{en:'Cancel'},sel_count:{en:' selected'},restore:{en:'Restore'},move:{en:'Move'},delete:{en:'Delete'},
   search_ph:{en:'Search...'},view_toggle:{en:'View'},account_sync:{en:'Account · Sync'},trash:{en:'Trash'},
   settings:{en:'Settings'},add:{en:'Add'},note:{en:'Note'},checklist:{en:'Checklist'},
   title_ph:{en:'Title'},save:{en:'Save'},edit_hint:{en:'Edit mode'},format_t:{en:'Format'},
@@ -1715,7 +1724,7 @@ const I18N={
   font_ctrl:{en:'Note text controls'},fc_size:{en:'Size'},fc_ls:{en:'Letter spacing'},fc_lh:{en:'Line spacing'},
   save_back:{en:'Save and go back'},
   font_weight:{en:'Note font weight'},fw_l:{en:'Light (300)'},fw_n:{en:'Normal (500) — recommended'},
-  fw_b:{en:'Bold (700)'},fw_x:{en:'Black (900)'},box_size:{en:'Box size (columns)'},
+  fw_b:{en:'SemiBold (600)'},fw_x:{en:'Bold (700)'},box_size:{en:'Box size (columns)'},
   box1:{en:'1 column'},box2:{en:'2 columns'},box3:{en:'3 columns'},box4:{en:'4 columns'},box5:{en:'5 columns'},box6:{en:'6 columns'},box7:{en:'7 columns'},note_shape:{en:'Note shape'},
   shape_none:{en:'Plain'},shape_line:{en:'Lined paper'},
   default_color:{en:'Default note color'},
@@ -1803,6 +1812,7 @@ const I18N_KO={
   cancel:'취소',
   sel_count:'개 선택',
   restore:'복원',
+  move:'이동',
   delete:'삭제',
   add:'추가',
   note:'메모',
@@ -1863,8 +1873,8 @@ const I18N_KO={
   font_weight:'노트 글자 굵기 (입력 텍스트만)',
   fw_l:'가벼움 (300)',
   fw_n:'보통 (500) — 권장',
-  fw_b:'굵게 (700)',
-  fw_x:'매우굵게 (900)',
+  fw_b:'중간굵게 (600)',
+  fw_x:'굵게 (700)',
   box_size:'노트박스 크기 (한 줄 개수)',
   box1:'가로 1개씩 (한 줄에 하나)',
   box2:'가로 2개씩',
@@ -2062,7 +2072,7 @@ const I18N_JA={
   font_ctrl:'本文の文字調整',fc_size:'サイズ',fc_ls:'字間',fc_lh:'行間',
   save_back:'保存して戻る',
   font_size:'本文の文字サイズ (10〜25pt)',font_preview:'サンプル Abc 123 — プレビュー',
-  font_weight:'本文の太さ',fw_l:'細い (300)',fw_n:'標準 (500) — 推奨',fw_b:'太い (700)',fw_x:'極太 (900)',
+  font_weight:'本文の太さ',fw_l:'細い (300)',fw_n:'標準 (500) — 推奨',fw_b:'中太 (600)',fw_x:'太い (700)',
   box_size:'ボックスの大きさ（列数）',box2:'2列',box3:'3列',box4:'4列',
   note_shape:'ノートの形式',shape_none:'なし',shape_line:'罫線',
   default_color:'既定のノート色',
@@ -2212,7 +2222,7 @@ const I18N_ZH={
   font_ctrl:'正文文字调整',fc_size:'大小',fc_ls:'字距',fc_lh:'行距',
   save_back:'保存并返回',
   font_size:'正文字号 (10–25pt)',font_preview:'示例 Abc 123 — 预览',
-  font_weight:'正文粗细',fw_l:'细 (300)',fw_n:'标准 (500) — 推荐',fw_b:'粗 (700)',fw_x:'特粗 (900)',
+  font_weight:'正文粗细',fw_l:'细 (300)',fw_n:'标准 (500) — 推荐',fw_b:'半粗 (600)',fw_x:'粗 (700)',
   box_size:'卡片大小（列数）',box2:'2 列',box3:'3 列',box4:'4 列',
   note_shape:'笔记样式',shape_none:'无',shape_line:'横线',
   default_color:'默认笔记颜色',
@@ -2362,7 +2372,7 @@ const I18N_ES={
   font_ctrl:'Ajuste del texto',fc_size:'Tamaño',fc_ls:'Espaciado',fc_lh:'Interlineado',
   save_back:'Guardar y volver',
   font_size:'Tamaño de letra (10–25 pt)',font_preview:'Muestra Abc 123 — vista previa',
-  font_weight:'Grosor de letra',fw_l:'Fina (300)',fw_n:'Normal (500) — recomendado',fw_b:'Negrita (700)',fw_x:'Extra (900)',
+  font_weight:'Grosor de letra',fw_l:'Fina (300)',fw_n:'Normal (500) — recomendado',fw_b:'Seminegrita (600)',fw_x:'Negrita (700)',
   box_size:'Tamaño de tarjeta (columnas)',box2:'2 columnas',box3:'3 columnas',box4:'4 columnas',
   note_shape:'Estilo de nota',shape_none:'Liso',shape_line:'Con renglones',
   default_color:'Color predeterminado',
@@ -2583,7 +2593,7 @@ function migFont(f){ if(f==null)return '12'; if(FONT_KEYS_PT[f]!=null)return Str
 /* (요구3) 본문 굵기 4단계 — 단계 간 차이가 확실하게 구분되도록 (v5.2):
    가벼움 300(Light) · 보통 500(Medium) · 굵게 700(Bold) · 매우굵게 900(Black).
    FONT_WEIGHTS 맵이 '글자 키(l/n/b/x) ↔ 숫자 값' 변환의 유일한 기준. 모든 저장·로드·적용은 이 맵을 거침 */
-const FONT_WEIGHTS={n:'500',b:'700',x:'900'};   /* (v7.5.2 요청3) 3단계: 보통·굵게·매우굵게 — Light(300) 폐지 */
+const FONT_WEIGHTS={n:'500',b:'600',x:'700'};   /* (v7.5.4 요청1) 3단계: 500·600·700 (v7.5.2: 500·700·900) */
 /* (v6.7) fontLs(자간, px) · fontLh(줄간격) 추가. 기본값은 V6.6과 똑같이 보이는 값 */
 /* (v6.8 STEP2) favA/favB = 하단바에 고정해 두는 즐겨찾기 폴더 ID 2개.
    폴더 데이터에는 손대지 않는다. 예전 설정에 이 값이 없으면 아래 기본값('')이 자동으로 채워진다. */
@@ -2633,7 +2643,7 @@ function load(){
   // (요구3) 본문 굵기 4단계, 기본 'n'(보통=500). v5.2: 기본값 'b'로 저장됐던 기기·옛 숫자값을
   //  새 키 체계로 1회 변환 (fwVer=2 마커) — 'b' 저장분은 새 기본 'n'(보통)으로 안전 이관.
   if(!S.settings.fwVer){
-    if(!['l','n','b','x'].includes(S.settings.fontWeight))S.settings.fontWeight=({'300':'l','400':'n','500':'n','600':'x'}[S.settings.fontWeight])||'n';
+    if(!['l','n','b','x'].includes(S.settings.fontWeight))S.settings.fontWeight=({'300':'l','400':'n','500':'n','600':'b'}[S.settings.fontWeight])||'n';   /* (v7.5.4 요청1) 옛 숫자값 600 → b(600) */
     else if(S.settings.fontWeight==='b')S.settings.fontWeight='n';
     S.settings.fwVer=2;
   }else if(!['l','n','b','x'].includes(S.settings.fontWeight))S.settings.fontWeight='n';
@@ -3410,6 +3420,10 @@ function updateSelBar(){
   $('#selDelete').innerHTML='🗑️ <span class="lbl">'+(ui.trash?L('영구삭제','Delete forever'):L('삭제','Delete'))+'</span>';
   const none=ui.selected.size===0;
   $('#selRestore').disabled=none; $('#selDelete').disabled=none;
+  /* (v7.5.4 요청2) 이동 버튼: 선택 모드(휴지통 제외)에서만, 휴지통 좌측에 표시 */
+  const mv=$('#selMove');
+  if(mv){mv.style.display=(ui.selMode&&!ui.trash)?'':'none';mv.disabled=none;mv.innerHTML='📤 <span class="lbl">'+L('이동','Move')+'</span>';}
+
   $('#selRestore').style.opacity=none?'.45':'';
   $('#selDelete').style.opacity=none?'.45':'';
   /* 전체 선택 / 전체 해제 토글 */
@@ -3442,6 +3456,23 @@ $('#selAll').onclick=()=>{
     arr.forEach(n=>ui.selected.add(n.id));
   }
   render();
+};
+/* (v7.5.4 요청2) 선택바 '이동' = 선택한 노트를 폴더로 이동 — ⋮ '노트 이동' 흐름과 동일한 slot 구조([hub, select S1, move S2])를
+   일반 노트 화면·폴더 상세(일반+Vault) 어디서든 재현해 Back 한 겹 규칙·moveSelectedNotes의 pop 계산과 정확히 일치 */
+$('#selMove').onclick=()=>{
+  const ids=[...ui.selected]; if(!ids.length)return;
+  lastBackHint=Date.now();   /* exitSel의 back이 메인 화면 step-5에 닿아 '한 번 더' 토스트+push가 나오지 않게 */
+  if(ui.selMode)exitSel();
+  /* (v7.5.4 요청2) exitSel의 back()이 커밋된 후에만 push한다 (동시 pop→push는 headless/실기기 history에서 slot을 깨뜨린다).
+     폴더 오버레이가 열려 있으면(detail 등) 그 slot을 건드리지 않고 select/move를 위로만 쌓는다 — Back은 한 겹씩. */
+  setTimeout(()=>{
+    if(!$('#folderOverlay').classList.contains('show'))openFolderMgr();
+    folderHub.select.clear();ids.forEach(id=>folderHub.select.add(id));
+    if(folderHub.page!=='select')histPush();
+    setFolderHubPage('select');
+    if(folderHub.selectMode!=='move')histPush();
+    folderHub.selectMode='move';renderFolderSelect();
+  },60);
 };
 /* (v6.4) 휴지통 배너의 ✕ = 일반 노트로 */
 $('#tbExit').onclick=()=>{ ui.trash=false; exitSel(); render(); };
@@ -3622,11 +3653,20 @@ function schedSave(){                                  // (요구9) 3초 후 자
   clearTimeout(edSaveTimer);
   edSaveTimer=setTimeout(()=>flushEd(true),3000);
 }
+function untitledTitle(n){   /* (v7.5.4 요청3) 내용이 있는데 제목이 비어 있으면 '제목 없음(No title)'을, 아니면 null 반환 */
+  const t=String(n.title||'').trim();
+  if(t)return null;
+  const hasContent=(n.type==='note'&&plain(n.content||'').trim())||(n.type==='check'&&(n.items||[]).some(i=>String(i.text||'').trim()));
+  return hasContent?L('제목 없음','No title'):null;
+}
 function flushEd(silent){
   const n=cur();if(!n)return;
   // (요청1) 실제로 바뀐 게 없으면 시간·저장 건드리지 않음 (그냥 열었다 닫기)
   if(!silent){ // 수동 저장(✓)일 땐 무조건 저장
   } else if(ui._edSnap!==undefined && edSnapshot()===ui._edSnap){
+    /* (v7.5.4 요청3) 변경이 없어도 '내용 있음 + 제목 없음'이면 제목을 부여해 저장 */
+    const _u0=untitledTitle(n);
+    if(_u0!==null){n.title=_u0;n.updatedAt=Date.now();n.dirty=true;persistActive();if(!ui.vault)syncSoon();ui._edSnap=edSnapshot();}
     return;   // 변경 없음 → 아무 것도 안 함
   }
   n.title=$('#edTitle').value;
@@ -3637,6 +3677,8 @@ function flushEd(silent){
     tmp.querySelectorAll('img.edimg').forEach(im=>im.classList.remove('sel','dragging'));
     n.content=sanitizeHTML(tmp.innerHTML);
   }
+  const _u=untitledTitle(n);   /* (v7.5.4 요청3) 최종 내용 기준으로 — 내용이 있고 제목 없으면 '제목 없음'으로 저장 */
+  if(_u!==null)n.title=_u;
   n.updatedAt=Date.now();n.dirty=true;persistActive();if(!ui.vault)syncSoon();
   ui._edSnap=edSnapshot();
   if(!silent)toast(tr('Saved','toast_saved'));
@@ -5383,7 +5425,7 @@ function openSettings(){
   $('#stTheme').value=sc.theme;$('#stView').value=sc.view;
   $('#stSort').value=sc.sort;$('#stBox').value=sc.box;
   updateFontStepUI();   /* (요청7) 글자크기 스테퍼 + 샘플 */
-  $('#stFontWeight').value=sc.fontWeight||'b';   /* (요구3) 본문 굵기 4단계 — 키 기본 'b'(보통), 드롭다운 선택 표시 정상화 (v5.1) */
+  $('#stFontWeight').value=sc.fontWeight||'n';   /* (v7.5.4 요청1) 본문 굵기 3단계(500/600/700) — 기본 'n'(보통=500) */
   $('#stRule').value=sc.rule||'none';
   $('#stPinBtn').textContent=hasVaultPin()?tr('Change / Reset','pin_change_btn'):tr('Set','pin_set_btn2');
   $('#stVaultAutoRow').classList.toggle('hidden',!ui.vault);
@@ -5420,7 +5462,7 @@ function applySettingsFromUI(){
   sc.font  =String(ptClamp(_r1?_r1.value:$('#stFontVal').textContent));
   if(_r2)sc.fontLs=String(lsClamp(_r2.value));
   if(_r3)sc.fontLh=String(noteLhClamp(_r3.value));
-  sc.fontWeight=$('#stFontWeight').value||'b';   /* (요구3) 본문 굵기 — 드롭다운 글자 키 그대로 저장 (v5.1) */
+  sc.fontWeight=$('#stFontWeight').value||'n';   /* (v7.5.4 요청1) 드롭다운 글자 키 그대로 저장 */
   sc.box=$('#stBox').value;
   sc.rule=$('#stRule').value;                          // (요청3) 줄 없음 / 줄쳐진 노트
   if(ui.vault){sc.vaultAutoLock=$('#stVaultAuto').value;VLT.persistSettings();VLT.armAutoLock();} else save();
