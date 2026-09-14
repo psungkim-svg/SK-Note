@@ -1,8 +1,21 @@
 <!DOCTYPE html>
 <!--
 ═══════════════════════════════════════════════════════════════
-  soonenote  —  V7.5.7
+  soonenote  —  V7.5.8
   (V6.0 → ... → V6.6 → V6.7 → V6.7.1)
+
+  V7.5.8 changes  (2026-09)  ← user-feedback round 11 (5 items)
+   1. Vault password prompt: after a vault-snapshot restore (device list or
+      file import) the password popup (gate) opens immediately; first-time
+      password set enters the vault directly. No more "open the vault" toasts.
+   2. Vault ⋮ menu: removed View / Sort / Notes-per-row items.
+   3. Editor ⋮: Reminder overlay raised above the editor (z-index 90) so it
+      actually works; removed Move-to-folder / Select-all-text / Move-to-Vault.
+   4. Pinned notification persists until unpinned: sw.js re-posts pinned
+      notifications on notificationclose (unless SK_UNPIN was announced);
+      syncPinnedNotifications() on start/foreground restores missing ones.
+   5. Icon number badge: OS-generated from the notification — app never uses
+      the Badging API; cannot be suppressed from the web app (explained).
 
   V7.5.7 changes  (2026-09)  ← user-feedback round 8 (2 items)
    1. Vault home (main screen inside Vault) background = pastel red
@@ -195,7 +208,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-xNolH3bmvxAv2PjzJlef+HICZNOxCF0qN2lAqYS/i6E='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-bgVsvfBj/vTvdzP3QWyCDSPov4B3vAgJCJy6YGwx5XU='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
 <!-- (요구3) 전화기 화면에 딱 맞게 · 자동 확대(핀치 줌 포함) 완전 금지 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#f5f2ef">
@@ -1151,6 +1164,7 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
 
 /* ── (요구2) Vault 암호 입력창 — 아주 심플한 하얀 박스 ──
    하얀 박스 안에 "암호입력" 글자 + 그 아래 큰 입력칸(안은 비움) + 확인 버튼 하나만 */
+#remindOverlay{z-index:90}   /* (v7.5.8 요청3) 편집기(z55) 위에 떠야 알림 설정이 보인다 */
 #vGate{align-items:center;justify-content:center;background:rgba(15,16,20,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
 #vGate .vgateCard{border-radius:12px;max-width:280px;width:calc(100% - 3em);background:#fff;
   /* (요구4) 전체 높이를 기존의 약 1/3로 축소 */
@@ -1688,7 +1702,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='soonenote';
-const APP_VER='7.5.7';
+const APP_VER='7.5.8';
 const SSTORE=(()=>{try{const t='__cn__';sessionStorage.setItem(t,'1');sessionStorage.removeItem(t);return sessionStorage}
   catch(e){const m={};return{getItem:k=>(k in m?m[k]:null),setItem:(k,v)=>{m[k]=String(v)},removeItem:k=>{delete m[k]}}}})();
 
@@ -3580,8 +3594,42 @@ function fireReminder(id){
   }catch(e){toast(title)}
 }
 
+/* (v7.5.8 요청4) 고정 알림은 '고정 해제'를 눌렀을 때만 사라진다.
+   - 서비스워커(sw.js)가 notificationclose(스와이프·OS 정리)를 받으면 같은 알림을 조용히 다시 띄운다.
+   - 단, 앱이 '고정 해제'로 닫을 때는 먼저 SW에 SK_UNPIN 메시지를 보내 재게시를 막는다.
+   - 앱을 켤 때/전면 복귀 때 syncPinnedNotifications()가 빠진 고정 알림을 다시 만들고, 더 이상 고정이 아닌 알림은 닫는다. */
+function pinnedNotifOptions(n,vault,silent){
+  const body=vault?L('고정한 Vault 노트가 있습니다. 내용은 알림에 표시하지 않습니다.','A Vault note is pinned. Its contents are not shown in notifications.'):plain(n.content||'').replace(/\s+/g,' ').trim().slice(0,100)||L('고정한 노트','Pinned note');
+  const title=vault?'🔐 Vault':'📌 '+(n.title||APP_NAME);
+  const opt={body,icon:'icons/icon-192.png',tag:'sk-pinned-'+n.id,requireInteraction:true,data:{noteId:n.id,vault,pinned:true,title,body}};
+  if(silent)opt.silent=true; else opt.renotify=true;
+  return {title,opt};
+}
 async function closePinnedNotification(noteId){
-  try{const reg=navigator.serviceWorker&&await navigator.serviceWorker.getRegistration();if(reg&&reg.getNotifications){(await reg.getNotifications({tag:'sk-pinned-'+noteId})).forEach(n=>n.close());}}catch(_){}
+  try{const reg=navigator.serviceWorker&&await navigator.serviceWorker.getRegistration();if(!reg)return;
+    const tag='sk-pinned-'+noteId;
+    const sw=reg.active||navigator.serviceWorker.controller;
+    if(sw){sw.postMessage({type:'SK_UNPIN',tag});await new Promise(r=>setTimeout(r,120));}   /* SW가 '의도된 닫기'로 기억한 뒤 닫는다 */
+    if(reg.getNotifications){(await reg.getNotifications({tag})).forEach(n=>n.close());}
+  }catch(_){}
+}
+let _pinSyncBusy=false;
+async function syncPinnedNotifications(){
+  if(_pinSyncBusy)return;_pinSyncBusy=true;
+  try{
+    if(!('Notification' in window)||Notification.permission!=='granted')return;
+    const reg=navigator.serviceWorker&&await navigator.serviceWorker.getRegistration();if(!reg||!reg.getNotifications||!reg.showNotification)return;
+    const shown=(await reg.getNotifications()).filter(x=>String(x.tag||'').startsWith('sk-pinned-'));
+    const want=new Map();
+    S.notes.filter(n=>n.pinned&&!n.deleted).forEach(n=>want.set(n.id,{n,vault:false}));
+    if(VLT.key&&VLT.auth)VLT.notes.filter(n=>n.pinned&&!n.deleted).forEach(n=>want.set(n.id,{n,vault:true}));
+    for(const x of shown){const id=x.tag.slice(10);const isVault=!!(x.data&&x.data.vault);
+      if(want.has(id))continue;
+      if(isVault&&!(VLT.key&&VLT.auth))continue;   /* 잠긴 Vault의 고정 알림은 판단 불가 → 그대로 둠 */
+      await closePinnedNotification(id);}
+    for(const [id,{n,vault}] of want){if(shown.some(x=>x.tag==='sk-pinned-'+id))continue;
+      const {title,opt}=pinnedNotifOptions(n,vault,true);try{await reg.showNotification(title,opt);}catch(_){}}
+  }catch(_){}finally{_pinSyncBusy=false;}
 }
 async function showPinnedNotification(n){
   if(!('Notification' in window)){toast(L('이 브라우저는 시스템 알림을 지원하지 않습니다. 상단 고정은 앱 안에서만 유지됩니다.','This browser does not support system notifications. The note remains pinned in the app.'));return false;}
@@ -3589,10 +3637,8 @@ async function showPinnedNotification(n){
   if(permission==='default'){try{permission=await Notification.requestPermission();}catch(_){permission='denied';}}
   if(permission!=='granted'){toast(L('알림 권한이 없어 앱 안에서만 상단 고정했습니다. 브라우저/휴대폰 설정에서 알림을 허용할 수 있습니다.','Notifications are not permitted, so the note is pinned only in the app. You can enable notifications in browser or phone settings.'));return false;}
   const vault=!!ui.vault;
-  const title=vault?'🔐 Vault':'📌 '+(n.title||APP_NAME);
-  const body=vault?L('고정한 Vault 노트가 있습니다. 내용은 알림에 표시하지 않습니다.','A Vault note is pinned. Its contents are not shown in notifications.'):plain(n.content||'').replace(/\s+/g,' ').trim().slice(0,100)||L('고정한 노트','Pinned note');
-  const opt={body,icon:'icons/icon-192.png',tag:'sk-pinned-'+n.id,renotify:true,requireInteraction:true,data:{noteId:n.id,vault}};
-  try{const reg=navigator.serviceWorker&&await navigator.serviceWorker.getRegistration();if(reg&&reg.showNotification)await reg.showNotification(title,opt);else new Notification(title,opt);toast(L('상단 고정과 함께 휴대폰 알림을 보냈습니다. 운영체제가 알림을 지우거나 묶을 수 있습니다.','Pinned and sent a phone notification. Your OS may group or dismiss it.'));return true;}catch(_){toast(L('상단 고정은 되었지만 시스템 알림을 표시하지 못했습니다.','The note is pinned, but the system notification could not be shown.'));return false;}
+  const {title,opt}=pinnedNotifOptions(n,vault,false);
+  try{const reg=navigator.serviceWorker&&await navigator.serviceWorker.getRegistration();if(reg&&reg.showNotification)await reg.showNotification(title,opt);else new Notification(title,opt);toast(L('상단 고정했습니다. 휴대폰 알림은 고정 해제 전까지 유지됩니다.','Pinned. The phone notification stays until you unpin.'));return true;}catch(_){toast(L('상단 고정은 되었지만 시스템 알림을 표시하지 못했습니다.','The note is pinned, but the system notification could not be shown.'));return false;}
 }
 
 /* ═══════════════ 에디터 (전체화면 · 보기/편집 모드) ═══════════════ */
@@ -4606,14 +4652,9 @@ function buildKebab(){
   item('📌',n.pinned?L('고정 해제','Unpin'):L('상단 고정','Pin to top'),async()=>{n.pinned=!n.pinned;n.updatedAt=Date.now();n.dirty=true;schedSave();if(n.pinned)await showPinnedNotification(n);else{await closePinnedNotification(n.id);toast(L('상단 고정을 해제했습니다.','Unpinned.'));}});
   item('⏰',L('알림 설정','Reminder'),()=>openRemind(n.id));
   item('📤',L('공유','Share'),()=>shareNote(n));
-  item('📑',L('전체 텍스트 선택','Select all text'),()=>{          // (요청1) 입력한 텍스트만 선택
-    if(n.type==='check'){const f=$('#edItems .itxt');if(f){f.focus();f.select()}return;}
-    selectBodyTextOnly();
-  });
-  item('📁',L('폴더로 이동','Move to folder'),()=>moveNoteFolder(n));   /* (요청3) Vault도 폴더 이동 가능 */
+  /* (v7.5.8 요청3) '전체 텍스트 선택'·'폴더로 이동'·'Vault로 이동' 항목 제거 — 이동은 폴더 화면의 선택→➡️ 이동으로 통일 */
   item(n.type==='check'?'📝':'☑️', n.type==='check'?L('메모로 전환','To note'):L('체크리스트로 전환','To checklist'),()=>switchType(n.type==='check'?'note':'check'));
   if(ui.vault)item('📤',L('일반 노트로 이동','Move to regular notes'),()=>moveFromVault(n));
-  else item('📦',L('Vault로 이동','Move to Vault'),()=>moveToVault(n));
   item('🗑️',L('삭제','Delete'),()=>deleteFromEditor(),'danger');
   /* (v6.9 요청4) '글자 굵기 (이 노트만)' 메뉴는 없앤다 — 노트별 굵기는 설정의 전역 값 하나로 통일. */
   /* applyEditorWeight() 는 그대로 쓴다(전역 설정을 에디터에 반영). */
@@ -4637,31 +4678,7 @@ async function shareNote(n){
   try{ if(navigator.share){await navigator.share({title:n.title||APP_NAME,text});return} }catch(e){return}
   try{ await navigator.clipboard.writeText(text); toast(L('클립보드에 복사했습니다','Copied to clipboard')); }catch(e){ toast(L('공유를 지원하지 않는 환경입니다','Sharing not supported here')); }
 }
-async function moveNoteFolder(n){
-  const opts=[L('(폴더 없음)','(No folder)'),...FOLDERS().map(f=>f.name)];
-  const list=opts.map((o,i)=>`${i}. ${o}`).join('\n');
-  const v=await dlg(L(`이 노트를 이동할 폴더 번호를 입력하세요:\n\n${list}`,`Enter the folder number to move this note to:\n\n${list}`),{input:true,okText:L('이동','Move')});
-  if(v===null||v===undefined||v==='')return;
-  const idx=parseInt(v);
-  if(idx===0)n.folder=''; else if(FOLDERS()[idx-1])n.folder=FOLDERS()[idx-1].id; else{toast(tr('Invalid number','dlg_wrong_num'));return}
-  n.updatedAt=Date.now();n.dirty=true;schedSave();
-  if(ui.vault)VLT.persist();   /* (요청1) Vault는 즉시 저장(서버 동기화 없음) */
-  toast(tr('Moved to folder','toast_folder_moved'));
-}
-async function moveToVault(n){
-  if(!VLT.key||!hasVaultPin()){toast(L('먼저 Vault를 열고 비밀번호를 확인하세요.','Open and unlock Vault first.'));return;}
-  const pass=await dlg(L('Vault로 이동하려면 Vault 비밀번호를 다시 입력하세요.','Re-enter the Vault password to move this note.'),{input:true,password:true,okText:L('확인','Confirm')});
-  if(pass===null||pass===undefined)return;
-  const ok=eqConst(await pinHash(pass,VLT.auth.salt),VLT.auth.hash);
-  if(!ok){toast(L('Vault 비밀번호가 맞지 않아 이동하지 않았습니다.','Vault password did not match; the note was not moved.'));return;}
-  if(!await dlg(L('이 노트를 Vault로 옮길까요? 암호화되어 이 기기에만 저장되며 서버 동기화에서 제외됩니다.','Move this note to Vault? It will be encrypted on this device and excluded from server sync.'),{okText:L('이동','Move')}))return;
-  const copy={id:uid(),folder:'',color:n.color||0,type:n.type,title:n.title,content:n.content,items:n.items||[],createdAt:n.createdAt,updatedAt:Date.now(),deleted:false,dirty:true};
-  VLT.notes.unshift(copy);
-  if(!(await VLT.persist())){VLT.notes=VLT.notes.filter(x=>x.id!==copy.id);toast(L('Vault 저장에 실패해 이동하지 않았습니다.','Vault save failed; the note was not moved.'));return;}
-  const before=S.notes.slice();S.notes=S.notes.filter(x=>x.id!==n.id);
-  if(!save()){S.notes=before;toast(L('일반 노트 저장에 실패했습니다. 암호화된 Vault 복사본은 안전하게 남았습니다.','Normal-note save failed; the encrypted Vault copy was kept.'));return;}
-  SYNC.hardDelete(n.id);ui.editingId=null;touch();ovCloseUi($('#edOverlay'));render();toast(tr('Moved to vault','toast_tovault'));
-}
+/* (v7.5.8 요청3) moveNoteFolder()/moveToVault()(편집기 케밥 전용) 제거 — Vault 이동은 폴더 화면 ➡️ 이동(비밀번호 팝업) 경로만 사용 */
 async function deleteFromEditor(){
   const n=cur();if(!n)return;
   if(!await dlg(L('휴지통으로 이동할까요?','Move to trash?'),{okText:L('삭제','Delete')}))return;
@@ -4965,7 +4982,7 @@ async function deleteTrashNote(id){if(!await dlg(L('이 노트를 영구 삭제�
 function trashFolderRow(f){const row=document.createElement('div');row.className='fh-trash-row';const cp=document.createElement('span');cp.className='fh-trash-copy';const t=document.createElement('span');t.className='fh-trash-title';t.innerHTML=FH_ICONS.folder+' '+esc(folderName(f));const m=document.createElement('span');m.className='fh-trash-meta';m.textContent=L('연결된 노트 ','linked notes ')+NOTES().filter(n=>n.folder===f.id).length;cp.append(t,m);const restore=moreButton(L('복원','Restore'),()=>restoreTrashFolder(f.id));restore.className='btn';const del=moreButton(L('영구 삭제','Delete forever'),()=>deleteTrashFolder(f.id));del.className='btn danger';row.append(cp,restore,del);return row}
 async function restoreTrashFolder(id){const f=ALL_FOLDERS().find(x=>x.id===id);if(!f)return;const before={deleted:!!f.deleted,deletedAt:f.deletedAt||0,synced:f._synced,syncDelete:!!f._syncDelete,queue:[...(S.settings.folderDeletes||[])]};f.deleted=false;f.deletedAt=0;f._syncDelete=false;f._synced=false;S.settings.folderDeletes=(S.settings.folderDeletes||[]).filter(x=>x!==id);if(!(await persistFolderState())){f.deleted=before.deleted;f.deletedAt=before.deletedAt;f._synced=before.synced;f._syncDelete=before.syncDelete;S.settings.folderDeletes=before.queue;toast(L('복원 저장에 실패했습니다.','Could not save restoration.'));return}if(!ui.vault)syncSoon();renderFolderTrash();render()}
 async function deleteTrashFolder(id){const f=ALL_FOLDERS().find(x=>x.id===id);if(!f)return;if(!await dlg(L(`'${folderName(f)}' 폴더를 영구 삭제할까요? 연결된 노트는 '폴더 없음'으로 남습니다.`,`Delete '${folderName(f)}' forever? Linked notes will remain with no folder.`),{danger:true,okText:L('삭제','Delete')}))return;const coll=ALL_FOLDERS(),i=coll.indexOf(f),affected=NOTES().filter(n=>n.folder===id).map(n=>[n,n.folder,n.updatedAt,!!n.dirty]),queue=[...(S.settings.folderDeletes||[])];if(!ui.vault)S.settings.folderDeletes=[...new Set([...queue,id])];affected.forEach(([n])=>{n.folder='';n.updatedAt=Date.now();n.dirty=true});coll.splice(i,1);const saved=await persistFolderState();if(!saved){coll.splice(i,0,f);affected.forEach(([n,old,at,dirty])=>{n.folder=old;n.updatedAt=at;n.dirty=dirty});S.settings.folderDeletes=queue;toast(L('영구 삭제를 저장하지 못했습니다.','Could not save deletion.'));return}if(!ui.vault)syncSoon();renderFolderTrash();render()}
-function renderVaultMainMore(){const menu=$('#vaultMainMore'),sc=VLT.settings;const wasOpen=!menu.classList.contains('hidden');menu.innerHTML='';if(!wasOpen)histPush();menu.classList.remove('hidden');const add=(label,fn,cls)=>menu.append(moreButton(label,fn,cls));add(L('저장된 모든 노트 선택','Select all saved notes'),()=>{openFolderMgr();openAllNoteSelect()});add(L('노트 이동','Move notes'),()=>{openFolderMgr();openAllNoteSelect()});add(L('보기 방식','View'),()=>{folderHub.sub=folderHub.sub==='vhomeview'?'':'vhomeview';renderVaultMainMore()});if(folderHub.sub==='vhomeview'){const d=document.createElement('div');d.className='subchoices';[['grid',L('Grid','Grid')],['list',L('List','List')],['titles',L('Simple list','Simple list')]].forEach(([v,t])=>d.append(moreButton((sc.view===v?'✓  ':'')+t,()=>{sc.view=v;ui.view=v;VLT.persistSettings();render();renderVaultMainMore()})));menu.append(d)}add(L('정렬','Sort'),()=>{folderHub.sub=folderHub.sub==='vhomesort'?'':'vhomesort';renderVaultMainMore()});if(folderHub.sub==='vhomesort'){const d=document.createElement('div');d.className='subchoices';NOTE_SORTS.forEach(v=>d.append(moreButton((sc.sort===v?'✓  ':'')+({color:L('색상','Color'),updated:L('최근 수정','Recently updated'),created:L('최근 생성','Recently created'),title:L('제목','Title'),manual:L('수동 순서','Manual order')}[v]),()=>{sc.sort=v;VLT.persistSettings();render();renderVaultMainMore()})));menu.append(d)}add(L('노트 한 줄 개수','Notes per row'),()=>{folderHub.sub=folderHub.sub==='vhomecols'?'':'vhomecols';renderVaultMainMore()});if(folderHub.sub==='vhomecols'){const d=document.createElement('div');d.className='subchoices';['1','2','3','4'].forEach(v=>d.append(moreButton((String(sc.box)===v?'✓  ':'')+v,()=>{sc.box=v;VLT.persistSettings();render();renderVaultMainMore()})));menu.append(d)}const al=document.createElement('div');al.className='subchoices';al.append(moreHead(L('Vault 자동 잠금','Vault auto-lock')));const select=document.createElement('select');select.id='vaultAutoQuick';['1','5','15','30'].forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v+L('분',' min');select.append(o)});select.value=VLT.autoLockValue();select.onchange=()=>VLT.setAutoLock(select.value);al.append(select);menu.append(al)}
+function renderVaultMainMore(){const menu=$('#vaultMainMore'),sc=VLT.settings;const wasOpen=!menu.classList.contains('hidden');menu.innerHTML='';if(!wasOpen)histPush();menu.classList.remove('hidden');const add=(label,fn,cls)=>menu.append(moreButton(label,fn,cls));add(L('저장된 모든 노트 선택','Select all saved notes'),()=>{openFolderMgr();openAllNoteSelect()});add(L('노트 이동','Move notes'),()=>{openFolderMgr();openAllNoteSelect()});/* (v7.5.8 요청2) 보기 방식·정렬·노트 한 줄 개수 항목 제거 */const al=document.createElement('div');al.className='subchoices';al.append(moreHead(L('Vault 자동 잠금','Vault auto-lock')));const select=document.createElement('select');select.id='vaultAutoQuick';['1','5','15','30'].forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v+L('분',' min');select.append(o)});select.value=VLT.autoLockValue();select.onchange=()=>VLT.setAutoLock(select.value);al.append(select);menu.append(al)}
 function closeVaultMainMore(consume=true){closeMenuSlot('#vaultMainMore',consume);folderHub.sub=''}
 $('#fhHome').onclick=folderHome;$('#fhSearchBtn').onclick=()=>setFolderSearch('hub',!folderHub.searchOpen);$('#fhSearchClose').onclick=()=>setFolderSearch('hub',false);$('#fhSearch').addEventListener('input',renderFolderHub);$('#fhAddBtn').onclick=()=>{folderHub.addOpen=!folderHub.addOpen;renderFolderHub();if(folderHub.addOpen)setTimeout(()=>$('#fhAddInput').focus(),20)};$('#fhAddClose').onclick=()=>{folderHub.addOpen=false;$('#fhAddInput').value='';renderFolderHub()};$('#fhAddSave').onclick=addFolderFromHub;$('#fhAddInput').addEventListener('keydown',e=>{if(e.key==='Enter')addFolderFromHub()});$('#fhTrashBtn').onclick=openFolderTrash;$('#fhMoreBtn').onclick=()=>renderMore('hub');const folderBackBtn=()=>{const before=folderHub.page,wasMove=folderHub.selectMode==='move',wasL1=wasMove&&(folderHub.moveLevel||0)===1;folderHubBack();if($('#folderOverlay').classList.contains('show')){if(wasL1)histPop();else if(before!=='hub'&&folderHub.page==='hub')histPop();else if(before==='select'&&wasMove&&folderHub.selectMode==='notes')histPop();}};$('#fdBack').onclick=folderBackBtn;/* (v7.5.3 요청3) 폴더 상세 왼쪽 상단 폴더명 탭 → 그 자리에 현재 이름이 들어간 인라인 입력 박스 (일반+Vault 공용) */
 $('#fdTitle').onclick=()=>startFolderInlineRename();$('#fdTitle').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();startFolderInlineRename()}};$('#fdSearchBtn').onclick=()=>setFolderSearch('detail',!folderHub.detailSearchOpen);$('#fdSearchClose').onclick=()=>setFolderSearch('detail',false);$('#fdSearch').addEventListener('input',renderFolderDetail);$('#fdAddBtn').onclick=()=>{const f=folderRaw();if(!f)return;const n=newNote('note',f.id);openEditor(n.id)};$('#fdViewBtn').onclick=openDetailViewMenu;$('#fdTrashBtn').onclick=openFolderTrash;$('#fdMoreBtn').onclick=()=>renderMore('detail');$('#fsBack').onclick=folderBackBtn;$('#fsAll').onclick=()=>{const arr=NOTES().filter(n=>!n.deleted&&fHit(n,$('#fsSearch').value.trim().toLowerCase())),all=arr.length&&arr.every(n=>folderHub.select.has(n.id));if(all)arr.forEach(n=>folderHub.select.delete(n.id));else arr.forEach(n=>folderHub.select.add(n.id));renderFolderSelect()};$('#fsSearch').addEventListener('input',renderFolderSelect);$('#fsSearchClear').onclick=()=>{$('#fsSearch').value='';renderFolderSelect()};$('#fsMove').onclick=()=>{if(!folderHub.select.size)return;if(folderHub.selectMode!=='move')histPush();folderHub.moveLevel=0;folderHub.moveDest='';folderHub.selectMode='move';renderFolderSelect()};$('#fsDelete').onclick=deleteSelectedNotes;$('#ftBack').onclick=folderBackBtn;$('#ftNotesTab').onclick=()=>{folderHub.trashTab='notes';renderFolderTrash()};$('#ftFoldersTab').onclick=()=>{folderHub.trashTab='folders';renderFolderTrash()};$('#btnVaultMore').onclick=()=>{const m=$('#vaultMainMore');if(!m.classList.contains('hidden')){closeVaultMainMore();return;}renderVaultMainMore()};$('#fhFab').onclick=()=>{if(folderHub.page==='hub'){folderHub.addOpen=true;renderFolderHub();setTimeout(()=>$('#fhAddInput').focus(),20);return;}if(folderHub.page==='detail'){const f=folderRaw();if(f)openEditor(newNote('note',f.id).id);}};
@@ -5736,9 +5753,15 @@ async function restoreVaultSnapshot(v){
     STORE.removeItem('sk.vault.folders');STORE.removeItem('sk.vault.settings');STORE.removeItem('sk.vault.rate');
     S.settings.pinHash=null;S.settings.pinSalt=null;save();
     VLT.load();render();
-    toast(L('암호화된 Vault를 복구했습니다. 이 백업의 Vault 비밀번호로 열어 주세요.','Encrypted vault restored. Open it with this backup’s vault password.'));
+    toast(L('암호화된 Vault를 복구했습니다. 백업 당시의 Vault 비밀번호를 입력하세요.','Encrypted vault restored. Enter the vault password from that backup.'));
     return true;
   }catch(_){toast(L('Vault 스냅샷을 저장하지 못했습니다','Could not save the vault snapshot'));return false;}
+}
+/* (v7.5.8 요청1) Vault 스냅샷 복구 직후: 백업/설정 창을 닫고 곧바로 Vault 비밀번호 팝업(게이트)을 띄운다.
+   — '열어 주세요' 안내만 하고 끝내지 않는다. 취소(뒤로가기)하면 첫 화면으로 돌아간다. */
+function openVaultGateAfterRestore(){
+  ['#bkOverlay','#setOverlay'].forEach(sel=>{const el=$(sel);if(el&&el.classList.contains('show'))ovCloseUi(el);});
+  setTimeout(()=>{try{VLT.open();}catch(_){}},60);
 }
 /* ── v6 자동 백업(스냅샷): 저장/닫기/백그라운드 전환 시 이전 상태를 이 기기에 자동 보관 ── */
 let autoSnapTimer=null;
@@ -5832,7 +5855,7 @@ function renderBkDetail(){
   if(vaultSnap){const vb=document.createElement('div');vb.className='setsec';
     const vt=document.createElement('div');vt.className='hint';vt.textContent=L('🔐 암호화된 Vault 스냅샷이 포함되어 있습니다. 제목과 본문은 여기서 표시하지 않습니다.','🔐 This backup includes an encrypted vault snapshot. Titles and contents are never shown here.');
     const vr=document.createElement('button');vr.className='btn danger';vr.textContent=L('이 Vault 스냅샷 복구','Restore this vault snapshot');
-    vr.onclick=async()=>{if(await restoreVaultSnapshot(d.vault)){openBkList();}};vb.append(vt,vr);list.append(vb);}
+    vr.onclick=async()=>{if(await restoreVaultSnapshot(d.vault)){openVaultGateAfterRestore();}};   /* (v7.5.8 요청1) 복구 직후 비밀번호 팝업 */vb.append(vt,vr);list.append(vb);}
   if(!all.length&&!vaultSnap){const e=document.createElement('div');e.className='hint';e.innerHTML=L('이 백업에는 노트가 없습니다.','This backup has no notes.');list.append(e);}
   all.forEach(x=>{
     const row=document.createElement('div');row.className='setrow';row.style.alignItems='flex-start';
@@ -5906,6 +5929,7 @@ $('#importFile').addEventListener('change',e=>{
     const res=await applyBackup(d);
     /* v5 external backups carry the vault as a separate ciphertext snapshot. Never merge it as plaintext. */
     const vaultRestored=validVaultSnapshot(d.vault)?await restoreVaultSnapshot(d.vault):false;
+    if(vaultRestored)openVaultGateAfterRestore();   /* (v7.5.8 요청1) */
     toast(IS_KO?`가져오기 완료: 추가 ${res.added}/갱신 ${res.updated}, 보관 ${res.vadded}개${vaultRestored?' · 🔐 암호화 Vault 복구됨':''}${res.vskip?' (🔐 이전 평문 Vault는 잠겨서 건드리지 않음)':''}`
               :`Import done: added ${res.added}, updated ${res.updated}, vault ${res.vadded}${vaultRestored?' · encrypted vault restored':''}${res.vskip?' (legacy plaintext vault skipped — locked)':''}`);
   }catch(err){toast(tr('Not a valid backup file','bk_bad'))}};
@@ -6097,7 +6121,7 @@ const VLT={
       if(a===null||a===undefined)return;if(a.length<12){toast(L('12자 이상 입력하세요','Enter at least 12 characters'));return}
       const b=await dlg(L('한 번 더 입력하세요:','Enter it again:'),{input:true,password:true,okText:L('확인','OK')});
       if(a!==b){toast(L('두 값이 다릅니다. 다시 시도하세요','The two values differ. Try again.'));return}
-      try{await setVaultPin(a);if(this.pendingTransfer){const moved=await finishPendingVaultTransfer();if(moved)this.enter();return;}toast(L('비밀번호가 설정되었습니다. 다시 Vault를 열어 주세요.','Password set. Open the vault again.'));}catch(_){toast(L('Vault 설정에 실패했습니다','Could not set up the vault'));}return;
+      try{await setVaultPin(a);if(this.pendingTransfer){const moved=await finishPendingVaultTransfer();if(moved)this.enter();return;}this.enter();   /* (v7.5.8 요청1) '다시 열어 주세요' 대신 곧바로 진입 */}catch(_){toast(L('Vault 설정에 실패했습니다','Could not set up the vault'));}return;
     }
     const v=vGatePlain;if(!v){toast(tr('Enter the password','dlg_pin_enter'));return}
     if(this.failCount>=5&&Date.now()<this.lockUntil){const sec=Math.ceil((this.lockUntil-Date.now())/1000);toast(L(`너무 여러 번 틀렸습니다. ${sec}초 후 다시 시도하세요.`,`Too many attempts. Try again in ${sec}s.`));return;}
@@ -6523,12 +6547,14 @@ document.addEventListener('visibilitychange',()=>{
        foreground 복귀 즉시 deadline을 점검해 잠금(예: 화면 오프 중 1분 설정). */
     try{if(VLT&&VLT.key&&VLT._autoUntil&&Date.now()>VLT._autoUntil)VLT.leave();}catch(_){}
     resetToFirstNotesScreen(false);
+    try{setTimeout(syncPinnedNotifications,500);}catch(_){}   /* (v7.5.8 요청4) 빠진 고정 알림 재게시 */
   }
 });
 /* ═══════════════ PWA ═══════════════ */
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){
   addEventListener('load',()=>{
     navigator.serviceWorker.register('sw.js').then(reg=>{
+      try{navigator.serviceWorker.ready.then(()=>setTimeout(syncPinnedNotifications,800));}catch(_){}   /* (v7.5.8 요청4) */
       /* (v6.1) 새 버전이 대기 중이면 바로 넘겨받게 한다 */
       if(reg.waiting)reg.waiting.postMessage('SKIP_WAITING');
       reg.addEventListener('updatefound',()=>{
