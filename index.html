@@ -1,8 +1,12 @@
 <!DOCTYPE html>
 <!--
 ═══════════════════════════════════════════════════════════════
-  soonenote  —  V7.5.8
+  soonenote  —  V7.5.9
   (V6.0 → ... → V6.6 → V6.7 → V6.7.1)
+
+  V7.5.9 changes  (2026-09)  ← user-feedback round 12 (3 items)
+   1-2. Folder hub ⋮ and folder-detail ⋮: removed Sort and per-row items.
+   3. T (format) box: removed the top-right × button.
 
   V7.5.8 changes  (2026-09)  ← user-feedback round 11 (5 items)
    1. Vault password prompt: after a vault-snapshot restore (device list or
@@ -208,7 +212,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-bgVsvfBj/vTvdzP3QWyCDSPov4B3vAgJCJy6YGwx5XU='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-/SRB9coCTGpP54yG+7TQxH5oh/ssK/Yv1H45N6EGJ8Q='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
 <!-- (요구3) 전화기 화면에 딱 맞게 · 자동 확대(핀치 줌 포함) 완전 금지 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#f5f2ef">
@@ -1702,7 +1706,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='soonenote';
-const APP_VER='7.5.8';
+const APP_VER='7.5.9';
 const SSTORE=(()=>{try{const t='__cn__';sessionStorage.setItem(t,'1');sessionStorage.removeItem(t);return sessionStorage}
   catch(e){const m={};return{getItem:k=>(k in m?m[k]:null),setItem:(k,v)=>{m[k]=String(v)},removeItem:k=>{delete m[k]}}}})();
 
@@ -4292,8 +4296,7 @@ function buildTypePop(){
   const hd=document.createElement('div'); hd.id='tpHandle';
   hd.innerHTML='<span class="bar"></span><span class="txt">'+L('끌어서 이동','DRAG TO MOVE')+'</span><span class="bar"></span>';
   p.append(hd);
-  const close=document.createElement('button');close.type='button';close.id='tpClose';close.setAttribute('aria-label',L('서식 닫기','Close format'));close.title=L('닫기','Close');close.textContent='×';
-  close.onclick=e=>{e.preventDefault();e.stopPropagation();p.classList.remove('show');histPop();};p.append(close);
+  /* (v7.5.9 요청3) 우측 상단 × 버튼 제거 — 닫기는 T 버튼 재탭·바깥 탭·뒤로가기 */
   makeTypePopDraggable(p,hd);
   /* (v6.9 요청3) '크기' 슬라이더는 없앤다 - 글자 크기는 설정 화면(전역)에서만 조절한다. */
   /* B / I / U */
@@ -4604,7 +4607,7 @@ function updateTpVals(){
 }
 $('#edTypeBtn').onclick=e=>{e.stopPropagation();
   const tp=$('#edTypePop');
-  if(tp.classList.contains('show'))return;  /* v7.5: only X or Back closes an open T popup */
+  if(tp.classList.contains('show')){tp.classList.remove('show');histPop();return;}  /* (v7.5.9 요청3) × 제거 → T 재탭 또는 Back으로 닫음 */
   tpSaveRange();buildTypePop();updateTpVals();renderTpPal();
   $('#edColorPop').classList.remove('show');$('#edMenu').classList.remove('show');
   tp.classList.add('show');histPush();
@@ -4847,24 +4850,7 @@ function renderMore(which){
   if(hub){
     /* (v7.5.3 request 4) folder view options removed — 4 per row is fixed */
   }
-  menu.append(moreButton(L('정렬','Sort'),()=>{folderHub.sub=folderHub.sub==='sort'?'':'sort';renderMore(which)}));
-  if(folderHub.sub==='sort'){
-    const d=document.createElement('div');d.className='subchoices';
-    if(hub){
-      d.append(moreHead(L('폴더 정렬','Folder sort')));
-      [['name',L('이름순','Name')],['recent',L('최근 만든 순','Newest')],['count',L('노트 많은 순','Most notes')]].forEach(([v,t])=>d.append(moreButton((folderSort(sc)===v?'✓  ':'')+t,()=>setFolderSort(v))));
-    }else{
-      d.append(moreHead(L('이 폴더 노트 정렬','Notes in this folder')));
-      [['color',L('색상','Color')],['updated',L('최근 수정','Recently updated')],['created',L('최근 생성','Recently created')],['title',L('제목','Title')],['manual',L('수동 순서','Manual order')]].forEach(([v,t])=>d.append(moreButton((folderNoteSort(sc)===v?'✓  ':'')+t,()=>setFolderNoteSort(v))));
-    }
-    menu.append(d);
-  }
-  menu.append(moreButton(hub?L('폴더 한 줄 개수','Folders per row'):L('노트 한 줄 개수','Notes per row'),()=>{folderHub.sub=folderHub.sub==='cols'?'':'cols';renderMore(which)}));
-  if(folderHub.sub==='cols'){
-    const d=document.createElement('div');d.className='subchoices';d.append(moreHead(hub?L('폴더 카드 1–4개','Folders per row 1–4'):L('노트 카드 1–4개','Notes per row 1–4')));
-    ['1','2','3','4'].forEach(v=>{const now=hub?prefGrid(sc,'folderBox','3'):prefGrid(sc,'folderNoteBox','2');d.append(moreButton((now===v?'✓  ':'')+v,()=>hub?setFolderBox(v):setFolderNoteBox(v)))});
-    menu.append(d);
-  }
+  /* (v7.5.9 요청1·2) 폴더 hub/상세 ⋮의 '정렬'·'폴더(노트) 한 줄 개수' 항목 제거 */
   if(!hub){
     menu.append(moreButton(L('폴더 이름 변경','Rename folder'),renameCurrentFolder));
     menu.append(moreButton(L('폴더를 휴지통으로','Move folder to trash'),trashCurrentFolder,'danger'));
