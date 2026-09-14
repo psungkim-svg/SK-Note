@@ -1,8 +1,13 @@
 <!DOCTYPE html>
 <!--
 ═══════════════════════════════════════════════════════════════
-  soonenote  —  V7.5.6
+  soonenote  —  V7.5.7
   (V6.0 → ... → V6.6 → V6.7 → V6.7.1)
+
+  V7.5.7 changes  (2026-09)  ← user-feedback round 8 (2 items)
+   1. Vault home (main screen inside Vault) background = pastel red
+      (light #f8e4e1 / dark #312422), following the Vault's own theme.
+   2. Move-targets screen list scaled to 120% — row height, icons and text.
 
   V7.5.6 changes  (2026-09)  ← user-feedback round 7 (3 items)
    1. Vault gate password field is now a masked contenteditable — browsers
@@ -190,7 +195,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-WloE8Dsa47VB1w+NMcPOs/lVxFBJOnx2aURT7A+uDrQ='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-xNolH3bmvxAv2PjzJlef+HICZNOxCF0qN2lAqYS/i6E='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
 <!-- (요구3) 전화기 화면에 딱 맞게 · 자동 확대(핀치 줌 포함) 완전 금지 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#f5f2ef">
@@ -314,6 +319,8 @@ html[data-theme="dark"] #folderNav{background:#2b2725}      /* 다크: Ivory 톤
 #folderNav.vault .chip{padding:.3em .6em;font-size:1.2em;border-radius:1.5em;min-height:2.15em;
   line-height:1.2;display:inline-flex;align-items:center}
 html[data-theme="dark"] #folderNav.vault{background:#2a2c27} /* 다크: Sage 톤 */
+html.vault{--bg:#f8e4e1;--bg2:#f1d7d2}                       /* (v7.5.7 요청1) Vault 바탕화면: 파스텔 레드(라이트) */
+html[data-theme="dark"].vault{--bg:#312422;--bg2:#3a2b28}    /* (v7.5.7 요청1) 다크:  레드-브라운 */
 .hrow{display:flex;align-items:center;gap:.3em;min-width:0;flex-wrap:nowrap}
 .logo{font-weight:800;font-size:.72em;color:var(--text);margin-right:.25em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:26%;min-width:0;flex:none}
 /* (요청10) 항상 보이는 버전 배지 → 새 버전이 떴는지 눈으로 확인. 좁은 화면에서는 감춤(아이콘 잘림 방지) */
@@ -775,6 +782,8 @@ html[data-theme="dark"] mark{background:#8a6f62;color:#fff}
 .fh-mv-ro{display:flex;align-items:center;gap:.5em;padding:.4em .2em;border-bottom:1px solid var(--line)}
 .fh-mv-ro .t{flex:1;min-width:0;font-size:.82em;font-weight:750;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .fh-mv-ro .d{flex:none;font-size:.62em;color:var(--sub);font-weight:650}
+#fhSelectList.move-targets{font-size:1.2em}   /* (v7.5.7 요청2) 이동 리스트 120% (div 계열: 읽기전용 행·빈 텍스트) */
+#fhSelectList.move-targets .fh-trash-row{font-size:16px}   /* (v7.5.7 요청2) 버튼 행: 현재(13.33px)의 120% — 높이·아이콘·텍스트 */
 .fh-note-copy,.fh-trash-copy{flex:1;min-width:0;display:flex;flex-direction:column;gap:.1em}.fh-note-title,.fh-trash-title{font-size:.79em;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.fh-note-meta,.fh-trash-meta{font-size:.6em;color:var(--sub);font-weight:650;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .fh-trash-row .btn{font-size:.63em;padding:.4em .5em;min-height:2.15em;white-space:nowrap}
 #folderDetailGrid{display:grid;grid-template-columns:repeat(var(--cols,2),minmax(0,1fr));gap:1mm;align-content:start}
@@ -1679,7 +1688,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='soonenote';
-const APP_VER='7.5.6';
+const APP_VER='7.5.7';
 const SSTORE=(()=>{try{const t='__cn__';sessionStorage.setItem(t,'1');sessionStorage.removeItem(t);return sessionStorage}
   catch(e){const m={};return{getItem:k=>(k in m?m[k]:null),setItem:(k,v)=>{m[k]=String(v)},removeItem:k=>{delete m[k]}}}})();
 
@@ -3097,6 +3106,7 @@ function render(){
   const dark=isDark(); const PAL=dark?COLORS_D:COLORS, HEAD=dark?HEADS_D:HEADS_L;
   /* (요청) 하단 폴더바 배경: 일반=라이트 옐로우, 보관=라이트 그린 */
   $('#folderNav').classList.toggle('vault',ui.vault);
+  document.documentElement.classList.toggle('vault',ui.vault);   /* (v7.5.7 요청1) Vault 바탕색 스위치 */
   const bar=$('#folderBar');bar.innerHTML='';
   if(ui.vault){
     // (요구10) 보관 모드: 일반 화면과 동일 UI, 폴더바만 '보관' 표시 + 나가기
@@ -4891,9 +4901,9 @@ function startFolderInlineRename(){
   inp.addEventListener('click',e=>e.stopPropagation());
 }
 async function trashCurrentFolder(){const f=folderRaw();if(!f)return;if(!await dlg(L(`'${folderName(f)}' 폴더를 휴지통으로 옮길까요?\n폴더 안 노트의 연결은 유지되어 복원할 수 있습니다.`,`Move '${folderName(f)}' to folder trash? Note links are kept so it can be restored.`),{danger:true,okText:L('휴지통으로','Move to trash')}))return;const before={deleted:!!f.deleted,deletedAt:f.deletedAt||0,synced:f._synced,syncDelete:!!f._syncDelete};f.deleted=true;f.deletedAt=Date.now();f._synced=true;f._syncDelete=!ui.vault;const saved=await persistFolderState();if(!saved){f.deleted=before.deleted;f.deletedAt=before.deletedAt;f._synced=before.synced;f._syncDelete=before.syncDelete;toast(L('폴더를 저장하지 못했습니다.','Could not save the folder.'));return}if(!ui.vault)syncSoon();closeFolderMore();folderHubBack();render();toast(L('폴더를 휴지통으로 옮겼습니다.','Folder moved to trash.'))}
-function renderFolderSelect(){setFolderHubPage('select');const list=$('#fhSelectList');if(folderHub.selectMode==='move'){renderFolderMoveTargets();return}$('#fsTitle').textContent=L('저장된 모든 노트 선택','Select all saved notes');$('#fsSearchRow').classList.remove('hidden');$('.fh-select-actions').classList.remove('hidden');const q=$('#fsSearch').value.trim().toLowerCase(),arr=NOTES().filter(n=>!n.deleted&&fHit(n,q));list.innerHTML='';arr.forEach(n=>{const row=document.createElement('label');row.className='fh-note-row';const cb=document.createElement('input');cb.type='checkbox';cb.checked=folderHub.select.has(n.id);cb.onchange=()=>{if(cb.checked)folderHub.select.add(n.id);else folderHub.select.delete(n.id);updateFolderSelectionUI()};const cp=document.createElement('span');cp.className='fh-note-copy';const title=document.createElement('span');title.className='fh-note-title';title.textContent=(n.type==='check'?'☑ ':'')+(n.title||L('제목 없음','No title'));const f=ALL_FOLDERS().find(x=>x.id===n.folder),meta=document.createElement('span');meta.className='fh-note-meta';meta.textContent=(f?'📁 '+folderName(f):L('폴더 없음','No folder'))+' · '+new Date(n.updatedAt||Date.now()).toLocaleDateString();cp.append(title,meta);row.append(cb,cp);list.append(row)});if(!arr.length){const e=document.createElement('div');e.className='fh-empty';e.textContent=L('선택할 노트가 없습니다.','No notes to select.');list.append(e)}updateFolderSelectionUI()}
+function renderFolderSelect(){setFolderHubPage('select');const list=$('#fhSelectList');if(folderHub.selectMode!=='move')list.classList.remove('move-targets');if(folderHub.selectMode==='move'){renderFolderMoveTargets();return}$('#fsTitle').textContent=L('저장된 모든 노트 선택','Select all saved notes');$('#fsSearchRow').classList.remove('hidden');$('.fh-select-actions').classList.remove('hidden');const q=$('#fsSearch').value.trim().toLowerCase(),arr=NOTES().filter(n=>!n.deleted&&fHit(n,q));list.innerHTML='';arr.forEach(n=>{const row=document.createElement('label');row.className='fh-note-row';const cb=document.createElement('input');cb.type='checkbox';cb.checked=folderHub.select.has(n.id);cb.onchange=()=>{if(cb.checked)folderHub.select.add(n.id);else folderHub.select.delete(n.id);updateFolderSelectionUI()};const cp=document.createElement('span');cp.className='fh-note-copy';const title=document.createElement('span');title.className='fh-note-title';title.textContent=(n.type==='check'?'☑ ':'')+(n.title||L('제목 없음','No title'));const f=ALL_FOLDERS().find(x=>x.id===n.folder),meta=document.createElement('span');meta.className='fh-note-meta';meta.textContent=(f?'📁 '+folderName(f):L('폴더 없음','No folder'))+' · '+new Date(n.updatedAt||Date.now()).toLocaleDateString();cp.append(title,meta);row.append(cb,cp);list.append(row)});if(!arr.length){const e=document.createElement('div');e.className='fh-empty';e.textContent=L('선택할 노트가 없습니다.','No notes to select.');list.append(e)}updateFolderSelectionUI()}
 function updateFolderSelectionUI(){const arr=NOTES().filter(n=>!n.deleted&&fHit(n,$('#fsSearch').value.trim().toLowerCase())),count=folderHub.select.size;$('#fsCount').textContent=L(count+'개 선택',''+count+' selected');$('#fsMove').disabled=!count;$('#fsDelete').disabled=!count;$('#fsAll').textContent=arr.length&&arr.every(n=>folderHub.select.has(n.id))?'☐':'☑'}
-function renderFolderMoveTargets(){$('#fsSearchRow').classList.add('hidden');$('.fh-select-actions').classList.add('hidden');const list=$('#fhSelectList');list.innerHTML='';
+function renderFolderMoveTargets(){$('#fhSelectList').classList.add('move-targets');   /* (v7.5.7 요청2) 120% */$('#fsSearchRow').classList.add('hidden');$('.fh-select-actions').classList.add('hidden');const list=$('#fhSelectList');list.innerHTML='';
   const tile=(icon,name,sub,cb)=>{const b=document.createElement('button');b.className='fh-trash-row fh-mv-tile';b.style.width='100%';b.style.textAlign='left';b.type='button';b.innerHTML=`<span class="fi">${icon}</span><span class="fh-trash-copy"><span class="fh-trash-title">${esc(name)}</span><span class="fh-trash-meta">${esc(sub||'')}</span></span><span class="fh-mv-chev">›</span>`;b.onclick=cb;list.append(b)};
   const row=(icon,name,sub,cb)=>{const b=document.createElement('button');b.className='fh-trash-row';b.style.width='100%';b.style.textAlign='left';b.type='button';b.innerHTML=`<span class="fi">${icon}</span><span class="fh-trash-copy"><span class="fh-trash-title">${esc(name)}</span><span class="fh-trash-meta">${esc(sub||'')}</span></span>`;b.onclick=cb;list.append(b)};
   const drill=dest=>{ histPush(); folderHub.moveLevel=1; folderHub.moveDest=dest; renderFolderMoveTargets(); };
