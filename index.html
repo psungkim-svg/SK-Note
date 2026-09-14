@@ -1,8 +1,19 @@
 <!DOCTYPE html>
 <!--
 ═══════════════════════════════════════════════════════════════
-  soonenote  —  V7.5.4
+  soonenote  —  V7.5.5
   (V6.0 → ... → V6.6 → V6.7 → V6.7.1)
+
+  V7.5.5 changes  (2026-09)  ← user-feedback round 6 (4 items)
+   1. Vault gate no longer triggers browser saved-password autofill
+      (autocomplete=new-password) — a saved password can no longer auto-open
+      the Vault on a shared device.
+   2. Selection-bar Move button: up-arrow (📤) → right arrow (➡️), larger &
+      bolder so it is clearly visible.
+   3. Move-targets screen (folder list shown by the Move button) scaled to
+      150% — bigger rows and text.
+   4. Note colors 7 → 5: Ivory/White removed; existing notes (5→0, 6→1) and
+      default color auto-migrate.
 
   V7.5.4 changes  (2026-09)  ← user-feedback round 5 (3 items)
    1. Note font weight stages: 500/700/900 → 500/600/700 (Normal/SemiBold/Bold).
@@ -170,7 +181,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-ieEG1Fqfh/TnApBTul41EnwskGLTNwgFxjh2X4XtMMs='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-YNSGqLIswLSCAl7b4nGNIc3JhZQwF5Nj2vJJtuxEWr8='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
 <!-- (요구3) 전화기 화면에 딱 맞게 · 자동 확대(핀치 줌 포함) 완전 금지 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#f5f2ef">
@@ -749,6 +760,7 @@ html[data-theme="dark"] mark{background:#8a6f62;color:#fff}
 .fh-note-row,.fh-trash-row{display:flex;align-items:center;gap:.48em;background:var(--card);border:1px solid var(--line);border-radius:.65em;padding:.48em .55em;margin-bottom:.34em;min-width:0}
 .fh-note-row input{width:1.15em;height:1.15em;flex:none;accent-color:var(--accent2)}
 .fh-note-copy,.fh-trash-copy{flex:1;min-width:0;display:flex;flex-direction:column;gap:.1em}.fh-note-title,.fh-trash-title{font-size:.79em;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.fh-note-meta,.fh-trash-meta{font-size:.6em;color:var(--sub);font-weight:650;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#fhSelectList.move-targets .fh-trash-row{font-size:1.5em;padding:.62em .7em;gap:.55em;border-radius:.75em}   /* (v7.5.5 요청3) 이동 대상 리스트 150% */
 .fh-trash-row .btn{font-size:.63em;padding:.4em .5em;min-height:2.15em;white-space:nowrap}
 #folderDetailGrid{display:grid;grid-template-columns:repeat(var(--cols,2),minmax(0,1fr));gap:1mm;align-content:start}
 #folderDetailGrid.folder-note-list{display:flex;flex-direction:column;gap:1mm}#folderDetailGrid.folder-note-titles{display:flex;flex-direction:column;gap:1mm}
@@ -1084,6 +1096,7 @@ html[data-theme="dark"] input[type=range]::-moz-range-thumb{border-color:#221f1e
 #selMode .sbtn{background:rgba(255,255,255,.35);border:none;color:#4a332e;border-radius:.5em;
   padding:.4em .6em;font-size:.72em;font-weight:700;white-space:nowrap;flex:none;
   display:inline-flex;align-items:center;gap:.28em}
+#selMode #selMove{font-size:1.08em;font-weight:800;padding:.5em .68em;background:rgba(255,255,255,.62);box-shadow:0 1px 3px rgba(80,65,35,.18)}   /* (v7.5.5 요청2) 이동 버튼 눈에 띄게 */
 /* (v6.5) 복원 화살표가 너무 작아 안 보이던 문제 → 크고 진하게 */
 #selMode .sbtn .ic{font-size:1.9em;line-height:1;font-weight:900;-webkit-text-stroke:.02em currentColor}
 #selMode .sbtn.restore{background:rgba(255,255,255,.62)}
@@ -1203,7 +1216,7 @@ html[data-theme="dark"] #folderOverlay:not(.vault-folder),html[data-theme="dark"
   <button class="sbtn" id="selAll">☑ <span class="lbl" data-i18n="select_all">All</span></button>
   <span class="cnt" id="selCount">0<span data-i18n="sel_count"> selected</span></span>
   <button class="sbtn restore" id="selRestore" style="display:none"><span class="ic">↺</span> <span class="lbl" data-i18n="restore">Restore</span></button>
-  <button class="sbtn" id="selMove" style="display:none">📤 <span class="lbl" data-i18n="move">Move</span></button>   <!-- (v7.5.4 요청2) 휴지통 좌측: 이동 -->
+  <button class="sbtn" id="selMove" style="display:none">➡️ <span class="lbl" data-i18n="move">Move</span></button>   <!-- (v7.5.5 요청2) 이동: 우측 화살표, 눈에 띄게 -->
   <button class="sbtn" id="selDelete">🗑️ <span class="lbl" data-i18n="delete">Delete</span></button>
 </div>
 
@@ -1607,7 +1620,7 @@ html[data-theme="dark"] #folderOverlay:not(.vault-folder),html[data-theme="dark"
 <div class="overlay" id="vGate" style="z-index:80">
   <div class="vgateCard">
     <div class="vgateTitle" data-i18n="gate_title">Password</div>
-    <input type="password" id="vGatePass" maxlength="128" autocomplete="current-password">
+    <input type="password" id="vGatePass" maxlength="128" autocomplete="new-password" name="sk-vault-gate">   <!-- (v7.5.5 요청1) 저장된 비밀번호 자동완성(Google 등) 차단 -->
     <button class="btn primary vunlock" id="vPassBtn" data-i18n="gate_ok">OK</button>
   </div>
 </div>
@@ -1631,7 +1644,7 @@ html[data-theme="dark"] #folderOverlay:not(.vault-folder),html[data-theme="dark"
 <div class="overlay" id="dlg" style="z-index:110">
   <div class="sheet" style="max-width:360px">
     <div id="dlgMsg" style="font-size:.8em;line-height:1.5;margin:.3em .2em .7em;white-space:pre-line"></div>
-    <input type="password" id="dlgInput" class="hidden" maxlength="128"
+    <input type="password" id="dlgInput" class="hidden" maxlength="128" autocomplete="new-password" name="sk-dlg-pass"
       style="width:100%;padding:.5em;border-radius:.5em;background:var(--chip);border:1px solid var(--line);color:var(--text);outline:none;font-size:.85em;margin-bottom:.6em">
     <div class="btnrow" style="justify-content:flex-end;margin-top:0">
       <button class="btn" id="dlgNo" data-i18n="dlg_no">Cancel</button>
@@ -1649,7 +1662,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='soonenote';
-const APP_VER='7.5.4';
+const APP_VER='7.5.5';
 const SSTORE=(()=>{try{const t='__cn__';sessionStorage.setItem(t,'1');sessionStorage.removeItem(t);return sessionStorage}
   catch(e){const m={};return{getItem:k=>(k in m?m[k]:null),setItem:(k,v)=>{m[k]=String(v)},removeItem:k=>{delete m[k]}}}})();
 
@@ -1658,14 +1671,14 @@ const SSTORE=(()=>{try{const t='__cn__';sessionStorage.setItem(t,'1');sessionSto
 /* ══ (v6.1) soonenote 고정 팔레트 — 7색 muted pastel ══
    본문(COLORS)  = 기준색을 화이트에 72% 희석 → 거의 화이트에 가까운 파스텔
    제목(HEADS_L) = 기준색 그대로 또는 10%만 밝게                              */
-const PALETTE_BASE=['#D7A49A','#E4C9B6','#A4B1BA','#B8BBA3','#C9C3DD','#E1DAD3','#FFFFFF'];
-const COLORS  =['#f4e6e3','#f7f0eb','#e6e9ec','#ebece5','#f0eef5','#f7f5f3','#ffffff'];
-const HEADS_L =['#dbada4','#e7cebd','#adb9c1','#bfc2ac','#cec9e0','#e4ded7','#f0eeec'];
-const COLORS_D=['#3d3334','#3f3b39','#32363a','#363835','#3a3941','#3f3e3f','#454548'];
-const HEADS_D =['#584746','#5c544f','#464b50','#4d4f49','#53515c','#5b5959','#656668'];
-const NCOLORS=COLORS.length;                       /* 7 */
-const COLOR_NAMES   =['더스티 로즈','누드','베이비 블루','세이지','라벤더','아이보리','화이트'];
-const COLOR_NAMES_EN=['Dusty Rose','Nude','Baby Blue','Sage','Lavender','Ivory','White'];
+const PALETTE_BASE=['#D7A49A','#E4C9B6','#A4B1BA','#B8BBA3','#C9C3DD'];   /* (v7.5.5 요청4) 5색 */
+const COLORS  =['#f4e6e3','#f7f0eb','#e6e9ec','#ebece5','#f0eef5'];   /* (v7.5.5 요청4) 5색 — 아이보리·화이트 제거 */
+const HEADS_L =['#dbada4','#e7cebd','#adb9c1','#bfc2ac','#cec9e0'];
+const COLORS_D=['#3d3334','#3f3b39','#32363a','#363835','#3a3941'];
+const HEADS_D =['#584746','#5c544f','#464b50','#4d4f49','#53515c'];
+const NCOLORS=COLORS.length;                       /* (v7.5.5 요청4) 5 — 7색 중 아이보리·화이트 제거 */
+const COLOR_NAMES   =['더스티 로즈','누드','베이비 블루','세이지','라벤더'];
+const COLOR_NAMES_EN=['Dusty Rose','Nude','Baby Blue','Sage','Lavender'];
 const cnName=i=>((IS_KO?COLOR_NAMES[i]:COLOR_NAMES_EN[i])||'');
 /* 글자색·형광펜도 같은 톤으로 (원색 제거) */
 const TEXT_COLORS=['#3a3430','#8f6259','#8a7358','#6f7460','#5d6b74','#6f6889','#a89f97'];
@@ -2618,7 +2631,6 @@ function load(){
   try{S.notes=JSON.parse(STORE.getItem(LS.notes))||[]}catch(e){S.notes=[]}
   try{S.folders=JSON.parse(STORE.getItem(LS.folders))||[]}catch(e){S.folders=[]}
   try{Object.assign(S.settings,DEF,JSON.parse(STORE.getItem(LS.settings))||{})}catch(e){Object.assign(S.settings,DEF)}
-  S.notes.forEach(n=>{ if(n.color==null)n.color=0; if(n.color>=NCOLORS||n.color<0)n.color=((n.color%NCOLORS)+NCOLORS)%NCOLORS; });
   /* ══ (v6.4) 팔레트 순서 변경 마이그레이션 ══
      팔레트를 3,2,4,5,6,1,7 순서로 바꿨다. 색 자체는 그대로지만 '번호'가 달라지므로
      이미 저장된 노트의 색 번호를 새 위치로 옮겨 준다. (한 번만 실행)
@@ -2639,6 +2651,8 @@ function load(){
     if(dc2!=null && dc2>=0 && dc2<SW.length) S.settings.defColor=SW[dc2];
     S.settings.palVer=3;
   }
+  S.notes.forEach(n=>{ if(n.color==null)n.color=0; if(n.color>=NCOLORS||n.color<0)n.color=((n.color%NCOLORS)+NCOLORS)%NCOLORS; });   /* (v7.5.5 요청4) 5색: 기존 5→0, 6→1 자동 이관 */
+  if(S.settings.defColor!=null&&(S.settings.defColor>=NCOLORS||S.settings.defColor<0))S.settings.defColor=0;   /* (v7.5.5 요청4) 기본 컬러 0-4 */
   S.settings.font=migFont(S.settings.font);   /* (요청7) 구버전 5단계 → pt, 10~25 클램프 (v5.3) */
   // (요구3) 본문 굵기 4단계, 기본 'n'(보통=500). v5.2: 기본값 'b'로 저장됐던 기기·옛 숫자값을
   //  새 키 체계로 1회 변환 (fwVer=2 마커) — 'b' 저장분은 새 기본 'n'(보통)으로 안전 이관.
@@ -3422,7 +3436,7 @@ function updateSelBar(){
   $('#selRestore').disabled=none; $('#selDelete').disabled=none;
   /* (v7.5.4 요청2) 이동 버튼: 선택 모드(휴지통 제외)에서만, 휴지통 좌측에 표시 */
   const mv=$('#selMove');
-  if(mv){mv.style.display=(ui.selMode&&!ui.trash)?'':'none';mv.disabled=none;mv.innerHTML='📤 <span class="lbl">'+L('이동','Move')+'</span>';}
+  if(mv){mv.style.display=(ui.selMode&&!ui.trash)?'':'none';mv.disabled=none;mv.innerHTML='➡️ <span class="lbl">'+L('이동','Move')+'</span>';   /* (v7.5.5 요청2) 우측 화살표 */}
 
   $('#selRestore').style.opacity=none?'.45':'';
   $('#selDelete').style.opacity=none?'.45':'';
@@ -4859,9 +4873,9 @@ function startFolderInlineRename(){
   inp.addEventListener('click',e=>e.stopPropagation());
 }
 async function trashCurrentFolder(){const f=folderRaw();if(!f)return;if(!await dlg(L(`'${folderName(f)}' 폴더를 휴지통으로 옮길까요?\n폴더 안 노트의 연결은 유지되어 복원할 수 있습니다.`,`Move '${folderName(f)}' to folder trash? Note links are kept so it can be restored.`),{danger:true,okText:L('휴지통으로','Move to trash')}))return;const before={deleted:!!f.deleted,deletedAt:f.deletedAt||0,synced:f._synced,syncDelete:!!f._syncDelete};f.deleted=true;f.deletedAt=Date.now();f._synced=true;f._syncDelete=!ui.vault;const saved=await persistFolderState();if(!saved){f.deleted=before.deleted;f.deletedAt=before.deletedAt;f._synced=before.synced;f._syncDelete=before.syncDelete;toast(L('폴더를 저장하지 못했습니다.','Could not save the folder.'));return}if(!ui.vault)syncSoon();closeFolderMore();folderHubBack();render();toast(L('폴더를 휴지통으로 옮겼습니다.','Folder moved to trash.'))}
-function renderFolderSelect(){setFolderHubPage('select');const list=$('#fhSelectList');if(folderHub.selectMode==='move'){renderFolderMoveTargets();return}$('#fsTitle').textContent=L('저장된 모든 노트 선택','Select all saved notes');$('#fsSearchRow').classList.remove('hidden');$('.fh-select-actions').classList.remove('hidden');const q=$('#fsSearch').value.trim().toLowerCase(),arr=NOTES().filter(n=>!n.deleted&&fHit(n,q));list.innerHTML='';arr.forEach(n=>{const row=document.createElement('label');row.className='fh-note-row';const cb=document.createElement('input');cb.type='checkbox';cb.checked=folderHub.select.has(n.id);cb.onchange=()=>{if(cb.checked)folderHub.select.add(n.id);else folderHub.select.delete(n.id);updateFolderSelectionUI()};const cp=document.createElement('span');cp.className='fh-note-copy';const title=document.createElement('span');title.className='fh-note-title';title.textContent=(n.type==='check'?'☑ ':'')+(n.title||L('제목 없음','No title'));const f=ALL_FOLDERS().find(x=>x.id===n.folder),meta=document.createElement('span');meta.className='fh-note-meta';meta.textContent=(f?'📁 '+folderName(f):L('폴더 없음','No folder'))+' · '+new Date(n.updatedAt||Date.now()).toLocaleDateString();cp.append(title,meta);row.append(cb,cp);list.append(row)});if(!arr.length){const e=document.createElement('div');e.className='fh-empty';e.textContent=L('선택할 노트가 없습니다.','No notes to select.');list.append(e)}updateFolderSelectionUI()}
+function renderFolderSelect(){setFolderHubPage('select');const list=$('#fhSelectList');list.classList.remove('move-targets');if(folderHub.selectMode==='move'){renderFolderMoveTargets();return}$('#fsTitle').textContent=L('저장된 모든 노트 선택','Select all saved notes');$('#fsSearchRow').classList.remove('hidden');$('.fh-select-actions').classList.remove('hidden');const q=$('#fsSearch').value.trim().toLowerCase(),arr=NOTES().filter(n=>!n.deleted&&fHit(n,q));list.innerHTML='';arr.forEach(n=>{const row=document.createElement('label');row.className='fh-note-row';const cb=document.createElement('input');cb.type='checkbox';cb.checked=folderHub.select.has(n.id);cb.onchange=()=>{if(cb.checked)folderHub.select.add(n.id);else folderHub.select.delete(n.id);updateFolderSelectionUI()};const cp=document.createElement('span');cp.className='fh-note-copy';const title=document.createElement('span');title.className='fh-note-title';title.textContent=(n.type==='check'?'☑ ':'')+(n.title||L('제목 없음','No title'));const f=ALL_FOLDERS().find(x=>x.id===n.folder),meta=document.createElement('span');meta.className='fh-note-meta';meta.textContent=(f?'📁 '+folderName(f):L('폴더 없음','No folder'))+' · '+new Date(n.updatedAt||Date.now()).toLocaleDateString();cp.append(title,meta);row.append(cb,cp);list.append(row)});if(!arr.length){const e=document.createElement('div');e.className='fh-empty';e.textContent=L('선택할 노트가 없습니다.','No notes to select.');list.append(e)}updateFolderSelectionUI()}
 function updateFolderSelectionUI(){const arr=NOTES().filter(n=>!n.deleted&&fHit(n,$('#fsSearch').value.trim().toLowerCase())),count=folderHub.select.size;$('#fsCount').textContent=L(count+'개 선택',''+count+' selected');$('#fsMove').disabled=!count;$('#fsDelete').disabled=!count;$('#fsAll').textContent=arr.length&&arr.every(n=>folderHub.select.has(n.id))?'☐':'☑'}
-function renderFolderMoveTargets(){$('#fsTitle').textContent=L('선택한 노트를 어디로 옮길까요?','Move selected notes to…');$('#fsSearchRow').classList.add('hidden');$('.fh-select-actions').classList.add('hidden');const list=$('#fhSelectList');list.innerHTML='';const add=(id,name,sub,cb)=>{const b=document.createElement('button');b.className='fh-trash-row';b.style.width='100%';b.style.textAlign='left';b.type='button';b.innerHTML=`<span class="fi">${FH_ICONS.folder}</span><span class="fh-trash-copy"><span class="fh-trash-title">${esc(name)}</span><span class="fh-trash-meta">${esc(sub||'')}</span></span>`;b.onclick=cb||(()=>moveSelectedNotes(id));list.append(b)};add('',L('폴더 없음','No folder'),L('선택한 노트를 폴더 밖으로','Move selected notes out of folders'));sortFolderCollection(ALL_FOLDERS().filter(f=>!f.deleted)).forEach(f=>add(f.id,folderName(f),L('이 폴더로 이동','Move to this folder')));if(!ui.vault)add('__vault__','Vault',L('비밀번호 확인 후 암호화해 이동','Unlock and encrypt before moving'),startSelectedMoveToVault)}
+function renderFolderMoveTargets(){$('#fsTitle').textContent=L('선택한 노트를 어디로 옮길까요?','Move selected notes to…');$('#fhSelectList').classList.add('move-targets');   /* (v7.5.5 요청3) 150% */$('#fsSearchRow').classList.add('hidden');$('.fh-select-actions').classList.add('hidden');const list=$('#fhSelectList');list.innerHTML='';const add=(id,name,sub,cb)=>{const b=document.createElement('button');b.className='fh-trash-row';b.style.width='100%';b.style.textAlign='left';b.type='button';b.innerHTML=`<span class="fi">${FH_ICONS.folder}</span><span class="fh-trash-copy"><span class="fh-trash-title">${esc(name)}</span><span class="fh-trash-meta">${esc(sub||'')}</span></span>`;b.onclick=cb||(()=>moveSelectedNotes(id));list.append(b)};add('',L('폴더 없음','No folder'),L('선택한 노트를 폴더 밖으로','Move selected notes out of folders'));sortFolderCollection(ALL_FOLDERS().filter(f=>!f.deleted)).forEach(f=>add(f.id,folderName(f),L('이 폴더로 이동','Move to this folder')));if(!ui.vault)add('__vault__','Vault',L('비밀번호 확인 후 암호화해 이동','Unlock and encrypt before moving'),startSelectedMoveToVault)}
 async function moveSelectedNotes(folderId){const ids=[...folderHub.select];if(!ids.length)return;const changed=NOTES().filter(n=>ids.includes(n.id)).map(n=>[n,n.folder]);changed.forEach(([n])=>{n.folder=folderId;n.updatedAt=Date.now();n.dirty=true});const saved=await persistFolderState();if(!saved){changed.forEach(([n,old])=>n.folder=old);toast(L('노트를 옮기지 못했습니다.','Could not move notes.'));return}if(!ui.vault)syncSoon();folderHub.select.clear();const fromMove=folderHub.selectMode==='move';folderHub.selectMode='notes';if(fromMove)histPop();histPop();setFolderHubPage('hub');renderFolderHub();render();toast(L('선택한 노트를 옮겼습니다.','Selected notes moved.'))}
 function startSelectedMoveToVault(){const ids=[...folderHub.select];if(!ids.length)return;VLT.pendingTransfer={ids};VLT.open()}
 async function deleteSelectedNotes(){const ids=[...folderHub.select];if(!ids.length)return;if(!await dlg(L(`선택한 ${ids.length}개 노트를 휴지통으로 옮길까요?`,`Move ${ids.length} selected note(s) to trash?`),{danger:true,okText:L('휴지통으로','Move to trash')}))return;const changed=NOTES().filter(n=>ids.includes(n.id)).map(n=>[n,!!n.deleted,n.updatedAt]);changed.forEach(([n])=>{n.deleted=true;n.updatedAt=Date.now();n.dirty=true});const saved=await persistFolderState();if(!saved){changed.forEach(([n,del,at])=>{n.deleted=del;n.updatedAt=at});toast(L('노트를 저장하지 못했습니다.','Could not save notes.'));return}if(!ui.vault)syncSoon();folderHub.select.clear();histPop();setFolderHubPage('hub');renderFolderHub();render();toast(L('선택한 노트를 휴지통으로 옮겼습니다.','Selected notes moved to trash.'))}
