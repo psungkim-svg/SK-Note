@@ -1,8 +1,17 @@
 <!DOCTYPE html>
 <!--
 ═══════════════════════════════════════════════════════════════
-  soonenote  —  V7.5.9
+  soonenote  —  V7.6.0
   (V6.0 → ... → V6.6 → V6.7 → V6.7.1)
+
+  V7.6.0 changes  (2026-09)  ← product direction: text-only notes, no photo storage
+   · Camera removed. Gallery/paste image insertion (base64 into note) removed.
+   · New 🖼 "Link photo": stores only a tiny reference {uri,name,size,added}
+     in sk.photolinks (or encrypted inside the Vault payload); note body holds
+     <a class="plink" data-pid>. Photos open in the system viewer via the
+     Capacitor PhotoLink plugin (Photo Picker + takePersistableUriPermission).
+     In a plain browser: session-only viewing (in-memory Blob), nothing stored.
+   · Existing base64 images in old notes still render/delete (legacy only).
 
   V7.5.9 changes  (2026-09)  ← user-feedback round 12 (3 items)
    1-2. Folder hub ⋮ and folder-detail ⋮: removed Sort and per-row items.
@@ -212,7 +221,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-/SRB9coCTGpP54yG+7TQxH5oh/ssK/Yv1H45N6EGJ8Q='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-jnxyJxLIOvEegaMN42+BOuzajUNvA1rSU5LqVC+UOWk='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
 <!-- (요구3) 전화기 화면에 딱 맞게 · 자동 확대(핀치 줌 포함) 완전 금지 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#f5f2ef">
@@ -948,6 +957,11 @@ html[data-theme="dark"] #edColorBtn{border-color:#f2eeea;box-shadow:0 0 0 1px rg
 #edBody a,#edBody a.nlink{color:#3f6ea8;text-decoration:underline;text-underline-offset:2px;
   word-break:break-all;cursor:pointer;-webkit-tap-highlight-color:rgba(63,110,168,.18)}
 html[data-theme="dark"] #edBody a,html[data-theme="dark"] #edBody a.nlink{color:#8fb4dd}
+/* (v7.6.0) 사진 링크 칩 */
+#edBody a.plink{display:inline-block;text-decoration:none;color:#4a332e;background:rgba(0,0,0,.06);border:1px solid rgba(0,0,0,.12);border-radius:.6em;padding:.05em .55em;margin:.1em .15em .1em 0;font-weight:700;user-select:none;-webkit-user-select:none;cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:baseline}
+#edBody a.plink:active{background:rgba(0,0,0,.12)}
+#edBody a.plink.missing{opacity:.55;text-decoration:line-through}
+html[data-theme="dark"] #edBody a.plink{color:#eee;background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2)}
 #edBody a:active{background:rgba(63,110,168,.14);border-radius:3px}
 /* 링크 동작 선택 시트 */
 #linkSheet{position:fixed;inset:0;z-index:70;background:rgba(40,32,28,.34);
@@ -1346,11 +1360,10 @@ html[data-theme="dark"] #folderOverlay:not(.vault-folder),html[data-theme="dark"
         </svg>
       </button>
       <button class="edtool" id="edTypeBtn" data-i18n-title="Format" title="Format">T</button>
-      <button class="edtool" id="edImgBtn" data-i18n-title="Tap=Gallery · Hold=Camera" title="Tap=Gallery · Hold=Camera">📷</button>
+      <button class="edtool" id="edImgBtn" data-i18n-title="img_btn" title="Link photo">🖼</button>   <!-- (v7.6.0) 사진 링크: 사진은 저장하지 않고 참조만 -->
       <button class="edtool" id="edColorBtn" data-i18n-title="Color" title="Color"></button>
       <button class="edtool" id="edKebab" data-i18n-title="More" title="More">⋮</button>
-      <input type="file" id="edImgFile" accept="image/*" style="display:none">
-      <input type="file" id="edImgCam" accept="image/*" capture="environment" style="display:none">
+      <input type="file" id="edImgFile" accept="image/*" multiple style="display:none">   <!-- 웹 브라우저 모드 전용(세션 한정 보기) -->
       <!-- 컬러 팝오버 -->
       <div id="edColorPop"></div>
       <!-- 서식(Type) 팝오버 -->
@@ -1706,7 +1719,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='soonenote';
-const APP_VER='7.5.9';
+const APP_VER='7.6.0';
 const SSTORE=(()=>{try{const t='__cn__';sessionStorage.setItem(t,'1');sessionStorage.removeItem(t);return sessionStorage}
   catch(e){const m={};return{getItem:k=>(k in m?m[k]:null),setItem:(k,v)=>{m[k]=String(v)},removeItem:k=>{delete m[k]}}}})();
 
@@ -1767,7 +1780,7 @@ const I18N={
   search_ph:{en:'Search...'},view_toggle:{en:'View'},account_sync:{en:'Account · Sync'},trash:{en:'Trash'},
   settings:{en:'Settings'},add:{en:'Add'},note:{en:'Note'},checklist:{en:'Checklist'},
   title_ph:{en:'Title'},save:{en:'Save'},edit_hint:{en:'Edit mode'},format_t:{en:'Format'},
-  img_btn:{en:'Tap=Gallery · Hold=Camera'},color_btn:{en:'Color'},more:{en:'More'},
+  img_btn:{en:'Link photo'},color_btn:{en:'Color'},more:{en:'More'},
   body_ph:{en:'Type something...'},add_item:{en:'+ Add item'},
   img_smaller:{en:'−'},img_bigger:{en:'＋'},img_preview:{en:'🔍'},img_delete:{en:'🗑'},img_close:{en:'✕'},
   undo:{en:'Undo'},undone:{en:'Undone'},
@@ -1985,7 +1998,7 @@ const I18N_KO={
   edit_hint:'누르면 첫째 줄이 제목으로 채워집니다',
   undo:'되돌리기 (Undo)',
   format_t:'서식 (선택 텍스트)',
-  img_btn:'탭=갤러리 · 길게=카메라 촬영',
+  img_btn:'사진 링크',
   more:'더보기',
   today:'오늘',
   chip_backnormal:'← 일반 노트',
@@ -2118,7 +2131,7 @@ const I18N_JA={
   search_ph:'検索...',view_toggle:'表示',account_sync:'アカウント・同期',trash:'ゴミ箱',
   settings:'設定',add:'追加',note:'ノート',checklist:'チェックリスト',
   title_ph:'タイトル',save:'保存',edit_hint:'編集モード',format_t:'書式',
-  img_btn:'タップ=ギャラリー・長押し=カメラ',color_btn:'色',more:'その他',
+  img_btn:'写真リンク',color_btn:'色',more:'その他',
   body_ph:'入力してください...',add_item:'＋ 項目を追加',
   undo:'元に戻す',undone:'取り消しました',
   sec_screen:'画面',language:'言語 / Language',lang_auto:'自動（システム言語）',
@@ -2268,7 +2281,7 @@ const I18N_ZH={
   search_ph:'搜索...',view_toggle:'视图',account_sync:'账户 · 同步',trash:'回收站',
   settings:'设置',add:'添加',note:'笔记',checklist:'清单',
   title_ph:'标题',save:'保存',edit_hint:'编辑模式',format_t:'格式',
-  img_btn:'轻点=相册 · 长按=拍照',color_btn:'颜色',more:'更多',
+  img_btn:'照片链接',color_btn:'颜色',more:'更多',
   body_ph:'输入内容...',add_item:'＋ 添加项目',
   undo:'撤销',undone:'已撤销',
   sec_screen:'显示',language:'语言 / Language',lang_auto:'自动（跟随系统）',
@@ -2418,7 +2431,7 @@ const I18N_ES={
   search_ph:'Buscar...',view_toggle:'Vista',account_sync:'Cuenta · Sincronización',trash:'Papelera',
   settings:'Ajustes',add:'Añadir',note:'Nota',checklist:'Lista',
   title_ph:'Título',save:'Guardar',edit_hint:'Modo edición',format_t:'Formato',
-  img_btn:'Toca = Galería · Mantén = Cámara',color_btn:'Color',more:'Más',
+  img_btn:'Vincular foto',color_btn:'Color',more:'Más',
   body_ph:'Escribe algo...',add_item:'＋ Añadir elemento',
   undo:'Deshacer',undone:'Deshecho',
   sec_screen:'Pantalla',language:'Idioma / Language',lang_auto:'Automático (según el sistema)',
@@ -2813,7 +2826,7 @@ const SAN_TAGS=new Set(['B','STRONG','I','EM','U','S','STRIKE','BR','P','DIV','S
   'UL','OL','LI','A','IMG','FONT','H1','H2','H3','H4','BLOCKQUOTE','CODE','PRE','SUB','SUP','HR']);
 const SAN_ATTR={
   '*':['style','class','align','dir'],
-  'A':['href','target','rel','title'],
+  'A':['href','target','rel','title','data-pid'],   /* (v7.6.0) 사진 링크 참조 id */
   'IMG':['src','alt','width','height'],
   'FONT':['color','size','face']
 };
@@ -2887,6 +2900,7 @@ function linkify(html){
   if(!html)return '';
   // (v6.1) 먼저 정화한 뒤 링크화 — 저장된 내용/동기화 내용 모두 신뢰하지 않는다
   const box=document.createElement('div');box.innerHTML=sanitizeHTML(html);
+  box.querySelectorAll('a.plink').forEach(a=>{a.setAttribute('contenteditable','false');a.setAttribute('href','#photo');const m=PL.get(a.dataset.pid);a.textContent='🖼 '+(m?m.name:L('사진(연결 끊김)','Photo (unlinked)'));if(!m)a.classList.add('missing');});   /* (v7.6.0) 사진 링크 칩 */
   const rx=/(https?:\/\/[^\s<]+[^\s<.,;!?)\]}"'])/g;
   const walk=node=>{
     for(const child of [...node.childNodes]){
@@ -3743,7 +3757,7 @@ function updateColorBtn(sel){
 }
 function schedSave(){                                  // (요구9) 3초 후 자동 저장(조용히)
   clearTimeout(edSaveTimer);
-  edSaveTimer=setTimeout(()=>flushEd(true),3000);
+  edSaveTimer=setTimeout(()=>{flushEd(true);PL.prune();},3000);   /* (v7.6.0) 참조 없는 사진 메타 정리 */
 }
 function untitledTitle(n){   /* (v7.5.4 요청3) 내용이 있는데 제목이 비어 있으면 '제목 없음(No title)'을, 아니면 null 반환 */
   const t=String(n.title||'').trim();
@@ -3907,58 +3921,80 @@ document.addEventListener('keydown',e=>{
 },true);
 /* (요청1) 모바일 롱프레스/드래그로 '도구줄·제목줄'이 선택되는 것까지 차단 → 본문/체크 입력칸만 선택 허용 */
 $('#edOverlay').addEventListener('selectstart',e=>{
-  const t=e.target; if(!t)return;
+  let t=e.target; if(!t)return; if(t.nodeType!==1)t=t.parentElement; if(!t||!t.closest)return;   /* (v7.6.0) 텍스트 노드가 target인 경우 */
   if(t.closest('#edTitle'))return;                              // 제목 입력칸은 허용
   if(t.closest('#edBody'))return;                               // 본문은 허용
   if(t.closest('#edItems'))return;                              // 체크 항목은 허용
   e.preventDefault();                                           // 그 외(도구줄·버튼·배경) 선택 차단
 });
 
-/* (요청5) 이미지 붙여넣기: 클립보드 그림을 본문에 삽입 */
-/* (v6.1) 사진을 base64 원본 그대로 localStorage에 넣으면 5MB 한도를 금방 넘겨
-   노트 전체가 저장 불가가 된다 → 넣기 전에 긴 변 1280px · JPEG 품질 0.72로 압축. */
-async function compressImage(file,maxSide=1280,quality=0.72){
-  try{
-    const url=URL.createObjectURL(file);
-    const img=await new Promise((res,rej)=>{const im=new Image();im.onload=()=>res(im);im.onerror=rej;im.src=url});
-    let {naturalWidth:w,naturalHeight:h}=img;
-    URL.revokeObjectURL(url);
-    if(!w||!h)throw 0;
-    const scale=Math.min(1,maxSide/Math.max(w,h));
-    const cw=Math.max(1,Math.round(w*scale)), ch=Math.max(1,Math.round(h*scale));
-    const cv=document.createElement('canvas'); cv.width=cw; cv.height=ch;
-    const cx=cv.getContext('2d');
-    cx.fillStyle='#ffffff'; cx.fillRect(0,0,cw,ch);      // 투명 PNG → 흰 배경
-    cx.drawImage(img,0,0,cw,ch);
-    const out=cv.toDataURL('image/jpeg',quality);
-    // 압축이 오히려 커지면 원본 사용
-    return out.length<file.size*1.35?out:null;
-  }catch(e){ return null }
-}
-async function insertImageFile(file){
-  if(!file)return;
-  if(file.size>12*1024*1024){toast(L('이미지가 너무 큽니다(12MB 이하로)','Image is too large (max 12MB)'));return}
+/* ═══════════════ (v7.6.0) 사진 링크 — 사진은 절대 저장하지 않는다 ═══════════════
+   원칙: 노트에는 <a class="plink" data-pid="…">🖼 이름</a> 한 줄(수십 byte)만 들어간다.
+   사진 참조 메타(uri·이름·크기·추가일)는 노트와 분리된 작은 표(PL)에 둔다.
+     · 일반 노트용: localStorage 'sk.photolinks'
+     · Vault 노트용: VLT.photolinks (Vault 암호문 payload 안에 함께 암호화)
+   Base64/BLOB/썸네일/업로드 없음. 열기는 시스템 뷰어(갤러리·Google Photos)에 위임.
+   Android(Capacitor)에서는 PhotoLink 플러그인이 Photo Picker + takePersistableUriPermission 으로 영구 참조를 준다.
+   웹 브라우저에서는 영구 참조가 불가능하므로 '이번 세션 동안만 보기'(메모리 Blob)이고, 저장은 이름·크기 메타만. */
+const PL={
+  LSKEY:'sk.photolinks', _n:null, _session:new Map(),
+  _normal(){ if(!this._n){try{this._n=JSON.parse(STORE.getItem(this.LSKEY)||'{}')||{}}catch(_){this._n={}}} return this._n; },
+  _store(){ return ui.vault?(VLT.photolinks||(VLT.photolinks={})):this._normal(); },
+  get(pid){ if(!pid)return null; return (ui.vault&&VLT.photolinks&&VLT.photolinks[pid])||this._normal()[pid]||null; },
+  put(pid,meta){ this._store()[pid]=meta; this._save(); },
+  remove(pid){ delete this._store()[pid]; this._save(); },
+  all(){ return Object.assign({},this._normal()); },
+  merge(obj){ if(!obj||typeof obj!=='object')return 0; const st=this._normal(); let n=0; Object.keys(obj).forEach(k=>{ if(!st[k]&&obj[k]&&typeof obj[k].name==='string'){st[k]={name:String(obj[k].name).slice(0,120),uri:String(obj[k].uri||'').slice(0,2048),size:+obj[k].size||0,mime:String(obj[k].mime||'').slice(0,60),added:+obj[k].added||Date.now()};n++;} }); if(n)this._save(); return n; },
+  _save(){ if(ui.vault){VLT.persist();return;} try{STORE.setItem(this.LSKEY,JSON.stringify(this._normal()))}catch(e){console.error('photolinks save',e)} },
+  /* 노트 어디에서도 더 이상 참조하지 않는 메타는 지운다(현재 컨텍스트만) */
+  prune(){ try{ const notes=NOTES(); const used=new Set(); notes.forEach(n=>{ (String(n.content||'').match(/data-pid="([^"]+)"/g)||[]).forEach(m=>used.add(m.slice(10,-1))); });
+    const st=this._store(); let ch=false; Object.keys(st).forEach(k=>{ if(!used.has(k)){delete st[k];ch=true;} }); if(ch)this._save(); }catch(_){} },
+  bytes(){ try{return new Blob([JSON.stringify(this._store())]).size}catch(_){return 0} }
+};
+/* ── 네이티브 브릿지(Capacitor PhotoLink) ↔ 웹 fallback ── */
+const PhotoBridge={
+  plugin(){ try{return (window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.PhotoLink)||null}catch(_){return null} },
+  native(){ return !!this.plugin(); },
+  /* → [{uri,name,size,mime}] */
+  async pick(max){
+    const pl=this.plugin();
+    if(pl){ const r=await pl.pick({max:max||10}); return (r&&r.items)||[]; }
+    return new Promise(res=>{ const inp=$('#edImgFile'); inp.onchange=()=>{ const files=[...inp.files].slice(0,max||10); inp.value='';
+      res(files.map(f=>{const uri='';const it={uri,name:f.name||'photo',size:f.size||0,mime:f.type||'',_file:f};return it;})); }; inp.click(); });
+  },
+  async open(pid,meta){
+    const pl=this.plugin();
+    if(pl&&meta.uri){ try{await pl.open({uri:meta.uri});return true;}catch(e){ toast(L('사진을 열 수 없습니다. 사진이 삭제되었거나 이동되었을 수 있습니다.','Could not open the photo. It may have been deleted or moved.')); return false; } }
+    const f=PL._session.get(pid);
+    if(f){ const url=URL.createObjectURL(f); const ov=$('#imgPrev'); ov.innerHTML='<span>✕</span>'; const im=document.createElement('img'); im.src=url; im.onload=()=>URL.revokeObjectURL(url); ov.appendChild(im); if(ov.classList.contains('hidden'))histPush(); ov.classList.remove('hidden'); return true; }
+    toast(L('웹 브라우저에서는 사진을 고른 세션 동안만 볼 수 있습니다. Android 앱에서는 언제든 열립니다.','In a web browser, photos can be viewed only during the session they were picked. The Android app opens them anytime.'));
+    return false;
+  }
+};
+async function linkPhotos(){
+  let items=[]; try{items=await PhotoBridge.pick(10);}catch(e){toast(L('사진 선택이 취소되었거나 실패했습니다','Photo selection was canceled or failed'));return;}
+  if(!items.length)return;
   if(!ui.edEdit){ui.edEdit=true;applyEdMode();}
-  let dataUrl=await compressImage(file);
-  if(!dataUrl){
-    dataUrl=await new Promise(res=>{const r=new FileReader();r.onload=()=>res(r.result);r.readAsDataURL(file)});
-  }
-  // 압축 후에도 2.5MB를 넘으면 더 줄여본다
-  if(dataUrl.length>2.5*1024*1024){
-    const smaller=await compressImage(file,900,0.6);
-    if(smaller)dataUrl=smaller;
-  }
-  if(dataUrl.length>4*1024*1024){
-    toast(L('이 사진은 너무 커서 넣을 수 없습니다','This photo is too large to insert'));return;
-  }
-  const img=document.createElement('img'); img.className='edimg'; img.src=dataUrl; img.alt='image';
-  img.style.width='100%';
-  $('#edBody').focus();
-  const s=window.getSelection(); const r=s.rangeCount?s.getRangeAt(0):document.createRange();
-  if(s.rangeCount){ r.deleteContents(); r.insertNode(img); }
-  else $('#edBody').appendChild(img);
-  schedSave();toast(tr('Image added','toast_img_added'));
-  selectImg(img);
+  const body=$('#edBody'); body.focus();
+  const s=window.getSelection(); const r=s.rangeCount&&body.contains(s.anchorNode)?s.getRangeAt(0):null;
+  const frag=document.createDocumentFragment();
+  items.forEach(it=>{
+    const pid='p'+uid();
+    const name=String(it.name||'photo').replace(/[\u0000-\u001F<>]/g,'').slice(0,120)||'photo';
+    PL.put(pid,{uri:String(it.uri||'').slice(0,2048),name,size:+it.size||0,mime:String(it.mime||'').slice(0,60),added:Date.now()});
+    if(it._file)PL._session.set(pid,it._file);   /* 웹: 세션 한정, 저장하지 않음 */
+    const a=document.createElement('a'); a.className='plink'; a.dataset.pid=pid; a.href='#photo'; a.setAttribute('contenteditable','false'); a.textContent='🖼 '+name;
+    frag.append(a,document.createTextNode(' '));
+  });
+  if(r){ r.deleteContents(); r.insertNode(frag); r.collapse(false); s.removeAllRanges(); s.addRange(r); }
+  else body.append(frag);
+  schedSave();
+  toast(L(`사진 ${items.length}장을 연결했습니다 (사진은 저장하지 않음)`,`Linked ${items.length} photo(s) — nothing copied`));
+}
+async function openPhotoLink(pid){
+  const m=PL.get(pid);
+  if(!m){ toast(L('이 사진 링크의 정보가 없습니다(다른 기기에서 만든 링크이거나 삭제됨).','No info for this photo link (made on another device, or removed).')); return; }
+  await PhotoBridge.open(pid,m);
 }
 /* (요청2/3) 이미지 선택 → 확대/축소(＋−·모서리 드래그) · 아무 곳으로 이동(이미지 잡고 드래그) · 삭제
    ★ 선택·이동·크기조절·삭제는 노트를 저장했다 다시 열어도(편집 모드 진입 시) 그대로 동작한다. */
@@ -4170,21 +4206,14 @@ $('#edBody').addEventListener('pointerdown',e=>{
   }
 },true);
 /* 이미지 선택/미리보기는 pointerup 분기에서 처리 (click 중복 방지) */
-/* (요청2) 카메라: 탭 = 갤러리 / 길게 = 직접 촬영(capture) */
-/* (요청2) 카메라: 탭=갤러리 / 길게=직접 촬영(capture). imgLong 플래그로 길게 후 click 무시 */
-let imgBtnT=null, imgLong=false;
-$('#edImgBtn').onpointerdown=()=>{imgLong=false;imgBtnT=setTimeout(()=>{imgLong=true;$('#edImgCam').click()},500)};
-$('#edImgBtn').onpointerup=()=>{clearTimeout(imgBtnT)};
-$('#edImgBtn').onpointercancel=()=>{clearTimeout(imgBtnT)};
-$('#edImgBtn').onclick=e=>{e.stopPropagation(); if(imgLong){imgLong=false;return} $('#edImgFile').click()};
-$('#edImgFile').addEventListener('change',e=>{[...e.target.files].forEach(f=>insertImageFile(f));e.target.value=''});
-$('#edImgCam').addEventListener('change',e=>{[...e.target.files].forEach(f=>insertImageFile(f));e.target.value=''});
+/* (v7.6.0) 🖼 = 사진 링크(카메라·갤러리 삽입 제거). 붙여넣기 그림은 거부(노트에 사진을 저장하지 않음) */
+$('#edImgBtn').onclick=e=>{e.stopPropagation();linkPhotos()};
 $('#edBody').addEventListener('paste',e=>{
   const items=(e.clipboardData||window.clipboardData)?.items||[];
   for(const it of items){
     if(it.type&&it.type.indexOf('image')===0){
       e.preventDefault();
-      insertImageFile(it.getAsFile());
+      toast(L('사진은 노트에 저장하지 않습니다. 🖼 버튼으로 사진을 연결하세요.','Photos are not stored in notes. Use 🖼 to link a photo.'));
       return;
     }
   }
@@ -4240,6 +4269,7 @@ $('#lsShare').onclick=async()=>{
 $('#edBody').addEventListener('click',e=>{
   const a=e.target.closest&&e.target.closest('a');
   if(!a)return;
+  if(a.classList.contains('plink')){e.preventDefault();openPhotoLink(a.dataset.pid);return;}   /* (v7.6.0) 사진 링크는 편집 중에도 탭=열기 */
   if(ui.edEdit)return;                 /* 편집 중에는 커서 놓기가 우선 (길게 눌러 메뉴) */
   e.preventDefault();
   const href=a.getAttribute('href')||a.href||'';
@@ -4249,7 +4279,7 @@ $('#edBody').addEventListener('click',e=>{
 /* 편집 중에도 링크를 '길게' 누르면 메뉴 */
 let _lnkT=null;
 $('#edBody').addEventListener('pointerdown',e=>{
-  const a=e.target.closest&&e.target.closest('a'); if(!a||!ui.edEdit)return;
+  const a=e.target.closest&&e.target.closest('a'); if(!a||!ui.edEdit||a.classList.contains('plink'))return;
   clearTimeout(_lnkT);
   _lnkT=setTimeout(()=>{ const h=a.getAttribute('href')||a.href||''; if(h)openLinkSheet(h); },550);
 });
@@ -5663,6 +5693,7 @@ function buildBackup(){
   return {app:'sk-note',v:5,exportedAt:new Date().toISOString(),
     notes:S.notes,
     folders:S.folders.map(f=>({id:f.id,name:f.name,createdAt:f.createdAt,deleted:!!f.deleted,deletedAt:f.deletedAt||0})),
+    photolinks:PL.all(),   /* (v7.6.0) 사진 참조 메타(작음) — 사진 자체는 없음 */
     vault:vaultSnapshotForBackup()};
 }
 function validVaultSnapshot(v){
@@ -5712,6 +5743,7 @@ async function applyBackup(d, onlyIds){
   });
   if(!onlyIds)(d.folders||[]).forEach(sf=>{const lf=S.folders.find(f=>f.id===sf.id);
     if(lf){lf.name=sf.name;lf.deleted=!!sf.deleted;lf.deletedAt=sf.deletedAt||0;}else S.folders.push({id:sf.id,name:sf.name,createdAt:sf.createdAt,deleted:!!sf.deleted,deletedAt:sf.deletedAt||0,_synced:false})});
+  if(!onlyIds&&d.photolinks)PL.merge(d.photolinks);   /* (v7.6.0) */
   /* Legacy v4 files may carry a plaintext vault. Never write it while locked. */
   if(Array.isArray(d.vaultNotes)&&d.vaultNotes.length){
     if(!VLT.key){vskip=true;}
@@ -5987,9 +6019,9 @@ _vGateEl.addEventListener('input',()=>{   /* beforeinput을 우회해 외부(자
 });
 
 const VLT={
-  notes:[],folders:[],settings:{},key:null,auth:null,encrypted:false,format:0,_blob:null,legacyMeta:false,_writeChain:Promise.resolve(),failCount:0,lockUntil:0,_autoTimer:null,_autoUntil:0,pendingTransfer:null,
+  notes:[],folders:[],settings:{},photolinks:{},key:null,auth:null,encrypted:false,format:0,_blob:null,legacyMeta:false,_writeChain:Promise.resolve(),failCount:0,lockUntil:0,_autoTimer:null,_autoUntil:0,pendingTransfer:null,
   load(){
-    this.clearAutoLock&&this.clearAutoLock();this.pendingTransfer=null;this.key=null;this.notes=[];this.folders=[];this.settings=Object.assign({},VAULT_DEF);this.encrypted=false;this.format=0;this._blob=null;this.auth=null;this.legacyMeta=false;this.failCount=0;this.lockUntil=0;
+    this.clearAutoLock&&this.clearAutoLock();this.pendingTransfer=null;this.key=null;this.notes=[];this.folders=[];this.photolinks={};this.settings=Object.assign({},VAULT_DEF);this.encrypted=false;this.format=0;this._blob=null;this.auth=null;this.legacyMeta=false;this.failCount=0;this.lockUntil=0;
     try{const rate=JSON.parse(STORE.getItem('sk.vault.rate')||'{}');this.failCount=Math.max(0,parseInt(rate.fails,10)||0);this.lockUntil=Math.max(0,parseInt(rate.until,10)||0);}catch(_){}
     let legacyFolders=[],legacySettings={};
     try{legacyFolders=JSON.parse(STORE.getItem('sk.vault.folders'))||[]}catch(_){}
@@ -6014,7 +6046,7 @@ const VLT={
       const json=await aesDecrypt(key,this._blob);const data=JSON.parse(json);
       if(this.format>=2){
         if(!data||!Array.isArray(data.notes)||!Array.isArray(data.folders)||!data.settings)throw new Error('invalid vault payload');
-        this.notes=data.notes;this.folders=data.folders;this.settings=Object.assign({},VAULT_DEF,data.settings);if(this.settings.fontWeight==='l')this.settings.fontWeight='n';   /* (v7.5.2 요청3) */
+        this.notes=data.notes;this.folders=data.folders;this.settings=Object.assign({},VAULT_DEF,data.settings);this.photolinks=(data.photolinks&&typeof data.photolinks==='object')?data.photolinks:{};if(this.settings.fontWeight==='l')this.settings.fontWeight='n';   /* (v7.5.2 요청3) */
       }else if(Array.isArray(data)){this.notes=data;this.legacyMeta=true;}
       else throw new Error('invalid legacy vault');
       this.settings.unlockMinutes=0;if(!['1','5','15','30'].includes(String(this.settings.vaultAutoLock)))this.settings.vaultAutoLock='5';this.key=key;return true;
@@ -6023,7 +6055,7 @@ const VLT={
   persist(){
     if(!this.key||!this.auth){toast(L('Vault가 잠겨 저장하지 않았습니다','Vault is locked; nothing was saved'));return Promise.resolve(false);}
     const key=this.key,auth=JSON.parse(JSON.stringify(this.auth));
-    const payload=JSON.stringify({notes:this.notes,folders:this.folders,settings:Object.assign({},this.settings,{unlockMinutes:0})});
+    const payload=JSON.stringify({notes:this.notes,folders:this.folders,settings:Object.assign({},this.settings,{unlockMinutes:0}),photolinks:this.photolinks||{}});   /* (v7.6.0) 사진 참조 메타도 암호화 */
     this._writeChain=this._writeChain.catch(()=>false).then(async()=>{
       try{
         const blob=await aesEncrypt(key,payload);blob.__enc=1;blob.fmt=2;blob.auth=auth;
@@ -6041,7 +6073,7 @@ const VLT={
   armAutoLock(){this.clearAutoLock();const m=parseInt(this.autoLockValue(),10)||0;if(!m||!this.key)return;this._autoUntil=Date.now()+m*60000;this._autoTimer=setTimeout(()=>{if(this.key){toast(L('Vault 시간이 만료되어 잠갔습니다.','Vault auto-lock time expired.'));this.leave();}},m*60000);this.persistSession();},   /* (v7.5.3 요청1) 데드라인 갱신마다 세션 저장 */
   async setAutoLock(v){if(!['1','5','15','30'].includes(String(v)))return;const old=this.settings.vaultAutoLock;this.settings.vaultAutoLock=String(v);if(!(await this.persist())){this.settings.vaultAutoLock=old;toast(L('자동 잠금 설정을 저장하지 못했습니다.','Could not save auto-lock setting.'));return;}this.armAutoLock();toast(L('Vault 자동 잠금을 '+v+'분으로 설정했습니다.','Vault auto-lock set to '+v+' minutes.'));},
   wipe(){
-    this.notes=[];this.folders=[];this.settings=Object.assign({},VAULT_DEF);this.key=null;this.auth=null;this.encrypted=false;this.format=0;this._blob=null;this._keyBits=null;this.legacyMeta=false;this.failCount=0;this.lockUntil=0;this.clearAutoLock();this.pendingTransfer=null;
+    this.notes=[];this.folders=[];this.photolinks={};this.settings=Object.assign({},VAULT_DEF);this.key=null;this.auth=null;this.encrypted=false;this.format=0;this._blob=null;this._keyBits=null;this.legacyMeta=false;this.failCount=0;this.lockUntil=0;this.clearAutoLock();this.pendingTransfer=null;
     try{STORE.removeItem('sk.vault');STORE.removeItem('sk.vault.folders');STORE.removeItem('sk.vault.settings');STORE.removeItem('sk.vault.rate');STORE.removeItem('sk.vault.session');}catch(_){}
     S.settings.pinHash=null;S.settings.pinSalt=null;
   },
@@ -6094,7 +6126,7 @@ const VLT={
     ui.vault=false;ui.view=S.settings.view||'grid';ui.folder='';ui.nofolder=false;ui.trash=false;ui.search='';$('#search').value='';ui.editingId=null;exitSel();scheduleReminders();render();toast(L('Vault는 설정한 자동 잠금 시간까지 잠금 해제 상태입니다.','Vault remains unlocked until the selected auto-lock time.'));
   },
   leave(){
-    this.clearAutoLock();this.clearSession();this._keyBits=null;this.pendingTransfer=null;   /* (v7.5.3 요청1) 잠김 = 세션 소멸 */
+    this.clearAutoLock();this.clearSession();this._keyBits=null;this.pendingTransfer=null;this.photolinks={};   /* (v7.6.0) */   /* (v7.5.3 요청1) 잠김 = 세션 소멸 */
     const eo=$('#edOverlay');
     closeFolderOverlayNow();
     {const fl=$('#fhFolderGrid'),fn=$('#folderDetailGrid'),fs=$('#fhSelectList'),ft=$('#fhTrashList');if(fl)fl.textContent='';if(fn)fn.textContent='';if(fs)fs.textContent='';if(ft)ft.textContent='';}

@@ -1,0 +1,16 @@
+# Recommended production HTTP response headers for index.html
+#
+# index.html has a baseline CSP meta. Send this stronger HTTP header too,
+# because browsers ignore frame-ancestors when it comes from a meta element.
+
+Content-Security-Policy: default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-jnxyJxLIOvEegaMN42+BOuzajUNvA1rSU5LqVC+UOWk='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests
+X-Content-Type-Options: nosniff
+Referrer-Policy: no-referrer
+Permissions-Policy: camera=(self), microphone=(), geolocation=(), payment=(), usb=()
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+
+Notes:
+- Enable HSTS only after confirming every required subdomain is HTTPS-ready.
+- The app can use the camera/photo feature, so camera=(self) is intentional. If unused, camera=() is stricter.
+- The app allows standard Supabase project HTTPS/WebSocket endpoints. Review and narrow connect-src before adding any other service.
+- Any change to the inline script requires recalculating the CSP SHA-256 hash.
