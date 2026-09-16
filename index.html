@@ -1,8 +1,18 @@
 <!DOCTYPE html>
 <!--
 ═══════════════════════════════════════════════════════════════
-  soonenote  —  V7.6.2
+  soonenote  —  V7.6.4
   (V6.0 → ... → V6.6 → V6.7 → V6.7.1)
+
+  V7.6.4 changes  (2026-09)
+   1. Toast/info duration set to 5 s / 8 s (long text).
+
+  V7.6.3 changes  (2026-09)  ← user-feedback (5 items)
+   1. Toast/info messages stay 3x longer (6.6 s / 13.2 s for long text).
+   2. ↶ Undo and T 110% larger.
+   3. Folder top bar: full-bleed (sides+top), same height as note top bar,
+      slightly darker green (vault: darker pastel red).
+   4. S badge: white outline ring.
 
   V7.6.2 changes  (2026-09)  ← user-feedback (5 items)
    1. Note top bar = S · Title · ↶ · T · 🖼 · Color · ⋮ (all notes). View/edit
@@ -240,7 +250,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-bd3l1iTEkhbjX9AsNneBoa6YYV3u6k2PSilHjbdF/2Y='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-ohMdqmJX04nOEv14zt/llPyQq3Jhbt3gVvIKkZCTCVo='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
 <!-- (요구3) 전화기 화면에 딱 맞게 · 자동 확대(핀치 줌 포함) 완전 금지 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#f5f2ef">
@@ -498,7 +508,7 @@ html[data-theme="dark"] #acLibWarn.loading{
   background:linear-gradient(135deg,var(--sbA,#D7A49A) 0%,var(--sbB,#C9C3DD) 100%);
   color:#fff;font-size:.78em;font-weight:900;line-height:1;
   display:flex;align-items:center;justify-content:center;
-  box-shadow:0 1px 5px rgba(120,90,80,.3);
+  box-shadow:0 0 0 2px #fff,0 1px 5px rgba(120,90,80,.3);   /* (v7.6.3) 흰색 테두리 */
   transition:transform .14s, box-shadow .2s, background .9s ease;
   margin-right:.3em;position:relative;z-index:2;
   isolation:isolate;
@@ -772,7 +782,7 @@ html[data-theme="dark"] mark{background:#8a6f62;color:#fff}
 #folderOverlay{align-items:stretch;background:var(--bg)}
 #folderOverlay .sheet{width:100%;max-width:100%;height:100%;max-height:100%;border-radius:0;
   display:flex;flex-direction:column;overflow:hidden;transform:none;
-  padding:.62em .72em calc(.72em + env(safe-area-inset-bottom))}
+  --fsx:.72em;padding:0 var(--fsx) calc(.72em + env(safe-area-inset-bottom))}   /* (v7.6.3) 위 여백 0: 상단바가 위를 채움 */
 #folderHub{flex:1;min-height:0;display:flex;flex-direction:column}
 .folder-page{flex:1;min-height:0;display:flex;flex-direction:column}
 .folder-page.hidden{display:none!important}
@@ -839,7 +849,7 @@ html[data-theme="dark"] mark{background:#8a6f62;color:#fff}
 #folderDetailGrid .note{cursor:pointer;-webkit-tap-highlight-color:rgba(0,0,0,0)}
 .fh-detail-label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media(min-width:640px){
- #folderOverlay .sheet{padding-left:max(.9em,calc((100vw - 900px)/2));padding-right:max(.9em,calc((100vw - 900px)/2))}
+ #folderOverlay .sheet{--fsx:max(.9em,calc((100vw - 900px)/2))}
  #fhFolderGrid{grid-template-columns:repeat(4,minmax(0,1fr));max-width:900px;width:100%;align-self:center}
  #fhFolderGrid.view-grid-s{grid-template-columns:repeat(6,minmax(0,1fr))}#fhFolderGrid.view-grid-l{grid-template-columns:repeat(2,minmax(0,1fr))}
  #fhFolderGrid.view-list,#fhFolderGrid.view-titles{display:flex}
@@ -904,8 +914,8 @@ html[data-theme="dark"] mark{background:#8a6f62;color:#fff}
   box-shadow:inset 0 2px 5px rgba(0,0,0,.18)}
 html[data-theme="dark"] #edDone{background:#2a2726;border-color:#c39a91;color:#e5c6bf}
 /* Undo 120% 확대, T 볼드체 */
-.edbar #edUndo{font-size:1.14em;font-weight:800}
-#edTypeBtn{font-weight:800}
+.edbar #edUndo{font-size:1.25em;font-weight:800}   /* (v7.6.3) 110% */
+#edTypeBtn{font-weight:800;font-size:.94em}   /* (v7.6.3) 110% */
 /* (요청) 휴지통 아이콘 80%로 축소 */
 #btnTrash{font-size:.78em;padding:.32em}
 .edtool:active{background:var(--chip);transform:translateY(1px) scale(.9);box-shadow:inset 0 2px 4px rgba(0,0,0,.2)}   /* (요청3) 눌리는 모양이 확실히 보이게 */
@@ -1257,10 +1267,15 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
 
 /* ══════════ v7.4 Folder polish · local pin notice ══════════ */
 #folderOverlay:not(.vault-folder),#folderOverlay:not(.vault-folder)>.sheet{background:#e6f1e5}
-#folderOverlay .fh-top{background:var(--accent2);color:#fff;border-radius:.78em;padding:.34em .42em .42em;margin-bottom:.35em;box-shadow:var(--shadow)}   /* (v7.6.2) 상단바를 진하게 해 아래와 구분 */
-#folderOverlay .fh-top h3,#folderOverlay .fh-top .iconbtn{color:#fff}
-#folderOverlay .fh-top .iconbtn svg{stroke:#fff}
-html[data-theme="dark"] #folderOverlay .fh-top{background:#6e5b54}
+/* (v7.6.3) 폴더 상단바 = 노트 상단바(.edbar)와 같은 규격: 양옆·위 끝까지 채움, 같은 높이(var(--fh-bar-h)), 살짝 짙은 그린 */
+#folderOverlay .fh-top{background:#a6cba2;color:#22391f;border-radius:0;margin:0 calc(-1*var(--fsx)) .45em;
+  padding:calc(.2em + env(safe-area-inset-top)) .5em .2em;height:var(--fh-bar-h,auto);min-height:2.4em;box-sizing:border-box;box-shadow:var(--shadow);max-width:none;width:auto;align-self:stretch}
+#folderOverlay .fh-top h3,#folderOverlay .fh-top .iconbtn{color:#22391f}
+#folderOverlay .fh-top .iconbtn svg{stroke:#22391f}
+#folderOverlay.vault-folder .fh-top{background:#dca6a6;color:#4a2323}
+#folderOverlay.vault-folder .fh-top h3,#folderOverlay.vault-folder .fh-top .iconbtn{color:#4a2323}
+html[data-theme="dark"] #folderOverlay .fh-top{background:#4f6b4c;color:#f2f5ef}
+html[data-theme="dark"] #folderOverlay .fh-top h3,html[data-theme="dark"] #folderOverlay .fh-top .iconbtn{color:#f2f5ef}
 #folderOverlay.vault-folder,#folderOverlay.vault-folder>.sheet{background:var(--bg)}
 html[data-theme="dark"] #folderOverlay:not(.vault-folder),html[data-theme="dark"] #folderOverlay:not(.vault-folder)>.sheet{background:#26352c}
 .fh-home-btn{background:linear-gradient(145deg,#fff8df,#e6f1e5)!important;border:1px solid #c6d9c5!important;box-shadow:0 2px 6px rgba(78,111,85,.16)}
@@ -1282,7 +1297,7 @@ html[data-theme="dark"] #folderOverlay:not(.vault-folder),html[data-theme="dark"
 .vault-folder-icon{font-size:1.16em!important;min-width:2.05em;padding-left:.34em!important;padding-right:.34em!important}
 /* v7.5 requested +10% height from v7.4 Vault strip, retaining the contextual Vault Notes FAB. */
 #folderNav.vault{padding:.10em .44em;padding-bottom:calc(.12em + env(safe-area-inset-bottom))}#folderNav.vault .folderbar{padding:.14em .05em .04em}#folderNav.vault .chip{font-size:.79em;min-height:1.92em;padding:.17em .37em}#folderNav.vault #fab{width:1.98em;height:1.98em;font-size:1.70em;margin-bottom:.42em;transform:translate(2mm,2mm) scale(.70)}#folderNav.vault #fab:active{transform:translate(2mm,2mm) scale(.64)}
-@media(min-width:640px){#folderOverlay .sheet{padding-left:max(.9em,calc((100vw - 1000px)/2));padding-right:max(.9em,calc((100vw - 1000px)/2))}.fh-top,.fh-tools,.fh-tabs,.fh-select-actions,#fhSelectList,#fhTrashList,#folderDetailGrid{max-width:1000px}#folderDetailGrid{width:calc(100% + 1.8em);margin-left:-.9em}}
+@media(min-width:640px){#folderOverlay .sheet{--fsx:max(.9em,calc((100vw - 1000px)/2))}.fh-top,.fh-tools,.fh-tabs,.fh-select-actions,#fhSelectList,#fhTrashList,#folderDetailGrid{max-width:1000px}#folderDetailGrid{width:calc(100% + 1.8em);margin-left:-.9em}}
 @media(min-width:1029px){#folderDetailGrid{width:100%;margin-left:0}}
 </style>
 </head>
@@ -1731,7 +1746,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='soonenote';
-const APP_VER='7.6.2';
+const APP_VER='7.6.4';
 /* ══════════ (v7.6.1) 기능 스위치 ══════════
    sync:false 로 바꾸면 동기화(Supabase)가 UI·네트워크·타이머 모두에서 비활성화된다.
    SYNC 객체와 계정 화면 코드는 남아 있되(프리미엄 대비) 어떤 경로도 실행되지 않는다.
@@ -2825,7 +2840,7 @@ function toast(m){
   const t=$('#toast');t.textContent=m;t.classList.add('show');
   clearTimeout(t._h);
   /* (v6.2) 긴 안내문은 조금 더 오래 보여준다 */
-  const dur=String(m).length>60?4200:2200;
+  const dur=String(m).length>60?8000:5000;   /* (v7.6.4) 안내 표시 5초 / 긴 문장 8초 */
   t._h=setTimeout(()=>t.classList.remove('show'),dur);
 }
 /* (v6.1) '오늘'이 한국어로 하드코딩돼 영어 모드에서도 한글이 나오던 문제 수정 */
@@ -4846,7 +4861,9 @@ function closeFolderOverlayNow(){
   histPop();
 }
 function folderHome(){const hadSub=['detail','select','trash'].includes(folderHub.page);folderHub.id='';folderHub.select.clear();ui.folder='';ui.nofolder=false;ui.trash=false;ui.search='';$('#search').value='';exitSel();render();setFolderHubPage('hub');if(hadSub)histPop();ovCloseUi($('#folderOverlay'));}
-function openFolderMgr(){closeVaultMainMore();folderHub.id='';folderHub.select.clear();folderHub.selectMode='notes';folderHub.trashTab='notes';folderHub.searchOpen=false;folderHub.detailSearchOpen=false;folderHub.addOpen=false;$('#fhSearch').value='';$('#fdSearch').value='';$('#fsSearch').value='';setFolderHubPage('hub');renderFolderHub();ovOpen($('#folderOverlay'))}
+/* (v7.6.3) 폴더 상단바 높이 = 노트 상단바(.edbar) 실제 높이 */
+function syncFolderBarH(){try{const h=$('.edbar').offsetHeight;if(h>0)$('#folderOverlay').style.setProperty('--fh-bar-h',h+'px')}catch(_){}}
+function openFolderMgr(){closeVaultMainMore();syncFolderBarH();folderHub.id='';folderHub.select.clear();folderHub.selectMode='notes';folderHub.trashTab='notes';folderHub.searchOpen=false;folderHub.detailSearchOpen=false;folderHub.addOpen=false;$('#fhSearch').value='';$('#fdSearch').value='';$('#fsSearch').value='';setFolderHubPage('hub');renderFolderHub();ovOpen($('#folderOverlay'))}
 function folderHubBack(){if(folderHub.page==='detail'){folderHub.id='';setFolderHubPage('hub');renderFolderHub();return}if(folderHub.page==='select'&&folderHub.selectMode==='move'){if((folderHub.moveLevel||0)===1){folderHub.moveLevel=0;folderHub.moveDest='';renderFolderMoveTargets();return}folderHub.selectMode='notes';renderFolderSelect();return}if(folderHub.page==='select'||folderHub.page==='trash'){setFolderHubPage('hub');renderFolderHub()}}
 /* (v7.5.3 요청2) 폴더 타일 '길게 눌러 이름 변경' 기능 제거 — 탭으로만 폴더를 연다. 이름 변경은 폴더 상세 제목 인라인 박스(startFolderInlineRename) */
 function sortFolderCollection(list){const mode=folderSort(curSettings());return list.sort((a,b)=>{const ac=NOTES().filter(n=>!n.deleted&&n.folder===a.id).length,bc=NOTES().filter(n=>!n.deleted&&n.folder===b.id).length;if(mode==='recent')return(b.createdAt||0)-(a.createdAt||0);if(mode==='count')return bc-ac||folderName(a).localeCompare(folderName(b),locale());return folderName(a).localeCompare(folderName(b),locale())})}
