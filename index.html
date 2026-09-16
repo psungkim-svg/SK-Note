@@ -1,8 +1,19 @@
 <!DOCTYPE html>
 <!--
 ═══════════════════════════════════════════════════════════════
-  soonenote  —  V7.6.0
+  soonenote  —  V7.6.1
   (V6.0 → ... → V6.6 → V6.7 → V6.7.1)
+
+  V7.6.1 changes  (2026-09)  ← test-round fixes (approved)
+   BUG-001 Editing content was lost when the app went to background/pagehide
+           before the 3 s autosave → flushEd(true) on hidden/pagehide.
+   BUG-002 Opening the photo picker backgrounds the web app; on return the
+           "reset to first screen" closed the editor and the new photo link was
+           dropped (and its meta pruned) → ui.pickingPhoto guard (≤3 min),
+           prune only after the editor is closed, cancel detection.
+   UX-001  Clearer session-only message in the browser fallback.
+   Settings: "Data size" (notes data / all app data) — 2 lines only.
+   FEATURES.sync switch: one flag disables sync everywhere (UI+network+timers).
 
   V7.6.0 changes  (2026-09)  ← product direction: text-only notes, no photo storage
    · Camera removed. Gallery/paste image insertion (base64 into note) removed.
@@ -221,7 +232,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-jnxyJxLIOvEegaMN42+BOuzajUNvA1rSU5LqVC+UOWk='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-JXEtP5rL2qcICPr+EaceWE8t+zVXhCdAcvmcROD3F9k='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
 <!-- (요구3) 전화기 화면에 딱 맞게 · 자동 확대(핀치 줌 포함) 완전 금지 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#f5f2ef">
@@ -1565,7 +1576,7 @@ html[data-theme="dark"] #folderOverlay:not(.vault-folder),html[data-theme="dark"
       </div>
     </div>
 
-    <div class="setsec">
+    <div class="setsec" id="secSync">
       <h4 data-i18n="sec_sync">Sync</h4>
       <div class="setrow"><span data-i18n="sync_status">Status</span><span class="stat" id="stSyncState" data-i18n="sync_notset">Not set</span></div>
       <div class="btnrow" style="margin-top:0">
@@ -1599,6 +1610,11 @@ html[data-theme="dark"] #folderOverlay:not(.vault-folder),html[data-theme="dark"
     </div>
 
     <div class="setsec">
+      <div class="setsec" id="secData">
+        <h4 data-i18n="sec_data">Data size</h4>
+        <div class="setrow"><span data-i18n="data_notes">Notes data</span><span class="stat" id="stSizeNotes">–</span></div>
+        <div class="setrow"><span data-i18n="data_all">All app data</span><span class="stat" id="stSizeAll">–</span></div>
+      </div>
       <div class="appver">
         <div id="stAppName" style="font-size:1.05em;letter-spacing:.02em">soonenote</div>
         <div id="stVersion">v6.1</div>
@@ -1719,7 +1735,12 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='soonenote';
-const APP_VER='7.6.0';
+const APP_VER='7.6.1';
+/* ══════════ (v7.6.1) 기능 스위치 ══════════
+   sync:false 로 바꾸면 동기화(Supabase)가 UI·네트워크·타이머 모두에서 비활성화된다.
+   SYNC 객체와 계정 화면 코드는 남아 있되(프리미엄 대비) 어떤 경로도 실행되지 않는다.
+   sync:false 로 배포할 때는 vendor/supabase.min.js 와 <script src> 도 함께 빼도 된다(없어도 오류 없음). */
+const FEATURES={sync:true};
 const SSTORE=(()=>{try{const t='__cn__';sessionStorage.setItem(t,'1');sessionStorage.removeItem(t);return sessionStorage}
   catch(e){const m={};return{getItem:k=>(k in m?m[k]:null),setItem:(k,v)=>{m[k]=String(v)},removeItem:k=>{delete m[k]}}}})();
 
@@ -1848,6 +1869,7 @@ const I18N={
   dlg_pin_set_done:{en:'Password set. Please enter it again.'},dlg_pin_enter:{en:'Enter the password'},
   dlg_pin_wrong:{en:'Wrong password'},
   vault_title:{en:'🔐 Vault'},
+  sec_data:{en:'Data size'},data_notes:{en:'Notes data'},data_all:{en:'All app data'},
   link_open:{en:'Open website'},link_copy:{en:'Copy link'},link_share:{en:'Share'},link_cancel:{en:'Cancel'},
   /* ── v6 추가 키 (영문/한국어 동적 문구) ── */
   sync_ok:{en:'Synced'},sync_syncing:{en:'Syncing…'},sync_err:{en:'Error'},sync_unset:{en:'Not set'},sync_nolog:{en:'Not signed in'},
@@ -1887,6 +1909,7 @@ const I18N_KO={
   add:'추가',
   note:'메모',
   checklist:'체크리스트',
+  sec_data:'데이터 크기',data_notes:'노트 데이터',data_all:'전체 앱 데이터',
   link_open:'웹사이트 열기',
   link_copy:'주소 복사하기',
   link_share:'공유하기',
@@ -2636,7 +2659,7 @@ const uid=()=> 'n'+Date.now().toString(36)+Math.random().toString(36).slice(2,7)
 function isDark(){const t=curSettings().theme;return t==='dark'||(t==='auto'&&matchMedia('(prefers-color-scheme: dark)').matches)}
 
 let S={notes:[],folders:[],settings:{}};
-let ui={folder:'',nofolder:false,view:null,search:'',trash:false,editingId:null,
+let ui={folder:'',nofolder:false,view:null,search:'',trash:false,editingId:null,pickingPhoto:0,
         edEdit:false, selMode:false, selected:new Set(), vault:false};
 
 /* (요구10) 현재 활성 컬렉션: 보관 모드면 VLT.notes, 아니면 일반 S.notes */
@@ -3757,7 +3780,7 @@ function updateColorBtn(sel){
 }
 function schedSave(){                                  // (요구9) 3초 후 자동 저장(조용히)
   clearTimeout(edSaveTimer);
-  edSaveTimer=setTimeout(()=>{flushEd(true);PL.prune();},3000);   /* (v7.6.0) 참조 없는 사진 메타 정리 */
+  edSaveTimer=setTimeout(()=>{flushEd(true);},3000);
 }
 function untitledTitle(n){   /* (v7.5.4 요청3) 내용이 있는데 제목이 비어 있으면 '제목 없음(No title)'을, 아니면 null 반환 */
   const t=String(n.title||'').trim();
@@ -3792,6 +3815,7 @@ function flushEd(silent){
 function closeEditor(fromBack){
   clearTimeout(edSaveTimer);
   flushEd(true);                                       // (요구9) Back으로 닫아도 저장(변경 시에만)
+  setTimeout(()=>{ if(!ui.editingId)PL.prune(); },0);   /* (v7.6.1) 참조 없는 사진 메타 정리 — 편집기가 닫힌 뒤에만 */
   const n=cur();
   if(n && !n.title && !plain(n.content).trim() && !(n.items||[]).some(i=>i.text.trim())){
     // 완전히 빈 노트는 자동 제거
@@ -3959,21 +3983,36 @@ const PhotoBridge={
   async pick(max){
     const pl=this.plugin();
     if(pl){ const r=await pl.pick({max:max||10}); return (r&&r.items)||[]; }
-    return new Promise(res=>{ const inp=$('#edImgFile'); inp.onchange=()=>{ const files=[...inp.files].slice(0,max||10); inp.value='';
-      res(files.map(f=>{const uri='';const it={uri,name:f.name||'photo',size:f.size||0,mime:f.type||'',_file:f};return it;})); }; inp.click(); });
+    return new Promise(res=>{ const inp=$('#edImgFile'); let done=false;
+      const finish=files=>{ if(done)return; done=true; inp.onchange=null; inp.oncancel=null; res(files); };
+      inp.onchange=()=>{ const files=[...inp.files].slice(0,max||10); inp.value='';
+        finish(files.map(f=>({uri:'',name:f.name||'photo',size:f.size||0,mime:f.type||'',_file:f}))); };
+      inp.oncancel=()=>finish([]);   /* Chrome 113+ 취소 이벤트 */
+      /* 취소 이벤트가 없는 브라우저: 창이 다시 포커스를 받은 뒤 1.5초 안에 change가 없으면 취소로 본다 */
+      const onFocus=()=>{ setTimeout(()=>{ if(!done&&!inp.files.length)finish([]); },1500); window.removeEventListener('focus',onFocus); };
+      setTimeout(()=>window.addEventListener('focus',onFocus),300);
+      inp.click(); });
   },
   async open(pid,meta){
     const pl=this.plugin();
     if(pl&&meta.uri){ try{await pl.open({uri:meta.uri});return true;}catch(e){ toast(L('사진을 열 수 없습니다. 사진이 삭제되었거나 이동되었을 수 있습니다.','Could not open the photo. It may have been deleted or moved.')); return false; } }
     const f=PL._session.get(pid);
     if(f){ const url=URL.createObjectURL(f); const ov=$('#imgPrev'); ov.innerHTML='<span>✕</span>'; const im=document.createElement('img'); im.src=url; im.onload=()=>URL.revokeObjectURL(url); ov.appendChild(im); if(ov.classList.contains('hidden'))histPush(); ov.classList.remove('hidden'); return true; }
-    toast(L('웹 브라우저에서는 사진을 고른 세션 동안만 볼 수 있습니다. Android 앱에서는 언제든 열립니다.','In a web browser, photos can be viewed only during the session they were picked. The Android app opens them anytime.'));
+    toast(L('이 사진은 휴대폰에 그대로 있습니다. 웹 버전은 사진을 고른 동안만 보여 주며, Android 앱에서는 언제든 열립니다.','The photo is still on your phone. The web version can show it only right after picking; the Android app opens it anytime.'));
     return false;
   }
 };
 async function linkPhotos(){
-  let items=[]; try{items=await PhotoBridge.pick(10);}catch(e){toast(L('사진 선택이 취소되었거나 실패했습니다','Photo selection was canceled or failed'));return;}
+  const noteId=ui.editingId; if(!noteId)return;
+  /* (v7.6.1 BUG-002) 사진 선택기가 뜨는 동안 웹앱은 백그라운드가 된다 → 복귀 시 '첫 화면 초기화'가 편집기를 닫고
+     링크가 유실되던 문제. 선택기 왕복(최대 3분) 동안은 초기화를 보류하고, 끝나면 반드시 플래그를 푼다. */
+  ui.pickingPhoto=Date.now()+180000;
+  /* 선택기가 닫힌 뒤 visibilitychange(visible)가 change보다 늦게 오는 경우가 있어, 완료 후 2초의 유예를 둔다 */
+  const settle=()=>{ui.pickingPhoto=Date.now()+2000;};
+  let items=[]; try{items=await PhotoBridge.pick(10);}catch(e){settle();toast(L('사진 선택이 취소되었거나 실패했습니다','Photo selection was canceled or failed'));return;}
+  settle();
   if(!items.length)return;
+  if(ui.editingId!==noteId||!$('#edOverlay').classList.contains('show')){toast(L('노트가 닫혀 사진을 연결하지 못했습니다. 노트를 열고 다시 시도하세요.','The note was closed; photos were not linked. Open the note and try again.'));return;}
   if(!ui.edEdit){ui.edEdit=true;applyEdMode();}
   const body=$('#edBody'); body.focus();
   const s=window.getSelection(); const r=s.rangeCount&&body.contains(s.anchorNode)?s.getRangeAt(0):null;
@@ -5053,8 +5092,9 @@ function checkPublicKey(k){
 }
 const SYNC={
   client:null, channel:null, uid:null, session:null, busy:false,
+  enabled(){return !!(FEATURES&&FEATURES.sync)},   /* (v7.6.1) 기능 스위치 */
   cfg(){return{url:(S.settings.sbUrl||'').trim(),key:(S.settings.sbKey||'').trim()}},
-  libOk(){return typeof window.supabase!=='undefined'&&!!window.supabase.createClient},
+  libOk(){return this.enabled()&&typeof window.supabase!=='undefined'&&!!window.supabase.createClient},
   /* (v6.3) 라이브러리가 없을 때 '왜' 없는지 확인해서 정확히 안내한다.
      가장 흔한 원인: GitHub에 vendor 폴더를 같이 올리지 않아 404 */
   async libDiagnose(){
@@ -5099,6 +5139,7 @@ const SYNC={
      앱이 시작될 때 getSession() 을 한 번 불러 '복원'해 주어야 한다.
      예전에는 makeClient() 만 호출하고 끝내서, 매번 다시 로그인해야 했다. */
   async restore(){
+    if(!this.enabled())return;   /* (v7.6.1) */
     /* 서버 주소·키가 없으면 애초에 할 일이 없다 */
     if(!this.cfg().url||!this.cfg().key)return false;
     /* ★ 라이브러리는 defer 로 늦게 뜬다. 준비될 때까지 기다린 뒤 복원한다.
@@ -5140,6 +5181,7 @@ const SYNC={
     content:r.content||'',items:r.items||[],pinned:!!r.pinned,remindAt:r.remind_at||0,sortIndex:r.sort_index||0,
     createdAt:r.created_at||0,updatedAt:r.updated_at||0,deleted:!!r.deleted}},
   async pushDirty(){
+    if(!this.enabled())return;   /* (v7.6.1) */
     const c=this.client; if(!c||!this.session)return;
     /* (v6.1) busy면 조용히 건너뛰지 않고 '나중에 다시'를 예약한다.
        예전에는 그냥 return이라 방금 고친 노트가 업로드를 통째로 놓칠 수 있었다. */
@@ -5173,6 +5215,7 @@ const SYNC={
     if(this.pending){ this.pending=false; setTimeout(()=>this.pushDirty(),400); }
   },
   async pullAll(){
+    if(!this.enabled())return;   /* (v7.6.1) */
     const c=this.client; if(!c||!this.session)return;
     this.busy=true;setStatus('syncing');
     try{
@@ -5237,8 +5280,8 @@ const SYNC={
       })
       .subscribe();
   },
-  hardDelete(id){ if(this.client&&this.session&&this.uid) this.client.from('notes').delete().eq('user_id',this.uid).eq('id',id).then(()=>{},()=>{}) },
-  deleteFolder(id){ if(this.client&&this.session&&this.uid) this.client.from('folders').delete().eq('user_id',this.uid).eq('id',id).then(()=>{},()=>{}) },
+  hardDelete(id){ if(this.enabled()&&this.client&&this.session&&this.uid) this.client.from('notes').delete().eq('user_id',this.uid).eq('id',id).then(()=>{},()=>{}) },
+  deleteFolder(id){ if(this.enabled()&&this.client&&this.session&&this.uid) this.client.from('folders').delete().eq('user_id',this.uid).eq('id',id).then(()=>{},()=>{}) },
   async test(){
     if(!this.libOk()) await ensureSyncLib();          /* (v6.3) 없으면 자동으로 받아온다 */
     if(!this.libOk()){ const d=await this.libDiagnose(); return{ok:false,msg:d.msg}; }
@@ -5263,12 +5306,12 @@ const SYNC={
   }
 };
 let syncTimer=null;
-function syncSoon(){clearTimeout(syncTimer);syncTimer=setTimeout(()=>SYNC.pushDirty(),2500)}
+function syncSoon(){if(!SYNC.enabled())return;clearTimeout(syncTimer);syncTimer=setTimeout(()=>SYNC.pushDirty(),2500)}
 /* (요청7) 올리기+내려받기 둘 다 하는 완전 동기화
    (v6.1) 화면 켜기/포커스/온라인/타이머가 동시에 겹쳐 3~4번 도는 문제 → 디바운스 */
 let _lastFullSync=0,_syncRunning=false;
 async function syncNow(force){
-  if(!SYNC.session)return;
+  if(!SYNC.enabled()||!SYNC.session)return;
   const now=Date.now();
   if(!force && (_syncRunning || now-_lastFullSync<5000))return;   // 5초 안에는 한 번만
   _syncRunning=true; _lastFullSync=now;
@@ -5352,6 +5395,7 @@ function updateAccountUI(){
   if(ls)ls.textContent=S.settings.lastSync?dts(S.settings.lastSync):L('아직 없음','None yet');
 }
 function openAccount(){
+  if(!SYNC.enabled()){toast(L('이 버전에는 동기화가 없습니다','Sync is not included in this version'));return;}
   $('#acUrl').value=S.settings.sbUrl||'';
   $('#acKey').value=S.settings.sbKey||'';
   $('#acTestStat').textContent='';
@@ -5556,6 +5600,7 @@ function openSettings(){
   if(ui.vault)$('#stVaultAuto').value=VLT.autoLockValue();
   const langSel=$('#stLang'); if(langSel)langSel.value=S.settings.lang||'auto';   /* (v6) 언어(자동/영어/한국어) */
   buildDefColor();
+  updateDataSize();   /* (v7.6.1) */
   ovOpen($('#setOverlay'));
 }
 /* (요구5) 기본 노트 컬러 — 새 노트의 색을 고정한다(0~4). 설정은 일반/보관 각각 적용 */
@@ -6517,8 +6562,19 @@ load();
 VLT.load();
 computeLang();                       /* (v6) 설정의 언어(자동/영어/한국어)를 반영한 뒤 번역 적용 */
 applyI18n();
+/* (v7.6.1) 데이터 크기 표시 — '데이터 최소화' 원칙을 실사용 중 확인하기 위한 2줄. 저장공간 관리 기능이 아니다. */
+function fmtBytes(b){ if(b<1024)return b+' B'; if(b<1048576)return (b/1024).toFixed(1)+' KB'; return (b/1048576).toFixed(2)+' MB'; }
+function updateDataSize(){
+  try{
+    const sz=v=>v?new Blob([v]).size:0;
+    const notes=sz(STORE.getItem(LS.notes))+sz(STORE.getItem(LS.folders))+sz(STORE.getItem('sk.vault'))+sz(STORE.getItem(PL.LSKEY));
+    let all=0; for(let i=0;i<STORE.length;i++){const k=STORE.key(i); all+=sz(k)+sz(STORE.getItem(k));}
+    const a=$('#stSizeNotes'),b=$('#stSizeAll'); if(a)a.textContent=fmtBytes(notes); if(b)b.textContent=fmtBytes(all);
+  }catch(_){}
+}
 /* (v6.1) 버전 표기 일원화: APP_VER 하나가 배지·설정창을 모두 채운다 */
 $('#stVersion').textContent='v'+APP_VER;
+if(!FEATURES.sync){const e=$('#secSync');if(e)e.remove();}   /* (v7.6.1) 동기화 없는 버전: 설정 섹션 자체를 제거 */
 $('#stAppName')&&($('#stAppName').textContent=APP_NAME);
 document.title=APP_NAME;
 ui.view=S.settings.view||'grid';
@@ -6552,15 +6608,16 @@ function resetToFirstNotesScreen(hardLock=false){
   try{folderHub.id='';folderHub.page='hub';folderHub.select.clear();folderHub.selectMode='notes';folderHub.trashTab='notes';}catch(_){}
   const q=$('#search');if(q)q.value='';render();applyViewBtn();
 }
-addEventListener('pageshow',e=>{if(e.persisted){try{if(VLT&&VLT.key&&VLT._autoUntil&&Date.now()>VLT._autoUntil)VLT.leave();}catch(_){} resetToFirstNotesScreen();}});
+addEventListener('pageshow',e=>{if(e.persisted){if(ui.pickingPhoto&&Date.now()<ui.pickingPhoto)return;   /* (v7.6.1 BUG-002) */try{if(VLT&&VLT.key&&VLT._autoUntil&&Date.now()>VLT._autoUntil)VLT.leave();}catch(_){} resetToFirstNotesScreen();}});
 /* v7.5.2 — pagehide는 더 이상 Vault key를 지우지 않는다.
    app 백그라운딩(PWA 홈 화면 전환, 브라우저 탭 전환)은 "닫힘"이 아닌 일시 중지에 해당하며,
    자동 잠금 deadline(_autoUntil)이 유일한 잠금 기준이다. foreground 복귀 시 pageshow/visibilitychange
    deadline 점검과 VLT.open() 진입 점검이 만료된 세션을 잠금한다. key는 프로세스 종료 시에만 소멸. */
-addEventListener('pagehide',()=>{ try{autoSnapshot(true);}catch(e){} });
+addEventListener('pagehide',()=>{ try{if(ui.editingId){clearTimeout(edSaveTimer);flushEd(true);}}catch(_){} try{autoSnapshot(true);}catch(e){} });   /* (v7.6.1 BUG-001) 편집 중 내용 먼저 저장 */
 document.addEventListener('visibilitychange',()=>{
-  if(document.hidden){try{autoSnapshot(true);}catch(_){}}
+  if(document.hidden){try{if(ui.editingId){clearTimeout(edSaveTimer);flushEd(true);}}catch(_){} try{autoSnapshot(true);}catch(_){}}   /* (v7.6.1 BUG-001) 앱 전환 시 편집 중 내용 먼저 저장 */
   else if(document.readyState==='complete'){
+    if(ui.pickingPhoto&&Date.now()<ui.pickingPhoto){return;}   /* (v7.6.1 BUG-002) 사진 선택기 왕복 중에는 첫 화면 초기화를 보류 */
     /* (v7.5.1) 백그라운드 동결로 auto-lock timer가 실제 만료를 넘겨 쌓인 경우,
        foreground 복귀 즉시 deadline을 점검해 잠금(예: 화면 오프 중 1분 설정). */
     try{if(VLT&&VLT.key&&VLT._autoUntil&&Date.now()>VLT._autoUntil)VLT.leave();}catch(_){}

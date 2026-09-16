@@ -9,6 +9,21 @@ uploads/index.html  db5cca58119d8b012622be02450943b2
 uploads/sw.js       27ad8a489d3da09d2ab1e775d4252e89
 ```
 
+## v7.6.1 검증 (2026-09-16)
+
+**진단:** `/home/user/review/diag760_photolink.js`(A–F 시나리오), `diag760_b/c/d/e.js`(원인 재현) · **E2E:** `verify761_e2e.js`
+
+| 내용 | 결과 |
+|---|---|
+| BUG-001: 본문 입력 <3초 후 앱 전환 → 보존 · 제목 변경 후 pagehide → 보존 · 복귀=첫 화면 규칙 유지 | PASS |
+| BUG-002: 선택기 왕복(hidden→visible→change, hidden→change→visible 두 순서) → 편집기 유지, 칩 삽입, 저장·메타 보존, 재열기 후 사진 열림 | PASS |
+| 선택 취소 → 편집기 유지·칩 없음·유예 후 일반 앱 전환은 다시 첫 화면 | PASS |
+| prune: 편집기 열린 채 자동저장 후 메타 유지, 닫은 뒤 미참조 메타만 정리 | PASS |
+| UX-001 문구 · 데이터 크기 2줄 표시 · `FEATURES.sync=false` 시 클라이언트 생성 0, 계정 화면 미노출, 안내 토스트 | PASS |
+
+**합계: 27/27.** 회귀: v7.6.0 27(문구·prune 시점·버전 체크 갱신) · 7.5.9 17 · 7.5.8 56 · 7.5.7 28 · 7.5.6 69 · 7.5.5 48 · 7.5.4 40 · 7.5.3 72 전부 통과.
+CSP: `sha256-JXEtP5rL2qcICPr+EaceWE8t+zVXhCdAcvmcROD3F9k=`.
+
 ## v7.6.0 검증 (2026-09-14)
 
 **E2E:** `/home/user/review/verify760_e2e.js` (Playwright · 웹 fallback + Capacitor 플러그인 mock)
