@@ -1,8 +1,13 @@
 <!DOCTYPE html>
 <!--
 ═══════════════════════════════════════════════════════════════
-  soonenote  —  V7.6.5
+  soonenote  —  V7.6.6
   (V6.0 → ... → V6.6 → V6.7 → V6.7.1)
+
+  V7.6.6 changes  (2026-09)
+   1. Reverted v7.6.5 #2: notes inside a folder look like main screen (title top).
+   2. Folder hub card: note-count is a brown block filling the bottom 1/4.
+   3. Folder detail title is a white box / black text from the start.
 
   V7.6.5 changes  (2026-09)
    1. Folder rename box = same white box / black text as note title.
@@ -254,7 +259,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-9UemK9Fyb7bQZzX9LGlf5tkJ1alXlyV4ljCJ/j9N0ao='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-W4e1pHbystATP6aQ2nYQTM0MgIBwL9mnMUMkJft+nxk='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
 <!-- (요구3) 전화기 화면에 딱 맞게 · 자동 확대(핀치 줌 포함) 완전 금지 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#f5f2ef">
@@ -482,11 +487,7 @@ html[data-theme="dark"] .note .selbox{
 html[data-theme="dark"] .note.sel .selbox{background:var(--accent);border-color:var(--accent);color:#241a17}
 /* 체크박스가 제목을 가리지 않게 */
 .note.haschk .thead .ttl{padding-right:1.4em}   /* (v7.5.3 요청2) 소형 체크박스 대응 */
-/* (v7.6.5) 폴더 안 노트 카드: 첫 화면과 반대로 제목줄을 카드 '하단'에 두고 브라운으로 꽉 채움 */
-#folderDetailGrid .note .thead{order:2;margin-top:auto;background:var(--accent2);color:#fff;padding:.2em .5em}
-#folderDetailGrid .note .thead .ttl{color:#fff}
-#folderDetailGrid .note .tinner{order:1;flex:1}
-#folderDetailGrid .note.haschk .selbox{top:auto;bottom:.25em}
+/* (v7.6.6) 폴더 안 노트 카드 = 첫 화면과 동일 구조(제목줄 상단) — v7.6.5의 하단 브라운 제목줄 원위치 */
 
 /* (v6.3) 동기화 라이브러리 누락 경고 배너 */
 #acLibWarn{
@@ -814,7 +815,9 @@ html[data-theme="dark"] mark{background:#8a6f62;color:#fff}
 .fh-folder:active{transform:scale(.98)}
 .fh-folder .fi{font-size:2.25em;line-height:1;filter:drop-shadow(0 1px 0 rgba(0,0,0,.08))}
 .fh-folder .fn{max-width:100%;font-size:.77em;font-weight:800;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.fh-folder .fc{font-size:.6em;color:#fff;font-weight:800;background:var(--accent2);border-radius:.6em;padding:.12em .7em;margin-top:.15em}   /* (v7.6.2) 노트 개수 영역을 진한 배지로 구분 */
+/* (v7.6.6) 노트 개수 = 카드 맨 아래 1/4을 차지하는 갈색 블록(폴더 이름 아래 ~ 카드 바닥, 좌우 끝까지) */
+.fh-folder{overflow:hidden;padding-bottom:25%!important;justify-content:center}
+.fh-folder .fc{position:absolute;left:0;right:0;bottom:0;height:25%;margin:0!important;border-radius:0;font-size:.6em;color:#fff;font-weight:800;background:var(--accent2);display:flex;align-items:center;justify-content:center}
 #fhFolderGrid.view-grid-s .fh-folder{min-height:5.95em;padding:.48em .25em;border-radius:.65em}
 #fhFolderGrid.view-grid-s .fh-folder .fi{font-size:1.8em}
 #fhFolderGrid.view-grid-s .fh-folder .fn{font-size:.66em}
@@ -1292,8 +1295,10 @@ html[data-theme="dark"] #folderOverlay:not(.vault-folder),html[data-theme="dark"
 .fh-home-svg{display:block;width:1.34em;height:1.34em;filter:drop-shadow(0 1px 0 rgba(99,76,45,.12))}.fh-home-svg .home-roof{fill:#df9a86}.fh-home-svg .home-wall{fill:#f6d487}.fh-home-svg .home-door{fill:#86ad8c}.fh-home-svg .home-sun{fill:#e8b95c}
 .fh-folder .fi{color:#d9a246}.fh-folder-svg .folder-tab{fill:#f9dc8f;stroke:#d9a246;stroke-width:1.15}.fh-folder-svg .folder-body{fill:#efbd58;stroke:#d9a246;stroke-width:1.15}.fh-folder-svg .folder-line{fill:none;stroke:#fff0bf;stroke-width:1.05}
 #folderOverlay .sheet{position:relative}#fhFab{position:absolute;right:.85em;bottom:max(.85em,env(safe-area-inset-bottom));z-index:12;width:1.7em;height:1.7em;padding:0;display:flex;align-items:center;justify-content:center;border-radius:50%;border:none;background:var(--accent);color:#4a332e;font-size:1.6em;font-weight:700;line-height:1;box-shadow:0 4px 12px rgba(90,75,65,.28);transform:translate(2mm,0) scale(.8);transition:transform .15s}#fhFab:active{transform:translate(2mm,1mm) scale(.72)}
-#fdTitle{cursor:pointer;text-decoration:underline dotted transparent;text-underline-offset:.19em}#fdTitle:active,#fdTitle:focus{outline:none;text-decoration-color:var(--sub)}
-#fdTitle.fd-editing{padding:0}
+/* (v7.6.6) 폴더 제목: 처음부터 노트 제목 박스처럼 흰 바탕·검은 글씨(톡 치면 그 자리에서 편집) */
+#fdTitle{cursor:pointer;background:#fff;border:1px solid var(--line);border-radius:.5em;padding:.3em .6em;font-size:1em;font-weight:800;color:#212121!important;margin-right:.3em}
+#fdTitle:focus{outline:none;border-color:var(--accent2)}
+#fdTitle.fd-editing{padding:0;border:0;background:transparent}
 #fdTitle .fd-rename{width:100%;box-sizing:border-box;background:#fff;border:1px solid var(--line);border-radius:.5em;font:inherit;font-weight:800;color:#212121;padding:.3em .6em;outline:none}   /* (v7.6.5) 노트 제목 박스와 동일: 흰 바탕·검은 글씨 */   /* (v7.5.3 요청3) 인라인 이름 변경 박스 */
 #edTypePop{width:128px;padding:0 .4em .3em}   /* (v7.6.2) 간소화: B U · 빨강 ⊘ */#tpHandle{margin:0 -.49em .28em;padding:.36em .48em .30em;gap:.28em}#tpHandle .bar{width:1.45em}#tpHandle .txt{font-size:.53em}.tprow{margin:.20em 0;gap:.30em}#edTypePop .tprow.tp1{gap:.30em}#edTypePop .tprow.tp1 .tpbiu{height:2.05em}.tprow.tpcolors{justify-content:center;gap:.55em;padding:.04em 0 .08em}#edTypePop .tpdot{width:1.62em;height:1.62em}
 /* v7.4 decision: Vault bar is 125% of the v7.3 compact bar, not a return to its old oversized version. */
@@ -1755,7 +1760,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='soonenote';
-const APP_VER='7.6.5';
+const APP_VER='7.6.6';
 /* ══════════ (v7.6.1) 기능 스위치 ══════════
    sync:false 로 바꾸면 동기화(Supabase)가 UI·네트워크·타이머 모두에서 비활성화된다.
    SYNC 객체와 계정 화면 코드는 남아 있되(프리미엄 대비) 어떤 경로도 실행되지 않는다.
