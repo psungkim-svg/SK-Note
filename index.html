@@ -1,8 +1,16 @@
 <!DOCTYPE html>
 <!--
 ═══════════════════════════════════════════════════════════════
-  soonenote  —  V7.6.1
+  soonenote  —  V7.6.2
   (V6.0 → ... → V6.6 → V6.7 → V6.7.1)
+
+  V7.6.2 changes  (2026-09)  ← user-feedback (5 items)
+   1. Note top bar = S · Title · ↶ · T · 🖼 · Color · ⋮ (all notes). View/edit
+      mode split, ✓ save button and pencil removed — always editable.
+   2. Autosave 0.6 s after typing stops (was 3 s).
+   3. T box: Italic, blue, green removed; smaller (128px).
+   4. Title: single tap = caret, double tap = select all.
+   5. Folder screen: dark top bar; folder card note-count as dark badge.
 
   V7.6.1 changes  (2026-09)  ← test-round fixes (approved)
    BUG-001 Editing content was lost when the app went to background/pagehide
@@ -232,7 +240,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-JXEtP5rL2qcICPr+EaceWE8t+zVXhCdAcvmcROD3F9k='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-bd3l1iTEkhbjX9AsNneBoa6YYV3u6k2PSilHjbdF/2Y='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
 <!-- (요구3) 전화기 화면에 딱 맞게 · 자동 확대(핀치 줌 포함) 완전 금지 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#f5f2ef">
@@ -787,7 +795,7 @@ html[data-theme="dark"] mark{background:#8a6f62;color:#fff}
 .fh-folder:active{transform:scale(.98)}
 .fh-folder .fi{font-size:2.25em;line-height:1;filter:drop-shadow(0 1px 0 rgba(0,0,0,.08))}
 .fh-folder .fn{max-width:100%;font-size:.77em;font-weight:800;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.fh-folder .fc{font-size:.58em;color:var(--sub);font-weight:700}
+.fh-folder .fc{font-size:.6em;color:#fff;font-weight:800;background:var(--accent2);border-radius:.6em;padding:.12em .7em;margin-top:.15em}   /* (v7.6.2) 노트 개수 영역을 진한 배지로 구분 */
 #fhFolderGrid.view-grid-s .fh-folder{min-height:5.95em;padding:.48em .25em;border-radius:.65em}
 #fhFolderGrid.view-grid-s .fh-folder .fi{font-size:1.8em}
 #fhFolderGrid.view-grid-s .fh-folder .fn{font-size:.66em}
@@ -877,12 +885,10 @@ html[data-theme="dark"] mark{background:#8a6f62;color:#fff}
 /* (요청) 노트 열람/편집 상단바 노출 규칙
    보기 모드(기본): 연필 · 칼라 · ⋮(3점) 만 표시 (✓체크·Undo·T·카메라 숨김)
    편집 모드(.editmode): ✓체크 · ↶Undo · T(볼드) · 📷카메라 · ⋮(3점) 만 표시 (연필·칼라 숨김) */
-.edbar:not(.editmode) #edSaveBtn,.edbar:not(.editmode) #edUndo,.edbar:not(.editmode) #edTypeBtn,.edbar:not(.editmode) #edImgBtn{display:none}
-.edbar.editmode #edPencil,.edbar.editmode #edColorBtn{display:none}
-/* 보기 모드: 연필 110% 확대, 칼라박스 90% 축소 */
-.edbar:not(.editmode) #edPencil{font-size:1.25em}   /* (v6.4) 더 잘 보이게 */
-.edbar:not(.editmode) #edPencil svg{width:1.5em;height:1.5em}   /* (v6.2) 컬러 연필을 조금 크게 */
-.edbar:not(.editmode) #edColorBtn{width:1.57em;height:1.57em}   /* (v6.4) 85%로 축소 */
+/* (v7.6.2) 상단바 도구는 항상 표시: ↶ T 🖼 칼라 ⋮ */
+#edColorBtn{width:1.57em;height:1.57em}
+.edbar .sbwrap{margin-right:.15em}
+.edbar .sbadge{font-size:.9em}
 /* ══ (v6.7) ☑ 체크박스 = 저장하고 목록으로 ══
    연필 왼쪽에 항상 있는 자리. 보기/편집 어느 모드에서도 같은 위치, 같은 동작.
    기존 ✓(#edSaveBtn)와 동작이 완전히 같으므로 편집 모드에서는 ✓를 숨겨 중복을 없앤다. */
@@ -897,9 +903,8 @@ html[data-theme="dark"] mark{background:#8a6f62;color:#fff}
 #edDone:active{transform:scale(.88);background:var(--accent);color:#4a332e;
   box-shadow:inset 0 2px 5px rgba(0,0,0,.18)}
 html[data-theme="dark"] #edDone{background:#2a2726;border-color:#c39a91;color:#e5c6bf}
-.edbar.editmode #edSaveBtn{display:none}
-/* 편집 모드: Undo 120% 확대, T 볼드체 */
-.edbar.editmode #edUndo{font-size:1.14em;font-weight:800}
+/* Undo 120% 확대, T 볼드체 */
+.edbar #edUndo{font-size:1.14em;font-weight:800}
 #edTypeBtn{font-weight:800}
 /* (요청) 휴지통 아이콘 80%로 축소 */
 #btnTrash{font-size:.78em;padding:.32em}
@@ -1252,7 +1257,10 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
 
 /* ══════════ v7.4 Folder polish · local pin notice ══════════ */
 #folderOverlay:not(.vault-folder),#folderOverlay:not(.vault-folder)>.sheet{background:#e6f1e5}
-#folderOverlay:not(.vault-folder) .fh-top{background:rgba(255,255,255,.32);border-radius:.78em;padding:.28em .36em .45em}
+#folderOverlay .fh-top{background:var(--accent2);color:#fff;border-radius:.78em;padding:.34em .42em .42em;margin-bottom:.35em;box-shadow:var(--shadow)}   /* (v7.6.2) 상단바를 진하게 해 아래와 구분 */
+#folderOverlay .fh-top h3,#folderOverlay .fh-top .iconbtn{color:#fff}
+#folderOverlay .fh-top .iconbtn svg{stroke:#fff}
+html[data-theme="dark"] #folderOverlay .fh-top{background:#6e5b54}
 #folderOverlay.vault-folder,#folderOverlay.vault-folder>.sheet{background:var(--bg)}
 html[data-theme="dark"] #folderOverlay:not(.vault-folder),html[data-theme="dark"] #folderOverlay:not(.vault-folder)>.sheet{background:#26352c}
 .fh-home-btn{background:linear-gradient(145deg,#fff8df,#e6f1e5)!important;border:1px solid #c6d9c5!important;box-shadow:0 2px 6px rgba(78,111,85,.16)}
@@ -1263,7 +1271,7 @@ html[data-theme="dark"] #folderOverlay:not(.vault-folder),html[data-theme="dark"
 #fdTitle{cursor:pointer;text-decoration:underline dotted transparent;text-underline-offset:.19em}#fdTitle:active,#fdTitle:focus{outline:none;text-decoration-color:var(--sub)}
 #fdTitle.fd-editing{padding:0}
 #fdTitle .fd-rename{width:100%;box-sizing:border-box;border:0;border-bottom:2px solid var(--accent);background:transparent;font:inherit;font-weight:700;color:var(--ink);padding:.05em 0;outline:none}   /* (v7.5.3 요청3) 인라인 이름 변경 박스 */
-#edTypePop{width:168px;padding:0 .46em .36em}#tpHandle{margin:0 -.49em .28em;padding:.36em .48em .30em;gap:.28em}#tpHandle .bar{width:1.45em}#tpHandle .txt{font-size:.53em}.tprow{margin:.20em 0;gap:.30em}#edTypePop .tprow.tp1{gap:.30em}#edTypePop .tprow.tp1 .tpbiu{height:2.05em}.tprow.tpcolors{justify-content:center;gap:.55em;padding:.04em 0 .08em}#edTypePop .tpdot{width:1.62em;height:1.62em}
+#edTypePop{width:128px;padding:0 .4em .3em}   /* (v7.6.2) 간소화: B U · 빨강 ⊘ */#tpHandle{margin:0 -.49em .28em;padding:.36em .48em .30em;gap:.28em}#tpHandle .bar{width:1.45em}#tpHandle .txt{font-size:.53em}.tprow{margin:.20em 0;gap:.30em}#edTypePop .tprow.tp1{gap:.30em}#edTypePop .tprow.tp1 .tpbiu{height:2.05em}.tprow.tpcolors{justify-content:center;gap:.55em;padding:.04em 0 .08em}#edTypePop .tpdot{width:1.62em;height:1.62em}
 /* v7.4 decision: Vault bar is 125% of the v7.3 compact bar, not a return to its old oversized version. */
 #folderNav.vault{padding:.09em .40em;padding-bottom:calc(.11em + env(safe-area-inset-bottom))}#folderNav.vault .folderbar{padding:.125em .05em .03em}#folderNav.vault .chip{font-size:.75em;min-height:1.84em;padding:.16em .34em}#folderNav.vault #fab{width:1.80em;height:1.80em;font-size:1.55em;margin-bottom:.38em;transform:translate(2mm,2mm) scale(.70)}#folderNav.vault #fab:active{transform:translate(2mm,2mm) scale(.64)}
 
@@ -1353,23 +1361,11 @@ html[data-theme="dark"] #folderOverlay:not(.vault-folder),html[data-theme="dark"
   </div>
 </div>
 <div class="edbar">
-      <input id="edTitle" data-i18n-ph="title_ph" placeholder="Title" data-i18n-title="Edit mode" title="Edit mode">
-      <button class="edtool" id="edSaveBtn" data-i18n-title="Save" title="Save">✓</button>
+      <!-- (v7.6.2) 노트 상단바 = S · 제목 · ↶ · T · 🖼 · 칼라 · ⋮ (모든 노트 동일). 보기/편집 모드 구분 없음 — 항상 편집, 입력 즉시 자동 저장 -->
+      <span class="sbwrap" id="edSBadgeWrap"><button class="sbadge" id="edSBadge" title="A little encouragement">S</button></span>
+      <input id="edTitle" data-i18n-ph="title_ph" placeholder="Title" title="Title">
       <button class="edtool undo" id="edUndo" data-i18n-title="Undo" title="Undo">↶</button>
-      <!-- (v6.2 요청4) 귀여운 컬러 연필 — 몸통은 팔레트 그라데이션, 나무결/흑연/지우개 분리 -->
-      <!-- (v6.7) ☑ 저장하고 목록으로 — 연필 왼쪽 고정 자리 -->
-      <button class="edtool" id="edDone" data-i18n-title="save_back" title="Save and go back">✓</button>
-      <button class="edtool" id="edPencil" data-i18n-title="Edit mode" title="Edit mode">
-        <svg viewBox="0 0 64 64" width="1.35em" height="1.35em" aria-hidden="true" class="pencilSvg">
-          <!-- (v6.7.1) 후보 C: 둥근 선으로만 그린 미니멀 연필 (색은 CSS에서 지정 → 다크모드 자동 대응) -->
-          <g transform="rotate(45 32 32)" fill="none" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round">
-            <path class="pkBody" d="M23 22h18v22l-9 12-9-12z"/>
-            <path class="pkCap"  d="M23 22v-7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v7"/>
-            <path class="pkLine" d="M23 44h18"/>
-            <path class="pkLine" d="M28 52h8"/>
-          </g>
-        </svg>
-      </button>
+      <!-- (v7.6.2) ✓ 저장 버튼·연필(보기/편집 전환) 제거 -->
       <button class="edtool" id="edTypeBtn" data-i18n-title="Format" title="Format">T</button>
       <button class="edtool" id="edImgBtn" data-i18n-title="img_btn" title="Link photo">🖼</button>   <!-- (v7.6.0) 사진 링크: 사진은 저장하지 않고 참조만 -->
       <button class="edtool" id="edColorBtn" data-i18n-title="Color" title="Color"></button>
@@ -1735,7 +1731,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='soonenote';
-const APP_VER='7.6.1';
+const APP_VER='7.6.2';
 /* ══════════ (v7.6.1) 기능 스위치 ══════════
    sync:false 로 바꾸면 동기화(Supabase)가 UI·네트워크·타이머 모두에서 비활성화된다.
    SYNC 객체와 계정 화면 코드는 남아 있되(프리미엄 대비) 어떤 경로도 실행되지 않는다.
@@ -1762,9 +1758,7 @@ const cnName=i=>((IS_KO?COLOR_NAMES[i]:COLOR_NAMES_EN[i])||'');
 const TEXT_COLORS=['#3a3430','#8f6259','#8a7358','#6f7460','#5d6b74','#6f6889','#a89f97'];
 const HI_COLORS  =['#f7f0eb','#f4e6e3','#ebece5','#e6e9ec','#f0eef5','transparent'];
 /* (v7.0 요청4) T창의 글자색 3개. 노트 배경 색이 아니라 '고른 글자'에 들어가는 색이다. */
-const TP_COLORS=[{c:'#C62828',ko:'진한 빨강',en:'Deep red'},
-                 {c:'#1565C0',ko:'진한 파랑',en:'Deep blue'},
-                 {c:'#2E7D32',ko:'진한 초록',en:'Deep green'}];
+const TP_COLORS=[{c:'#C62828',ko:'진한 빨강',en:'Deep red'}];   /* (v7.6.2) 파랑·초록 제거 */
 
 const LS={notes:'sk.notes',folders:'sk.folders',settings:'sk.settings'};
 /* (요구10) 앱 언어 = 전화기 시스템 언어(한국어면 한국어, 그 외 영어). + 설정에서 수동 강제(영어/한국어).
@@ -3696,7 +3690,7 @@ function cur(){return NOTES().find(n=>n.id===ui.editingId)}
 function openEditor(id){
   const n=NOTES().find(x=>x.id===id);if(!n)return;
   ui.editingId=id;
-  ui.edEdit=false;                                   // (결정) 기본 = 보기 모드
+  ui.edEdit=true;                                    // (v7.6.2) 항상 편집 모드 — 연필/보기 모드 없음
   $('#edTitle').value=n.title||'';
   const isCheck=n.type==='check';
   $('#edBody').classList.toggle('hidden',isCheck);
@@ -3751,7 +3745,6 @@ function applyEdMode(){
   $('#edBody').contentEditable=(ui.edEdit&&!isCheck)?'true':'false';
   $('#edBody').classList.toggle('viewmode',!ui.edEdit);
   $('#edBody').classList.toggle('editing',ui.edEdit&&!isCheck);   /* (요청3) 편집 중 이미지 드래그 허용 */
-  $('#edPencil').classList.toggle('on',ui.edEdit);
   /* (요청) 상단 도구줄 노출 규칙:
      보기 모드 = ✓(저장) · 연필 · 칼라 · ⋮(3점)
      편집 모드 = ✓(저장) · ↶Undo · T · 📷(카메라) */
@@ -3778,9 +3771,9 @@ function updateColorBtn(sel){
       updateColorBtn(i);applyEditorColor(i);                          // (요청1) 색 바꾸면 배경·제목바 즉시 변화
       pop.classList.remove('show');histPop();schedSave();renderTpPal()};pop.append(b)});
 }
-function schedSave(){                                  // (요구9) 3초 후 자동 저장(조용히)
+function schedSave(){                                  // (v7.6.2) 입력 후 0.6초 뒤 조용히 자동 저장(타이핑이 멈추는 즉시)
   clearTimeout(edSaveTimer);
-  edSaveTimer=setTimeout(()=>{flushEd(true);},3000);
+  edSaveTimer=setTimeout(()=>{flushEd(true);},600);
 }
 function untitledTitle(n){   /* (v7.5.4 요청3) 내용이 있는데 제목이 비어 있으면 '제목 없음(No title)'을, 아니면 null 반환 */
   const t=String(n.title||'').trim();
@@ -3832,9 +3825,8 @@ function closeEditor(fromBack){
   scheduleReminders();render();
   if($('#folderOverlay').classList.contains('show')&&folderHub&&folderHub.page==='detail')renderFolderDetail();
 }
-$('#edSaveBtn').onclick=()=>{ flushEd(); closeEditor(); };   // ✓ = 저장 후 목록으로
+/* (v7.6.2) ✓ 저장 버튼 제거 */
 /* (v6.7) ☑ 체크박스(연필 왼쪽) = 저장하고 이전 화면으로. 보기/편집 어느 모드에서나 같은 자리 */
-$('#edDone').onclick=()=>{ flushEd(); closeEditor(); };
 /* (요구2) Undo(되돌리기): 본문/체크리스트 직전 편집 취소 */
 $('#edUndo').onclick=()=>{
   const nb=$('#edBody');
@@ -3843,22 +3835,7 @@ $('#edUndo').onclick=()=>{
   try{ document.execCommand('undo',false,null); }catch(e){}
   schedSave();
 };
-$('#edPencil').onclick=()=>{
-  const entering=!ui.edEdit;
-  ui.edEdit=!ui.edEdit;applyEdMode();
-  /* (요청) 연필(편집 진입) 시: 본문 맨 아래 텍스트에서 한 줄을 띄우고 그 다음 줄에 커서 */
-  const nb=$('#edBody');
-  if(ui.edEdit && entering && nb && $('#edItems').classList.contains('hidden')){
-    nb.focus({preventScroll:true});
-    /* 맨 끝에 <br> 2개(=한 줄 띄우고 다음 줄)를 보장한 뒤 커서를 맨 끝으로 */
-    const html=nb.innerHTML;
-    if(html && !/<br\s*\/?>/i.test(html.slice(-12))){ nb.innerHTML=html.replace(/(<br\s*\/?>)+$/i,'')+'<br><br>'; }
-    else if(/<br\s*\/?>$/i.test(html)){ nb.innerHTML=html+'<br>'; }
-    const r=document.createRange();r.selectNodeContents(nb);r.collapse(false);
-    const s=window.getSelection();s.removeAllRanges();s.addRange(r);
-    setTimeout(()=>{nb.scrollTop=nb.scrollHeight},0);
-  }
-};
+/* (v7.6.2) 연필(보기/편집 전환) 제거 */
 $('#edColorBtn').onclick=e=>{e.stopPropagation();
   if($('#edMenu').classList.contains('show')){$('#edMenu').classList.remove('show');histPop();}   /* (v7.5.2) 다른 팝업 slot 소모 */
   const el=$('#edColorPop'); const willOpen=!el.classList.contains('show');
@@ -3904,6 +3881,10 @@ $('#edTitle').addEventListener('focus',()=>{
   }
 });
 $('#edTitle').addEventListener('input',schedSave);
+/* (v7.6.2) 제목: 한 번 탭 = 커서만, 두 번 탭 = 전체 선택 */
+let _ttTap=0;
+$('#edTitle').addEventListener('pointerup',()=>{const now=Date.now();if(now-_ttTap<350){const t=$('#edTitle');setTimeout(()=>{t.focus();t.select();},0);_ttTap=0;}else _ttTap=now;});
+$('#edTitle').addEventListener('dblclick',e=>{e.preventDefault();const t=$('#edTitle');t.focus();t.select();});
 $('#edBody').addEventListener('input',schedSave);
 /* (요청5→완전해결) 전체 선택(Ctrl/Cmd+A) = 노트 본문의 '텍스트만' 선택.
    · 보기 모드에서도 동작(포커스가 본문 밖이어도 됨)
@@ -4370,7 +4351,7 @@ function buildTypePop(){
   /* (v6.9 요청3) '크기' 슬라이더는 없앤다 - 글자 크기는 설정 화면(전역)에서만 조절한다. */
   /* B / I / U */
   const r2=document.createElement('div');r2.className='tprow tp1';
-  [['bold','B','b'],['italic','I','i'],['underline','U','u']].forEach(([cmd,lab,cls])=>{
+  [['bold','B','b'],['underline','U','u']].forEach(([cmd,lab,cls])=>{   /* (v7.6.2) Italic 제거 */
     const b=document.createElement('button');b.className='tpbiu '+cls;b.textContent=lab;
     b.onclick=e=>{e.preventDefault();e.stopPropagation();execTypeCmd(cmd);b.classList.toggle('on')};
     r2.append(b);
@@ -6475,8 +6456,8 @@ function typeInto(el,txt,speed){
 const _cheerRecent={};
 let _cheerT=null, _cheerOpenedAt=0;
 
-function showCheer(){
-  const bub=$('#cheerBubble'), badge=$('#sBadge');
+function showCheer(fromEl){
+  const bub=$('#cheerBubble'), badge=fromEl||$('#sBadge');
   if(!bub||!badge)return;
 
   applyCheerTheme();
@@ -6537,11 +6518,11 @@ function hideCheer(){
 
 /* (v6.2 버그수정 유지) 폰에서는 터치 뒤 click이 한 번 더 합성되어 들어온다.
    열린 직후 400ms 는 바깥 클릭으로 닫지 않는다. */
-$('#sBadge').addEventListener('click',e=>{
+['#sBadge','#edSBadge'].forEach(sel=>{const el=$(sel);if(!el)return;el.addEventListener('click',e=>{
   e.stopPropagation(); e.preventDefault();
   const b=$('#cheerBubble');
-  if(b&&b.classList.contains('show')) hideCheer(); else showCheer();
-});
+  if(b&&b.classList.contains('show')) hideCheer(); else showCheer(el);
+});});
 $('#cheerBubble').addEventListener('click',e=>e.stopPropagation());
 document.addEventListener('click',()=>{
   if(Date.now()-_cheerOpenedAt<400)return;
