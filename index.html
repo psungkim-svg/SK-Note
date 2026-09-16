@@ -1,8 +1,12 @@
 <!DOCTYPE html>
 <!--
 ═══════════════════════════════════════════════════════════════
-  soonenote  —  V7.6.4
+  soonenote  —  V7.6.5
   (V6.0 → ... → V6.6 → V6.7 → V6.7.1)
+
+  V7.6.5 changes  (2026-09)
+   1. Folder rename box = same white box / black text as note title.
+   2. Notes inside a folder: title strip moved to card bottom, filled brown.
 
   V7.6.4 changes  (2026-09)
    1. Toast/info duration set to 5 s / 8 s (long text).
@@ -250,7 +254,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-ohMdqmJX04nOEv14zt/llPyQq3Jhbt3gVvIKkZCTCVo='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-9UemK9Fyb7bQZzX9LGlf5tkJ1alXlyV4ljCJ/j9N0ao='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
 <!-- (요구3) 전화기 화면에 딱 맞게 · 자동 확대(핀치 줌 포함) 완전 금지 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#f5f2ef">
@@ -478,6 +482,11 @@ html[data-theme="dark"] .note .selbox{
 html[data-theme="dark"] .note.sel .selbox{background:var(--accent);border-color:var(--accent);color:#241a17}
 /* 체크박스가 제목을 가리지 않게 */
 .note.haschk .thead .ttl{padding-right:1.4em}   /* (v7.5.3 요청2) 소형 체크박스 대응 */
+/* (v7.6.5) 폴더 안 노트 카드: 첫 화면과 반대로 제목줄을 카드 '하단'에 두고 브라운으로 꽉 채움 */
+#folderDetailGrid .note .thead{order:2;margin-top:auto;background:var(--accent2);color:#fff;padding:.2em .5em}
+#folderDetailGrid .note .thead .ttl{color:#fff}
+#folderDetailGrid .note .tinner{order:1;flex:1}
+#folderDetailGrid .note.haschk .selbox{top:auto;bottom:.25em}
 
 /* (v6.3) 동기화 라이브러리 누락 경고 배너 */
 #acLibWarn{
@@ -1285,7 +1294,7 @@ html[data-theme="dark"] #folderOverlay:not(.vault-folder),html[data-theme="dark"
 #folderOverlay .sheet{position:relative}#fhFab{position:absolute;right:.85em;bottom:max(.85em,env(safe-area-inset-bottom));z-index:12;width:1.7em;height:1.7em;padding:0;display:flex;align-items:center;justify-content:center;border-radius:50%;border:none;background:var(--accent);color:#4a332e;font-size:1.6em;font-weight:700;line-height:1;box-shadow:0 4px 12px rgba(90,75,65,.28);transform:translate(2mm,0) scale(.8);transition:transform .15s}#fhFab:active{transform:translate(2mm,1mm) scale(.72)}
 #fdTitle{cursor:pointer;text-decoration:underline dotted transparent;text-underline-offset:.19em}#fdTitle:active,#fdTitle:focus{outline:none;text-decoration-color:var(--sub)}
 #fdTitle.fd-editing{padding:0}
-#fdTitle .fd-rename{width:100%;box-sizing:border-box;border:0;border-bottom:2px solid var(--accent);background:transparent;font:inherit;font-weight:700;color:var(--ink);padding:.05em 0;outline:none}   /* (v7.5.3 요청3) 인라인 이름 변경 박스 */
+#fdTitle .fd-rename{width:100%;box-sizing:border-box;background:#fff;border:1px solid var(--line);border-radius:.5em;font:inherit;font-weight:800;color:#212121;padding:.3em .6em;outline:none}   /* (v7.6.5) 노트 제목 박스와 동일: 흰 바탕·검은 글씨 */   /* (v7.5.3 요청3) 인라인 이름 변경 박스 */
 #edTypePop{width:128px;padding:0 .4em .3em}   /* (v7.6.2) 간소화: B U · 빨강 ⊘ */#tpHandle{margin:0 -.49em .28em;padding:.36em .48em .30em;gap:.28em}#tpHandle .bar{width:1.45em}#tpHandle .txt{font-size:.53em}.tprow{margin:.20em 0;gap:.30em}#edTypePop .tprow.tp1{gap:.30em}#edTypePop .tprow.tp1 .tpbiu{height:2.05em}.tprow.tpcolors{justify-content:center;gap:.55em;padding:.04em 0 .08em}#edTypePop .tpdot{width:1.62em;height:1.62em}
 /* v7.4 decision: Vault bar is 125% of the v7.3 compact bar, not a return to its old oversized version. */
 #folderNav.vault{padding:.09em .40em;padding-bottom:calc(.11em + env(safe-area-inset-bottom))}#folderNav.vault .folderbar{padding:.125em .05em .03em}#folderNav.vault .chip{font-size:.75em;min-height:1.84em;padding:.16em .34em}#folderNav.vault #fab{width:1.80em;height:1.80em;font-size:1.55em;margin-bottom:.38em;transform:translate(2mm,2mm) scale(.70)}#folderNav.vault #fab:active{transform:translate(2mm,2mm) scale(.64)}
@@ -1746,7 +1755,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='soonenote';
-const APP_VER='7.6.4';
+const APP_VER='7.6.5';
 /* ══════════ (v7.6.1) 기능 스위치 ══════════
    sync:false 로 바꾸면 동기화(Supabase)가 UI·네트워크·타이머 모두에서 비활성화된다.
    SYNC 객체와 계정 화면 코드는 남아 있되(프리미엄 대비) 어떤 경로도 실행되지 않는다.
