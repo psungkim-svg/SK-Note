@@ -283,7 +283,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-7CUiTTVXCQ/OmiFzLAb/ZK+3gW8yp7A4bTY/zbKZY7U='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-vlaPebNzFYHhXPYS69bqoJ5rnDubvAiJSi3mzBExpos='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
 <!-- (요구3) 전화기 화면에 딱 맞게 · 자동 확대(핀치 줌 포함) 완전 금지 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#f5f2ef">
@@ -740,7 +740,7 @@ main{order:1;flex:1;padding:0;max-width:1000px;width:100%;margin:0 auto;overflow
 .empty{color:var(--sub);text-align:center;padding:3em 1em;font-size:.8em}
 .hidden{display:none!important}
 /* (요구5) 검색어 하이라이트 */
-mark{background:#f0c79a;color:#3a3430;border-radius:2px;padding:0 1px}
+mark{background:#e7cebd;color:#3a3430;border-radius:2px;padding:0 1px}
 html[data-theme="dark"] mark{background:#8a6f62;color:#fff}
 
 /* ── 플로팅 + 버튼 (하단 바 바로 위에 붙음) ── */
@@ -847,12 +847,12 @@ html[data-theme="dark"] mark{background:#8a6f62;color:#fff}
   background:#f3e6e1;border-color:#e4cfc7;padding-top:.28em!important;gap:.16em;justify-content:flex-start}
 #fhFolderGrid.view-grid-s .fh-folder{padding-top:.2em!important}
 html[data-theme="dark"] .fh-folder{background:var(--fcbg,#3a302d);border-color:#4d403b}
-.fh-folder .fc{position:absolute;left:0;right:0;bottom:0;height:25%;margin:0!important;border-radius:0;font-size:.74em;color:#fff;font-weight:800;background:var(--fchead,var(--accent2));color:#000!important;text-shadow:none;display:flex;align-items:center;justify-content:center}
+.fh-folder .fc{position:absolute;left:0;right:0;bottom:0;height:25%;margin:0!important;border-radius:0;font-size:.6em;color:#fff;font-weight:800;background:var(--fchead,var(--accent2));color:#000!important;text-shadow:none;display:flex;align-items:center;justify-content:center}
 /* (v7.6.8) 폴더 이름 아래 여백 제거: 카드 높이 = 아이콘+이름+갈색 블록(하단 블록은 좌우 끝까지) */
 .fh-folder{min-height:0!important;padding-bottom:0!important;display:grid;grid-template-rows:auto auto auto;grid-template-columns:100%;gap:.16em;align-items:start;justify-items:center}
 .fh-folder .fi{margin:0}
 /* .fc는 font-size .6em이므로 카드 padding(.45em/.25em)을 .6으로 나눠 같은 px가 되게 한다 */
-.fh-folder .fc{position:static;height:auto;min-height:1.9em;width:auto;margin:.14em calc(-.45em / .74) 0!important;justify-self:stretch;transform:none}
+.fh-folder .fc{position:static;height:auto;min-height:1.9em;width:auto;margin:.14em calc(-.45em / .6) 0!important;justify-self:stretch;transform:none}
 /* (v7.6.9) 카드 뒤 얇은 그림자 + 폴더 색상(5색: 노트 팔레트와 동일) */
 .fh-folder{box-shadow:0 3px 8px rgba(70,52,44,.30),0 1px 2px rgba(70,52,44,.18)!important}   /* (v7.7.0) 더 진한 그림자 */
 .fh-folder{background:var(--fcbg,#f3e6e1)}
@@ -867,7 +867,7 @@ html[data-theme="dark"] .fh-folder{background:var(--fcbg,#3a302d);border-color:#
 .fh-selbar{display:none;align-items:center;gap:.4em;margin:0 0 .4em;font-size:.75em}
 .fh-selbar.show{display:flex}
 .fh-selbar .cnt{flex:1;color:var(--sub);font-weight:700}
-#fhFolderGrid.view-grid-s .fh-folder .fc{margin-left:calc(-.25em / .74)!important;margin-right:calc(-.25em / .74)!important}
+#fhFolderGrid.view-grid-s .fh-folder .fc{margin-left:calc(-.25em / .6)!important;margin-right:calc(-.25em / .6)!important}
 #fhFolderGrid.view-grid-s .fh-folder{min-height:5.95em;padding:.48em .25em;border-radius:.65em}
 #fhFolderGrid.view-grid-s .fh-folder .fi{font-size:1.8em}
 #fhFolderGrid.view-grid-s .fh-folder .fn{font-size:.66em}
@@ -1315,7 +1315,7 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
 #fhFolderGrid.view-grid-l{grid-template-columns:repeat(var(--folder-hub-cols,2),minmax(0,1fr))}
 #folderDetailGrid{grid-template-columns:repeat(var(--folder-note-cols,2),minmax(0,1fr))}
 #fdViewMenu{right:4.15em}.vault-main-more{position:fixed;z-index:105;top:3.05em;right:.55em}
-.vault-unlocked,#vaultUnlockedBar{background:#dfe0d6;color:#43503d;border-bottom:1px solid #c9ccbe;font-size:.86em;font-weight:900;letter-spacing:.04em;padding:.42em .7em}
+.vault-unlocked,#vaultUnlockedBar{background:#dfe0d6;color:#43503d;border-bottom:1px solid #c9ccbe;font-size:.68em;font-weight:900;letter-spacing:.04em;padding:.42em .7em}
 .vault-unlocked{margin:-.18em 0 .5em;border-radius:.55em}.vault-unlocked.hidden,#vaultUnlockedBar.hidden{display:none!important}#vaultUnlockedBar{display:flex;align-items:center}#vaultUnlockedBar b{font-weight:900}
 #folderNav.vault{padding:.07em .32em;padding-bottom:calc(.09em + env(safe-area-inset-bottom))}
 #folderNav.vault .folderbar{padding:.10em .04em .02em}
@@ -1393,7 +1393,7 @@ html[data-theme="dark"] #folderOverlay:not(.vault-folder),html[data-theme="dark"
     <button class="iconbtn hidden" id="btnVaultMore" data-i18n-title="More" title="More" aria-label="Vault options">⋮</button>
   </div>
 </header>
-<div id="vaultUnlockedBar" class="hidden"><svg viewBox="0 0 24 24" width="1.6em" height="1.6em" aria-hidden="true" style="flex:none;margin-right:.4em"><rect x="3.5" y="10.5" width="14" height="10.5" rx="2.2" fill="#f4b942" stroke="#6b4a12" stroke-width="1.4"/><path d="M14.5 10.5V7.2a4.3 4.3 0 0 1 8.6 0v1.1" fill="none" stroke="#6b4a12" stroke-width="2" stroke-linecap="round"/><circle cx="10.5" cy="15.2" r="1.5" fill="#6b4a12"/><rect x="9.8" y="15.6" width="1.4" height="3" rx=".6" fill="#6b4a12"/></svg><b>Vault Unlocked</b></div>
+<div id="vaultUnlockedBar" class="hidden"><svg viewBox="0 0 24 24" width="1.25em" height="1.25em" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-.28em;margin-right:.35em"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.6-1.7"/></svg><b>Vault Unlocked</b></div>
 <div id="vaultMainMore" class="fh-more vault-main-more hidden" role="menu"></div>
 
 <!-- (v6.4) 휴지통 화면임을 분명히 알려주는 띠 -->
@@ -1817,7 +1817,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='soonenote';
-const APP_VER='7.7.5';
+const APP_VER='7.7.4';
 /* ══════════ (v7.6.1) 기능 스위치 ══════════
    sync:false 로 바꾸면 동기화(Supabase)가 UI·네트워크·타이머 모두에서 비활성화된다.
    SYNC 객체와 계정 화면 코드는 남아 있되(프리미엄 대비) 어떤 경로도 실행되지 않는다.
@@ -1831,18 +1831,18 @@ const SSTORE=(()=>{try{const t='__cn__';sessionStorage.setItem(t,'1');sessionSto
 /* ══ (v6.1) soonenote 고정 팔레트 — 7색 muted pastel ══
    본문(COLORS)  = 기준색을 화이트에 72% 희석 → 거의 화이트에 가까운 파스텔
    제목(HEADS_L) = 기준색 그대로 또는 10%만 밝게                              */
-const PALETTE_BASE=['#efa9ae','#f0c79a','#a9d7b9','#a6c7e6','#c6b6e8'];   /* (v7.7.5) 파스텔 5색: 핑크·피치·민트·스카이블루·라벤더 — 앱 전체 통일 */   /* (v7.5.5 요청4) 5색 */
-const COLORS  =['#fbe7e8','#fbefe3','#e7f4eb','#e6eff8','#efebf9'];   /* (v7.7.5) 본문 = 기준색 72% 희석 */   /* (v7.5.5 요청4) 5색 — 아이보리·화이트 제거 */
-const HEADS_L =['#efa9ae','#f0c79a','#a9d7b9','#a6c7e6','#c6b6e8'];   /* (v7.7.5) 제목줄 = 기준색 그대로 */
-const COLORS_D=['#483334','#483c2e','#334038','#323c45','#3b3746'];
-const HEADS_D =['#835d60','#846d55','#5d7666','#5b6d7e','#6d6480'];
+const PALETTE_BASE=['#D7A49A','#E4C9B6','#A4B1BA','#B8BBA3','#C9C3DD'];   /* (v7.5.5 요청4) 5색 */
+const COLORS  =['#f4e6e3','#f7f0eb','#e6e9ec','#ebece5','#f0eef5'];   /* (v7.5.5 요청4) 5색 — 아이보리·화이트 제거 */
+const HEADS_L =['#dbada4','#e7cebd','#adb9c1','#bfc2ac','#cec9e0'];
+const COLORS_D=['#3d3334','#3f3b39','#32363a','#363835','#3a3941'];
+const HEADS_D =['#584746','#5c544f','#464b50','#4d4f49','#53515c'];
 const NCOLORS=COLORS.length;                       /* (v7.5.5 요청4) 5 — 7색 중 아이보리·화이트 제거 */
-const COLOR_NAMES   =['핑크','피치','민트','스카이블루','라벤더'];
-const COLOR_NAMES_EN=['Pink','Peach','Mint','Sky Blue','Lavender'];
+const COLOR_NAMES   =['더스티 로즈','누드','베이비 블루','세이지','라벤더'];
+const COLOR_NAMES_EN=['Dusty Rose','Nude','Baby Blue','Sage','Lavender'];
 const cnName=i=>((IS_KO?COLOR_NAMES[i]:COLOR_NAMES_EN[i])||'');
 /* 글자색·형광펜도 같은 톤으로 (원색 제거) */
 const TEXT_COLORS=['#3a3430','#8f6259','#8a7358','#6f7460','#5d6b74','#6f6889','#a89f97'];
-const HI_COLORS  =['#fbefe3','#fbe7e8','#e7f4eb','#e6eff8','#efebf9','transparent'];   /* (v7.7.5) 새 팔레트 본문색 */
+const HI_COLORS  =['#f7f0eb','#f4e6e3','#ebece5','#e6e9ec','#f0eef5','transparent'];
 /* (v7.0 요청4) T창의 글자색 3개. 노트 배경 색이 아니라 '고른 글자'에 들어가는 색이다. */
 const TP_COLORS=[{c:'#C62828',ko:'진한 빨강',en:'Deep red'}];   /* (v7.6.2) 파랑·초록 제거 */
 
@@ -4955,7 +4955,7 @@ const folderHub={page:'hub',id:'',searchOpen:false,detailSearchOpen:false,addOpe
 /* (v7.6.9) 폴더 색상(0~4, 노트 팔레트와 동일) */
 function folderColorIdx(f){const c=parseInt(f&&f.color,10);return isNaN(c)?-1:((c%NCOLORS)+NCOLORS)%NCOLORS}
 /* (v7.7.4) 폴더 전용 파스텔 5색 — 순서는 기존 0~4 그대로(핑크·피치·민트·스카이블루·라벤더). 아랫부분/스와치 = 이 값, 윗부분 = 같은 색을 연하게(흰색 70% 혼합) */
-const FOLDER_PAL=PALETTE_BASE;   /* (v7.7.5) 노트와 동일 팔레트 */
+const FOLDER_PAL=['#EFA9AE','#F0C79A','#A9D7B9','#A6C7E6','#C6B6E8'];
 function folderTint(hex,amt){const n=parseInt(hex.slice(1),16),r=n>>16,g=(n>>8)&255,b=n&255,m=(c)=>Math.round(c+(255-c)*amt);return '#'+[m(r),m(g),m(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
 function folderColorBg(f){const i=folderColorIdx(f);if(i<0)return isDark()?'#3a302d':'#f3e6e1';return isDark()?mixDark(FOLDER_PAL[i]):folderTint(FOLDER_PAL[i],.7)}
 function mixDark(hex){const n=parseInt(hex.slice(1),16),r=n>>16,g=(n>>8)&255,b=n&255,m=c=>Math.round(c*.35);return '#'+[m(r),m(g),m(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
