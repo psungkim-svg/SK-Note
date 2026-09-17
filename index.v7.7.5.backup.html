@@ -283,7 +283,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-Lk5WBi/BIdKXZOcYi645xqSEfxJqj3MXrs3RNsmZO3M='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-7CUiTTVXCQ/OmiFzLAb/ZK+3gW8yp7A4bTY/zbKZY7U='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
 <!-- (요구3) 전화기 화면에 딱 맞게 · 자동 확대(핀치 줌 포함) 완전 금지 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#f5f2ef">
@@ -398,7 +398,7 @@ header{
   line-height:1.2;display:inline-flex;align-items:center}
 /* (v7.0 요청1) '전체'·'노트' 글자만 70%로 줄인다(폴더·아이콘 칩은 그대로). 바는 함께 80%가 된다. */
 /* (v7.7.0) 전체·노트·폴더 칩 = 노트 제목과 같은 크기·굵기 */
-#folderNav .chip.mchip,#folderNav .pinrow .chip{font-size:calc(var(--ui) * .9);   /* (v7.7.6) 전체·노트 글자 조금 작게 */font-weight:800;padding:.18em .55em;min-height:0;line-height:1.25}
+#folderNav .chip.mchip,#folderNav .pinrow .chip{font-size:var(--ui);font-weight:800;padding:.18em .55em;min-height:0;line-height:1.25}
 /* (v7.0 패치E) 칩 스트립의 위·아래 여백을 없애 바 전체를 80%로 — 넘침·스크롤 동작은 그대로 */
 #folderNav .folderbar{padding-top:0;padding-bottom:0}
 html[data-theme="dark"] #folderNav{background:#2b2725}      /* 다크: Ivory 톤 */
@@ -1118,7 +1118,6 @@ html[data-theme="dark"] #edBody a.plink{color:#eee;background:rgba(255,255,255,.
 .tplab{font-size:.6em;color:var(--sub);font-weight:700;width:3.1em;flex:none}
 .tpbtn{background:var(--chip);border:none;color:var(--text);border-radius:.4em;padding:.32em .7em;font-size:.78em;font-weight:700}
 .tpval{min-width:2.6em;text-align:center;font-size:.78em;font-weight:800}
-#edBody [data-tpsel]{background:rgba(255,213,79,.55);border-radius:2px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
 .tpbiu{background:var(--chip);border:none;color:var(--text);border-radius:.4em;min-width:2.2em;height:2.2em;font-size:.8em;font-weight:800;font-style:normal}
 /* (v6.7) B/I/U 도 남는 폭을 나눠 가져 오른쪽 여백을 없앤다 */
 .tprow .tpbiu{flex:1}
@@ -1818,7 +1817,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='soonenote';
-const APP_VER='7.7.6';
+const APP_VER='7.7.5';
 /* ══════════ (v7.6.1) 기능 스위치 ══════════
    sync:false 로 바꾸면 동기화(Supabase)가 UI·네트워크·타이머 모두에서 비활성화된다.
    SYNC 객체와 계정 화면 코드는 남아 있되(프리미엄 대비) 어떤 경로도 실행되지 않는다.
@@ -2912,7 +2911,7 @@ function toast(m){
   const t=$('#toast');t.textContent=m;t.classList.add('show');
   clearTimeout(t._h);
   /* (v6.2) 긴 안내문은 조금 더 오래 보여준다 */
-  const dur=String(m).length>60?6000:3000;   /* (v7.7.6) 안내 표시 3초 / 긴 문장 6초 */
+  const dur=String(m).length>60?8000:5000;   /* (v7.6.4) 안내 표시 5초 / 긴 문장 8초 */
   t._h=setTimeout(()=>t.classList.remove('show'),dur);
 }
 /* (v6.1) '오늘'이 한국어로 하드코딩돼 영어 모드에서도 한글이 나오던 문제 수정 */
@@ -3080,7 +3079,7 @@ const LIGHT_POPUPS=[
   {sel:'#linkSheet',   close:()=>closeLinkSheet(true)},
   {sel:'#edMenu',      close:()=>$('#edMenu').classList.remove('show')},
   {sel:'#edColorPop',  close:()=>$('#edColorPop').classList.remove('show')},
-  {sel:'#edTypePop',   close:()=>closeTypePop()},
+  {sel:'#edTypePop',   close:()=>$('#edTypePop').classList.remove('show')},
   {sel:'#addMenu',     close:()=>$('#addMenu').classList.remove('show')},
   {sel:'#fhMoreMenu',   close:()=>closeFolderMore(false),hidden:true},
   {sel:'#fdMoreMenu',   close:()=>closeFolderMore(false),hidden:true},
@@ -3896,7 +3895,7 @@ function flushEd(silent){
   if(n.type==='note' && ui.edEdit){
     /* (v6.1) 저장 전 정화 + 화면 전용 상태(선택표시 .sel/.dragging)는 저장하지 않는다 */
     const tmp=document.createElement('div');
-    tmp.innerHTML=stripTpSelHtml($('#edBody').innerHTML);   /* (v7.7.6) T창 선택 표시는 저장하지 않음 */
+    tmp.innerHTML=$('#edBody').innerHTML;
     tmp.querySelectorAll('img.edimg').forEach(im=>im.classList.remove('sel','dragging'));
     n.content=sanitizeHTML(tmp.innerHTML);
   }
@@ -3921,7 +3920,7 @@ function closeEditor(fromBack){
   // fromBack: popstate가 이미 OVS.pop() + history 이동을 처리 → 화면만 숨김
   if(fromBack) $('#edOverlay').classList.remove('show');
   else ovCloseUi($('#edOverlay'));
-  hideSelBar();$('#edMenu').classList.remove('show');$('#edColorPop').classList.remove('show');closeTypePop();
+  hideSelBar();$('#edMenu').classList.remove('show');$('#edColorPop').classList.remove('show');$('#edTypePop').classList.remove('show');
   deselectImg();$('#imgPrev').classList.add('hidden');
   scheduleReminders();render();
   if($('#folderOverlay').classList.contains('show')&&folderHub&&folderHub.page==='detail')renderFolderDetail();
@@ -3989,7 +3988,7 @@ document.addEventListener('click',e=>{
   }
   /* ② 편집기 T(서식) 팝업 — 색/⋮ 팝업은 기존 핸들러가 처리 */
   const tp=$('#edTypePop');
-  if(tp&&tp.classList.contains('show')&&!t.closest('#edTypePop')&&!t.closest('#edTypeBtn')){closeTypePop();histPop();return}
+  if(tp&&tp.classList.contains('show')&&!t.closest('#edTypePop')&&!t.closest('#edTypeBtn')){tp.classList.remove('show');histPop();return}
   if(!isBgTap(t))return;
   const fo=$('#folderOverlay');
   if(fo&&fo.classList.contains('show')){
@@ -4476,35 +4475,11 @@ $('#edBody').addEventListener('pointerup',e=>{
 
 /* ═══════════════ (요청) Type(T) 버튼 — 선택 텍스트 서식: 크기·볼드·기울임·밑줄·줄간격 (이모티콘 제거) ═══════════════ */
 let typeFs=12, typeLh=1.5;   /* typeLh 범위는 아래 LH_MIN~LH_MAX(1.0~2.0) */
-/* (v7.7.6) T 창이 열려 있는 동안 고른 글자를 '표시 span'으로 감싸 계속 하이라이트로 보이게 하고,
-   브라우저 선택은 접어 둔다 → OS의 잘라내기/복사/붙여넣기 바가 사라지며, 창의 버튼을 눌러도 선택이 풀리지 않는다.
-   창이 닫히면 span을 풀어 원래대로(저장 내용에는 절대 남지 않음). */
-function tpMark(){
-  tpUnmark();
-  const r=typeSelRange(); if(!r||r.collapsed)return;
-  const sp=document.createElement('span'); sp.setAttribute('data-tpsel','1');
-  try{ r.surroundContents(sp); }
-  catch(_){ try{ sp.append(r.extractContents()); r.insertNode(sp); }catch(__){ return; } }
-  try{ const s=window.getSelection(); s.removeAllRanges(); const c=document.createRange(); c.setStartAfter(sp); c.collapse(true); s.addRange(c); }catch(_){}
-}
-function tpSelSpans(){ const ed=$('#edBody'); return ed?[...ed.querySelectorAll('[data-tpsel]')]:[]; }
-function tpUnmark(){
-  tpSelSpans().forEach(sp=>{
-    if(!sp.parentNode)return;
-    sp.removeAttribute('data-tpsel');
-    if(sp.getAttribute('style'))return;                 /* 색이 입혀진 span은 그대로 색 span이 된다 */
-    const p=sp.parentNode; while(sp.firstChild)p.insertBefore(sp.firstChild,sp); sp.remove(); try{p.normalize()}catch(_){}
-  });
-}
-function stripTpSelHtml(html){ const d=document.createElement('div'); d.innerHTML=html; d.querySelectorAll('[data-tpsel]').forEach(sp=>{sp.removeAttribute('data-tpsel'); if(sp.getAttribute('style'))return; const p=sp.parentNode; while(sp.firstChild)p.insertBefore(sp.firstChild,sp); sp.remove();}); return d.innerHTML; }
-function tpSelectMarked(){ const sps=tpSelSpans(); if(!sps.length)return false; try{ const s=window.getSelection(); s.removeAllRanges(); const r=document.createRange(); r.setStartBefore(sps[0]); r.setEndAfter(sps[sps.length-1]); s.addRange(r); return true; }catch(_){ return false; } }
-function tpCollapseSel(){ const sps=tpSelSpans(); if(!sps.length)return; try{ const s=window.getSelection(); s.removeAllRanges(); const c=document.createRange(); c.setStartAfter(sps[sps.length-1]); c.collapse(true); s.addRange(c); }catch(_){} }
-function closeTypePop(){ const tp=$('#edTypePop'); if(tp)tp.classList.remove('show'); tpUnmark(); }
 function buildTypePop(){
   const p=$('#edTypePop'); if(p._built)return; p._built=true;
   /* (v6.5) 맨 위 손잡이 — 잡고 끌면 창이 움직인다 */
   const hd=document.createElement('div'); hd.id='tpHandle';
-  hd.innerHTML='<span class="bar"></span><span class="txt">'+L('이동','MOVE')+'</span><span class="bar"></span>';
+  hd.innerHTML='<span class="bar"></span><span class="txt">'+L('끌어서 이동','DRAG TO MOVE')+'</span><span class="bar"></span>';
   p.append(hd);
   /* (v7.5.9 요청3) 우측 상단 × 버튼 제거 — 닫기는 T 버튼 재탭·바깥 탭·뒤로가기 */
   makeTypePopDraggable(p,hd);
@@ -4513,7 +4488,7 @@ function buildTypePop(){
   const r2=document.createElement('div');r2.className='tprow tp1';
   [['bold','B','b'],['underline','U','u']].forEach(([cmd,lab,cls])=>{   /* (v7.6.2) Italic 제거 */
     const b=document.createElement('button');b.className='tpbiu '+cls;b.textContent=lab;
-    b.onpointerdown=e=>{e.preventDefault();tpSaveRange()};b.onclick=e=>{e.preventDefault();e.stopPropagation();execTypeCmd(cmd);b.classList.toggle('on')};
+    b.onclick=e=>{e.preventDefault();e.stopPropagation();execTypeCmd(cmd);b.classList.toggle('on')};
     r2.append(b);
   });
   /* (v7.0 요청4) 한 줄에 B I U + 글자색 3개 (+ 지움).
@@ -4539,7 +4514,6 @@ function buildTypePop(){
   };
   const tpColorApply=(hex)=>{
     const ed=$('#edBody'),n=cur(); if(!ed||!n)return;
-    { const sps=tpSelSpans(); if(sps.length){ sps.forEach(sp=>{ let an=sp.parentElement; while(an&&an!==ed){ if(an.style&&an.style.color&&an.textContent===sp.textContent)an.style.removeProperty('color'); an=an.parentElement; } sp.querySelectorAll('[style]').forEach(e2=>e2.style.removeProperty('color')); sp.style.color=hex; }); n.content=stripTpSelHtml(ed.innerHTML);n.updatedAt=Date.now();n.dirty=true;schedSave(); toast(L('고른 글자에 색을 입혔습니다','Colour applied')); return; } }   /* (v7.7.6) 표시 span이 있으면 그 범위에만 */
     const r=tpColorScope();
     if(r){
       try{ const sp=document.createElement('span');sp.style.color=hex;r.surroundContents(sp); }
@@ -4565,7 +4539,6 @@ function buildTypePop(){
   };
   const tpColorClear=()=>{
     const ed=$('#edBody'),n=cur(); if(!ed||!n)return;
-    { const sps=tpSelSpans(); if(sps.length){ sps.forEach(sp=>{ let an=sp.parentElement; while(an&&an!==ed){ if(an.style&&an.style.color&&an.textContent===sp.textContent){an.style.removeProperty('color'); if(!an.getAttribute('style').trim())an.removeAttribute('style');} an=an.parentElement; } sp.style.removeProperty('color'); if(!sp.getAttribute('style')||!sp.getAttribute('style').trim())sp.removeAttribute('style'); sp.querySelectorAll('span,font,[style]').forEach(e2=>{ if(e2.style&&e2.style.color)e2.style.removeProperty('color'); if(e2.getAttribute('color'))e2.removeAttribute('color'); const st=e2.getAttribute('style'); if(st!=null&&!st.trim())e2.removeAttribute('style'); }); }); n.content=stripTpSelHtml(ed.innerHTML);n.updatedAt=Date.now();n.dirty=true;schedSave(); toast(L('글자색을 지웠습니다','Colour cleared')); return; } }   /* (v7.7.6) */
     const r=tpColorScope();
     let scope=ed,detached=false;
     if(r){
@@ -4808,7 +4781,7 @@ function readCurrentLh(){
   if(isFinite(v)) typeLh=lhClamp(v);
 }
 /* (v6.7.1) T창 −/＋ 버튼이 슬라이더로 대체되어 holdRepeat()/holdRepeatFs() 삭제(승인 완료) */
-function execTypeCmd(cmd){ $('#edBody').focus(); const marked=tpSelectMarked(); if(!marked)tpRestoreRange(); document.execCommand(cmd,false,null); if(marked)tpCollapseSel(); schedSave(); }
+function execTypeCmd(cmd){ $('#edBody').focus(); document.execCommand(cmd,false,null); schedSave(); }
 function updateTpVals(){
   readCurrentLh();                                   /* (v6.1) 실제 값을 읽어와 표시 */
   {const _e=$('#tpFsVal'); if(_e)_e.textContent=typeFs+'pt';}
@@ -4819,8 +4792,8 @@ function updateTpVals(){
 }
 $('#edTypeBtn').onclick=e=>{e.stopPropagation();
   const tp=$('#edTypePop');
-  if(tp.classList.contains('show')){closeTypePop();histPop();return;}  /* (v7.5.9 요청3) × 제거 → T 재탭 또는 Back으로 닫음 */
-  tpSaveRange();buildTypePop();updateTpVals();renderTpPal();tpMark();   /* (v7.7.6) 선택 표시 유지 + OS 선택 바 숨김 */
+  if(tp.classList.contains('show')){tp.classList.remove('show');histPop();return;}  /* (v7.5.9 요청3) × 제거 → T 재탭 또는 Back으로 닫음 */
+  tpSaveRange();buildTypePop();updateTpVals();renderTpPal();
   $('#edColorPop').classList.remove('show');$('#edMenu').classList.remove('show');
   tp.classList.add('show');histPush();
   requestAnimationFrame(()=>placeTypePop(tp));
