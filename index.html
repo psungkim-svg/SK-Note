@@ -1,8 +1,15 @@
 <!DOCTYPE html>
 <!--
 ═══════════════════════════════════════════════════════════════
-  soonenote  —  V7.6.9
+  soonenote  —  V7.7.0
   (V6.0 → ... → V6.6 → V6.7 → V6.7.1)
+
+  V7.7.0 changes  (2026-09)
+   1. Bottom bar chips 전체/노트/폴더 = note-title size & weight (1em --ui, 800).
+   2. Bottom bar darker (#d6cfc8).
+   3. Folder card shadow stronger.
+   4. Folder color dots = exact note palette (5), larger dots.
+   5. All trash icons pinned to the folder-top-bar trash size.
 
   V7.6.9 changes  (2026-09)  ← user-feedback (7 items)
    1. Bottom bar: 📁 icon replaced by the word '폴더'.
@@ -276,7 +283,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-fW3/ND4+wVx5iyzM94LFQ3IqOJM1hWi9ampoubt0t4A='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-Sx3y4Gxy+oty3XQC/IlgKIAZo0rXW+mHyHtpH2l6iLM='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
 <!-- (요구3) 전화기 화면에 딱 맞게 · 자동 확대(핀치 줌 포함) 완전 금지 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#f5f2ef">
@@ -375,7 +382,7 @@ header{
 #folderNav{
   order:3; bottom:0; z-index:30;
   /* (v6.1) 일반 노트 하단바 = Ivory 계열. Vault는 .vault → Sage 계열 */
-  background:#e3ded8;   /* (v7.6.9) 살짝 더 진하게 (was #eeebe7) */
+  background:#d6cfc8;   /* (v7.7.0) 한 단계 더 진하게 (v7.6.9 #e3ded8) */
   box-shadow:0 -1px 3px rgba(0,0,0,.12);
   /* (요청) 일반 노트 하단바 높이를 약 80%로 축소 */
   /* (v7.0 패치E) 요청1 = 바 높이를 80%로. 칩은 그대로(48px)이고 남는 건 안쪽 여백이라 그걸 접는다. */
@@ -390,7 +397,8 @@ header{
 #folderNav .chip{padding:.24em .56em;font-size:1.05em;border-radius:1.5em;min-height:2.02em;
   line-height:1.2;display:inline-flex;align-items:center}
 /* (v7.0 요청1) '전체'·'노트' 글자만 70%로 줄인다(폴더·아이콘 칩은 그대로). 바는 함께 80%가 된다. */
-#folderNav .chip.mchip{font-size:.735em;padding:.3em .62em}
+/* (v7.7.0) 전체·노트·폴더 칩 = 노트 제목과 같은 크기·굵기 */
+#folderNav .chip.mchip,#folderNav .pinrow .chip{font-size:var(--ui);font-weight:800;padding:.18em .55em;min-height:0;line-height:1.25}
 /* (v7.0 패치E) 칩 스트립의 위·아래 여백을 없애 바 전체를 80%로 — 넘침·스크롤 동작은 그대로 */
 #folderNav .folderbar{padding-top:0;padding-bottom:0}
 html[data-theme="dark"] #folderNav{background:#2b2725}      /* 다크: Ivory 톤 */
@@ -673,7 +681,7 @@ html[data-theme="dark"] .syncdot{border-color:rgba(255,255,255,.35)}
 #folderBar .pinrow{position:sticky;right:0;z-index:2;flex:none;display:flex;gap:.3em;
   margin-left:.05em;padding-left:.35em;background:linear-gradient(to right,rgba(238,235,231,0),#eeebe7 30%)}
 html[data-theme="dark"] #folderBar .pinrow{background:linear-gradient(to right,rgba(43,39,37,0),#2b2725 30%)}
-#folderNav:not(.vault) #folderBar .pinrow{background:linear-gradient(to right,rgba(227,222,216,0),#e3ded8 30%)}
+#folderNav:not(.vault) #folderBar .pinrow{background:linear-gradient(to right,rgba(214,207,200,0),#d6cfc8 30%)}
 #folderNav.vault #folderBar .pinrow{background:linear-gradient(to right,rgba(223,224,214,0),#dfe0d6 30%)}
 .chip{
   flex:none;background:var(--chip);color:var(--text);border:none;border-radius:1em;
@@ -818,7 +826,7 @@ html[data-theme="dark"] mark{background:#8a6f62;color:#fff}
 .fh-top h3{flex:1;min-width:0;margin:0;font-size:1.02em;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .fh-top .iconbtn{width:1.8em;min-width:1.8em;height:1.8em;min-height:1.8em;padding:0;font-size:1em}
 .fh-top .iconbtn.textico{font-size:1.14em;font-weight:800}
-.fh-svg{width:1.22em;height:1.22em;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle}
+.fh-svg{width:1.22em;height:1.22em;--trash-px:calc(1.22 * var(--ui));fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle}
 .fh-folder .fi{display:grid;place-items:center}.fh-folder .fi .fh-svg{width:1em;height:1em;stroke-width:1.7}
 .fh-tools{display:flex;align-items:center;gap:.4em;flex:none;margin:0 0 .48em}
 .fh-tools.hidden{display:none!important}
@@ -846,14 +854,14 @@ html[data-theme="dark"] .fh-folder{background:var(--fcbg,#3a302d);border-color:#
 /* .fc는 font-size .6em이므로 카드 padding(.45em/.25em)을 .6으로 나눠 같은 px가 되게 한다 */
 .fh-folder .fc{position:static;height:auto;min-height:1.9em;width:auto;margin:.14em calc(-.45em / .6) 0!important;justify-self:stretch;transform:none}
 /* (v7.6.9) 카드 뒤 얇은 그림자 + 폴더 색상(5색: 노트 팔레트와 동일) */
-.fh-folder{box-shadow:0 1px 4px rgba(70,52,44,.16),0 0 0 1px rgba(70,52,44,.05)!important}
+.fh-folder{box-shadow:0 3px 8px rgba(70,52,44,.30),0 1px 2px rgba(70,52,44,.18)!important}   /* (v7.7.0) 더 진한 그림자 */
 .fh-folder{background:var(--fcbg,#f3e6e1)}
 .fh-folder .fsel{position:absolute;top:.28em;right:.28em;z-index:4;width:1.75em;height:1.75em;border-radius:.34em;border:1.5px solid rgba(70,52,44,.62);background:rgba(255,255,255,.97);display:none;align-items:center;justify-content:center;font-size:.525em;font-weight:900;color:transparent;box-shadow:0 1px 3px rgba(90,70,60,.28)}
 #fhFolderGrid.fsel-on .fh-folder .fsel{display:flex}
 .fh-folder.fsel-checked .fsel{background:var(--accent);border-color:#b88d84;color:#4a332e}
 .fh-folder.fsel-checked{outline:3px solid var(--accent);outline-offset:-3px}
 .fh-cdots{display:flex;gap:.3em;align-items:center;flex:none;padding:0 .2em}
-.fh-cdot{width:1.35em;height:1.35em;border-radius:50%;border:2px solid rgba(70,52,44,.25);padding:0;cursor:pointer}
+.fh-cdot{width:1.6em;height:1.6em;border-radius:50%;border:2px solid rgba(70,52,44,.3);padding:0;cursor:pointer}
 .fh-cdot.on{border-color:#4a332e;box-shadow:0 0 0 2px #fff inset}
 .fh-selbar{display:none;align-items:center;gap:.4em;margin:0 0 .4em;font-size:.75em}
 .fh-selbar.show{display:flex}
@@ -971,6 +979,9 @@ html[data-theme="dark"] #edDone{background:#2a2726;border-color:#c39a91;color:#e
 #edTypeBtn{font-weight:800;font-size:.94em}   /* (v7.6.3) 110% */
 /* (요청) 휴지통 아이콘 80%로 축소 */
 #btnTrash{font-size:.78em;padding:.32em}
+/* (v7.7.0) 휴지통 아이콘 크기 = 폴더 상단바 휴지통과 동일(px) */
+#btnTrash svg.fh-svg,#selDelete svg.fh-svg,#trashBanner .tbIcon svg.fh-svg,#edMenu .menuitem svg.fh-svg,#imgDelete svg.fh-svg,#fhSelDelete svg.fh-svg{width:calc(1.22 * var(--ui));height:calc(1.22 * var(--ui))}
+#btnTrash{padding:.2em}
 .edtool:active{background:var(--chip);transform:translateY(1px) scale(.9);box-shadow:inset 0 2px 4px rgba(0,0,0,.2)}   /* (요청3) 눌리는 모양이 확실히 보이게 */
 /* (요청3) 연필: 박스 없이 연필만. 연필심(끝)은 왼쪽. 편집 ON=노란 연필(박스 없음), 누르면 '들어가는' 눌림 */
 /* (v6.4) 연필이 배경에 묻혀 잘 안 보이던 문제 →
@@ -1802,7 +1813,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='soonenote';
-const APP_VER='7.6.9';
+const APP_VER='7.7.0';
 /* ══════════ (v7.6.1) 기능 스위치 ══════════
    sync:false 로 바꾸면 동기화(Supabase)가 UI·네트워크·타이머 모두에서 비활성화된다.
    SYNC 객체와 계정 화면 코드는 남아 있되(프리미엄 대비) 어떤 경로도 실행되지 않는다.
