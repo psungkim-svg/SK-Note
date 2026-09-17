@@ -283,7 +283,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-vlaPebNzFYHhXPYS69bqoJ5rnDubvAiJSi3mzBExpos='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-xbhZCGc2eZ0bPAE1tT6KDEoInfnZonDrCJpe3cIUZCM='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
 <!-- (요구3) 전화기 화면에 딱 맞게 · 자동 확대(핀치 줌 포함) 완전 금지 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#f5f2ef">
@@ -847,7 +847,7 @@ html[data-theme="dark"] mark{background:#8a6f62;color:#fff}
   background:#f3e6e1;border-color:#e4cfc7;padding-top:.28em!important;gap:.16em;justify-content:flex-start}
 #fhFolderGrid.view-grid-s .fh-folder{padding-top:.2em!important}
 html[data-theme="dark"] .fh-folder{background:var(--fcbg,#3a302d);border-color:#4d403b}
-.fh-folder .fc{position:absolute;left:0;right:0;bottom:0;height:25%;margin:0!important;border-radius:0;font-size:.6em;color:#fff;font-weight:800;background:var(--fchead,var(--accent2));color:#000!important;text-shadow:none;display:flex;align-items:center;justify-content:center}
+.fh-folder .fc{position:absolute;left:0;right:0;bottom:0;height:25%;margin:0!important;border-radius:0;font-size:.6em;color:#fff;font-weight:800;background:var(--fchead,var(--accent2));text-shadow:0 0 2px rgba(0,0,0,.28);display:flex;align-items:center;justify-content:center}
 /* (v7.6.8) 폴더 이름 아래 여백 제거: 카드 높이 = 아이콘+이름+갈색 블록(하단 블록은 좌우 끝까지) */
 .fh-folder{min-height:0!important;padding-bottom:0!important;display:grid;grid-template-rows:auto auto auto;grid-template-columns:100%;gap:.16em;align-items:start;justify-items:center}
 .fh-folder .fi{margin:0}
@@ -1315,8 +1315,8 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
 #fhFolderGrid.view-grid-l{grid-template-columns:repeat(var(--folder-hub-cols,2),minmax(0,1fr))}
 #folderDetailGrid{grid-template-columns:repeat(var(--folder-note-cols,2),minmax(0,1fr))}
 #fdViewMenu{right:4.15em}.vault-main-more{position:fixed;z-index:105;top:3.05em;right:.55em}
-.vault-unlocked,#vaultUnlockedBar{background:#dfe0d6;color:#43503d;border-bottom:1px solid #c9ccbe;font-size:.68em;font-weight:900;letter-spacing:.04em;padding:.42em .7em}
-.vault-unlocked{margin:-.18em 0 .5em;border-radius:.55em}.vault-unlocked.hidden,#vaultUnlockedBar.hidden{display:none!important}#vaultUnlockedBar{display:flex;align-items:center}#vaultUnlockedBar b{font-weight:900}
+.vault-unlocked,#vaultUnlockedBar{background:#dfe0d6;color:#43503d;border-bottom:1px solid #c9ccbe;font-size:.68em;font-weight:800;letter-spacing:.04em;padding:.42em .7em}
+.vault-unlocked{margin:-.18em 0 .5em;border-radius:.55em}.vault-unlocked.hidden,#vaultUnlockedBar.hidden{display:none!important}
 #folderNav.vault{padding:.07em .32em;padding-bottom:calc(.09em + env(safe-area-inset-bottom))}
 #folderNav.vault .folderbar{padding:.10em .04em .02em}
 /* v7.2 Vault strip was about 41px tall; this keeps usable ~20px controls (roughly half scale). */
@@ -1393,7 +1393,7 @@ html[data-theme="dark"] #folderOverlay:not(.vault-folder),html[data-theme="dark"
     <button class="iconbtn hidden" id="btnVaultMore" data-i18n-title="More" title="More" aria-label="Vault options">⋮</button>
   </div>
 </header>
-<div id="vaultUnlockedBar" class="hidden"><svg viewBox="0 0 24 24" width="1.25em" height="1.25em" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-.28em;margin-right:.35em"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.6-1.7"/></svg><b>Vault Unlocked</b></div>
+<div id="vaultUnlockedBar" class="hidden">Vault Unlocked</div>
 <div id="vaultMainMore" class="fh-more vault-main-more hidden" role="menu"></div>
 
 <!-- (v6.4) 휴지통 화면임을 분명히 알려주는 띠 -->
@@ -1817,7 +1817,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='soonenote';
-const APP_VER='7.7.4';
+const APP_VER='7.7.3';
 /* ══════════ (v7.6.1) 기능 스위치 ══════════
    sync:false 로 바꾸면 동기화(Supabase)가 UI·네트워크·타이머 모두에서 비활성화된다.
    SYNC 객체와 계정 화면 코드는 남아 있되(프리미엄 대비) 어떤 경로도 실행되지 않는다.
@@ -4954,14 +4954,10 @@ const NOTE_SORTS=['color','updated','created','title','manual'];
 const folderHub={page:'hub',id:'',searchOpen:false,detailSearchOpen:false,addOpen:false,more:'',sub:'',select:new Set(),selectMode:'notes',trashTab:'notes',fsel:new Set(),fselOn:false,addColor:0};
 /* (v7.6.9) 폴더 색상(0~4, 노트 팔레트와 동일) */
 function folderColorIdx(f){const c=parseInt(f&&f.color,10);return isNaN(c)?-1:((c%NCOLORS)+NCOLORS)%NCOLORS}
-/* (v7.7.4) 폴더 전용 파스텔 5색 — 순서는 기존 0~4 그대로(핑크·피치·민트·스카이블루·라벤더). 아랫부분/스와치 = 이 값, 윗부분 = 같은 색을 연하게(흰색 70% 혼합) */
-const FOLDER_PAL=['#EFA9AE','#F0C79A','#A9D7B9','#A6C7E6','#C6B6E8'];
-function folderTint(hex,amt){const n=parseInt(hex.slice(1),16),r=n>>16,g=(n>>8)&255,b=n&255,m=(c)=>Math.round(c+(255-c)*amt);return '#'+[m(r),m(g),m(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
-function folderColorBg(f){const i=folderColorIdx(f);if(i<0)return isDark()?'#3a302d':'#f3e6e1';return isDark()?mixDark(FOLDER_PAL[i]):folderTint(FOLDER_PAL[i],.7)}
-function mixDark(hex){const n=parseInt(hex.slice(1),16),r=n>>16,g=(n>>8)&255,b=n&255,m=c=>Math.round(c*.35);return '#'+[m(r),m(g),m(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+function folderColorBg(f){const i=folderColorIdx(f);if(i<0)return isDark()?'#3a302d':'#f3e6e1';return (isDark()?COLORS_D:COLORS)[i]}
 /* (v7.7.3) 폴더 박스 아랫부분('노트 N') = 일반 노트 제목줄 색(진함). 윗부분은 folderColorBg = 노트 본문색(연함). 같은 인덱스라 항상 함께 바뀐다 */
-function folderColorHead(f){const i=folderColorIdx(f);if(i<0)return '';return FOLDER_PAL[i]}
-function renderAddColors(){const box=$('#fhAddColors');if(!box)return;box.innerHTML='';const HEAD=FOLDER_PAL;   /* (v7.7.4 폴더 파스텔) (v7.7.2) 설정의 '기본 노트 컬러'와 같은 5색 톤 */COLORS.forEach((c,i)=>{const d=document.createElement('button');d.type='button';d.className='fh-cdot'+(folderHub.addColor===i?' on':'');d.style.background=HEAD[i];d.setAttribute('aria-label',cnName(i));d.title=L('색상 ','Color ')+(i+1);d.onclick=e=>{e.stopPropagation();folderHub.addColor=i;renderAddColors()};box.append(d)})}
+function folderColorHead(f){const i=folderColorIdx(f);if(i<0)return '';return (isDark()?HEADS_D:HEADS_L)[i]}
+function renderAddColors(){const box=$('#fhAddColors');if(!box)return;box.innerHTML='';const HEAD=isDark()?HEADS_D:HEADS_L;   /* (v7.7.2) 설정의 '기본 노트 컬러'와 같은 5색 톤 */COLORS.forEach((c,i)=>{const d=document.createElement('button');d.type='button';d.className='fh-cdot'+(folderHub.addColor===i?' on':'');d.style.background=HEAD[i];d.setAttribute('aria-label',cnName(i));d.title=L('색상 ','Color ')+(i+1);d.onclick=e=>{e.stopPropagation();folderHub.addColor=i;renderAddColors()};box.append(d)})}
 function toggleFolderSel(id){if(folderHub.fsel.has(id))folderHub.fsel.delete(id);else folderHub.fsel.add(id);renderFolderHub()}
 function exitFolderSel(){folderHub.fselOn=false;folderHub.fsel.clear();renderFolderHub()}
 function renderFolderSelBar(){const bar=$('#fhSelBar');if(!bar)return;bar.classList.toggle('show',!!folderHub.fselOn);$('#fhSelCnt').textContent=L(folderHub.fsel.size+'개 폴더 선택',folderHub.fsel.size+' folder(s) selected');$('#fhSelDelete').disabled=!folderHub.fsel.size}
@@ -5034,7 +5030,7 @@ function attachFolderNoteSelection(el,n){
 }
 function renderFolderDetail(){const f=folderRaw();if(!f||f.deleted){folderHubBack();return}setFolderHubPage('detail');vaultFolderStatus();$('#fdTitle').textContent=folderName(f);$('#fdSearch').placeholder=L('이 폴더에서 노트 검색','Search this folder');$('#fdSearchRow').classList.toggle('hidden',!folderHub.detailSearchOpen);const q=$('#fdSearch').value.trim().toLowerCase(),g=$('#folderDetailGrid'),sc=curSettings(),view=folderNoteView(sc);g.className='folder-note-'+view;g.style.setProperty('--folder-note-cols',prefGrid(sc,'folderNoteBox','2'));g.innerHTML='';const arr=sortDetailNotes(NOTES().filter(n=>!n.deleted&&n.folder===f.id&&fHit(n,q)));arr.forEach(n=>g.append(folderNoteCard(n,q)));if(!arr.length){const e=document.createElement('div');e.className='fh-empty';e.textContent=q?L('검색 결과가 없습니다.','Nothing found.'):L('이 폴더에는 아직 노트가 없습니다. 상단의 ＋로 새 노트를 만드세요.','This folder has no notes yet. Use ＋ at the top to create one.');g.append(e)}}
 function openFolderDetail(id){if($('#folderOverlay').classList.contains('show')){closeFolderMore();closeDetailViewMenu();if(folderHub.page!=='detail')histPush();}folderHub.id=id;folderHub.detailSearchOpen=false;$('#fdSearch').value='';setFolderHubPage('detail');renderFolderDetail()}
-function folderColorRow(){const f=folderRaw(),row=document.createElement('div');row.className='fh-crow';const HEAD=FOLDER_PAL,cur=folderColorIdx(f);COLORS.forEach((c,i)=>{const d=document.createElement('button');d.type='button';d.className='fh-cdot'+(cur===i?' on':'');d.style.background=HEAD[i];d.setAttribute('aria-label',cnName(i));d.title=cnName(i);d.onclick=async e=>{e.stopPropagation();if(!f)return;const old=f.color;f.color=i;f._synced=false;const ok=await persistFolderState();if(!ok){f.color=old;toast(L('폴더 색을 저장하지 못했습니다.','Could not save folder color.'));return}if(!ui.vault)syncSoon();closeFolderMore();renderFolderDetail();toast(L('폴더 색을 변경했습니다.','Folder color changed.'))};row.append(d)});return row}
+function folderColorRow(){const f=folderRaw(),row=document.createElement('div');row.className='fh-crow';const HEAD=isDark()?HEADS_D:HEADS_L,cur=folderColorIdx(f);COLORS.forEach((c,i)=>{const d=document.createElement('button');d.type='button';d.className='fh-cdot'+(cur===i?' on':'');d.style.background=HEAD[i];d.setAttribute('aria-label',cnName(i));d.title=cnName(i);d.onclick=async e=>{e.stopPropagation();if(!f)return;const old=f.color;f.color=i;f._synced=false;const ok=await persistFolderState();if(!ok){f.color=old;toast(L('폴더 색을 저장하지 못했습니다.','Could not save folder color.'));return}if(!ui.vault)syncSoon();closeFolderMore();renderFolderDetail();toast(L('폴더 색을 변경했습니다.','Folder color changed.'))};row.append(d)});return row}
 function moreButton(label,fn,cls){const b=document.createElement('button');b.type='button';b.textContent=label;if(cls)b.className=cls;b.onclick=fn;return b}function moreHead(t){const d=document.createElement('div');d.className='morehead';d.textContent=t;return d}
 function setFolderView(v){const sc=curSettings();sc.folderView=v;if(v==='grid-s')sc.folderBox='4';if(v==='grid-m')sc.folderBox='3';if(v==='grid-l')sc.folderBox='2';persistFolderState().catch(()=>{});renderFolderHub()}
 function setFolderBox(v){const sc=curSettings();sc.folderBox=v;sc.folderView='grid-'+({1:'l',2:'l',3:'m',4:'s'}[v]||'m');persistFolderState().catch(()=>{});renderFolderHub()}
