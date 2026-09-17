@@ -283,7 +283,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-rhDO/nvh7Gr33LY20kI6TwTTAmPBSDebI3WVM3T9ADM='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-Sx3y4Gxy+oty3XQC/IlgKIAZo0rXW+mHyHtpH2l6iLM='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
 <!-- (요구3) 전화기 화면에 딱 맞게 · 자동 확대(핀치 줌 포함) 완전 금지 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#f5f2ef">
@@ -1813,7 +1813,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='soonenote';
-const APP_VER='7.7.1';
+const APP_VER='7.7.0';
 /* ══════════ (v7.6.1) 기능 스위치 ══════════
    sync:false 로 바꾸면 동기화(Supabase)가 UI·네트워크·타이머 모두에서 비활성화된다.
    SYNC 객체와 계정 화면 코드는 남아 있되(프리미엄 대비) 어떤 경로도 실행되지 않는다.
@@ -3785,7 +3785,7 @@ function openEditor(id){
   updateColorBtn(n.color||0);
   renderItems(n);
   applyEdMode();
-  ui._edSnap=edSnapshot();ui._edExt=false;           // (요청1) 원본 스냅샷 저장
+  ui._edSnap=edSnapshot();                           // (요청1) 원본 스냅샷 저장
   ovOpen($('#edOverlay'));
 }
 /* (요청1) 현재 편집 내용 요약 — 변경 여부 판단용 */
@@ -3794,20 +3794,6 @@ function edSnapshot(){
   // 편집 중이면 실시간 DOM, 보기 모드면 저장된 content 사용(링크 변환 영향 제거)
   const body=n.type==='note' ? (ui.edEdit ? $('#edBody').innerHTML : (n.content||'')) : JSON.stringify(n.items||[]);
   return ($('#edTitle').value||'')+'\u0001'+(body||'')+'\u0001'+(n.color||0)+'\u0001'+(n.pinned?1:0)+'\u0001'+(n.remindAt||0);
-}
-/* (v7.7.1) 편집기가 열려 있는 노트가 다른 기기에서 바뀌어 내려왔을 때 — 아직 손대지 않았으면 화면에 즉시 반영 */
-function edRefreshFromNote(n){
-  if(!n||ui.editingId!==n.id)return;
-  $('#edTitle').value=n.title||'';
-  if(n.type==='note')$('#edBody').innerHTML=linkify(n.content||'');
-  applyEditorColor(n.color||0);updateColorBtn(n.color||0);renderItems(n);
-  ui._edSnap=edSnapshot();ui._edExt=false;
-  toast(L('다른 기기의 수정 내용을 반영했습니다.','Updated with changes from another device.'));
-}
-/* (v7.7.1) 입력 중일 때는 덮지 않고 1회만 알림 — 저장 시 다른 기기 내용은 사본으로 보관됨(pushDirty) */
-function edExternalChange(){
-  if(ui._edExt)return; ui._edExt=true;
-  toast(L('이 노트가 다른 기기에서도 수정되었습니다. 저장하면 다른 기기 내용은 사본으로 보관됩니다.','This note was also edited on another device. When you save, the other version is kept as a copy.'));
 }
 /* (요청3) 에디터 배경 = 선택 색의 아주 연한색 / 제목바 = 진한색 */
 function applyEditorColor(sel){
@@ -5265,19 +5251,7 @@ const SYNC={
   },
   toRow(n){return{id:n.id,user_id:this.uid,folder:n.folder||'',color:n.color||0,type:n.type||'note',
     title:n.title||'',content:n.content||'',items:n.items||[],pinned:!!n.pinned,locked:false,
-    sort_index:n.sortIndex||0,created_at:n.createdAt||Date.now(),updated_at:Math.max(n.updatedAt||Date.now(),(S.settings.lastPull||0)+1,(n._srvUp||0)+1),deleted:!!n.deleted}},
-  /* (v7.7.1 동기화 최소수정) 노트 내용 지문 — 시계 대신 '내가 마지막으로 본 서버 내용'과 비교하기 위한 값 */
-  fp(n){const t=[n.title||'',n.content||'',JSON.stringify(n.items||[]),n.folder||'',n.color||0,n.deleted?1:0,n.pinned?1:0].join('\u0001');let h=5381;for(let i=0;i<t.length;i++)h=((h*33)^t.charCodeAt(i))>>>0;return h.toString(36)+t.length},
-  /* (v7.7.1) 서버 행 1건을 로컬에 반영 — 규칙: 시계 비교 없음. 미전송 수정(dirty)이 있으면 서버가 덮지 않고(push가 충돌을 처리), 없으면 서버가 진실. */
-  applyServer(sn){
-    const local=S.notes.find(n=>n.id===sn.id);
-    if(!local){S.notes.push(Object.assign(sn,{dirty:false,_srvSeen:this.fp(sn),_srvUp:sn.updatedAt}));return}
-    const same=this.fp(local)===this.fp(sn);
-    if(local.dirty){ if(!same&&ui.editingId===sn.id&&!ui.vault)edExternalChange(); return }
-    if(!same&&ui.editingId===sn.id&&!ui.vault&&ui._edSnap!==undefined&&edSnapshot()!==ui._edSnap){ edExternalChange(); return } /* 입력 중(아직 저장 전) → 덮지 않음 */
-    Object.assign(local,sn,{dirty:false,_srvSeen:this.fp(sn),_srvUp:sn.updatedAt});
-    if(!same&&ui.editingId===sn.id&&!ui.vault)edRefreshFromNote(local);
-  },
+    sort_index:n.sortIndex||0,created_at:n.createdAt||Date.now(),updated_at:n.updatedAt||Date.now(),deleted:!!n.deleted}},
   fromRow(r){return{id:r.id,folder:r.folder||'',color:((r.color||0)%NCOLORS+NCOLORS)%NCOLORS,type:r.type||'note',title:r.title||'',
     content:r.content||'',items:r.items||[],pinned:!!r.pinned,remindAt:r.remind_at||0,sortIndex:r.sort_index||0,
     createdAt:r.created_at||0,updatedAt:r.updated_at||0,deleted:!!r.deleted}},
@@ -5294,25 +5268,9 @@ const SYNC={
     this.busy=true;setStatus('syncing');
     try{
       if(dirty.length){
-        /* (v7.7.1) 올리기 전에 서버의 현재 내용을 한 번 읽어, 내가 마지막으로 본 서버 내용(_srvSeen)과 다르면
-           = 다른 기기가 그 사이에 고친 것 → 서버 내용을 '사본' 노트로 보존한 뒤 내 것을 올린다(조용한 소실 방지). */
-        const sr=await c.from('notes').select('*').eq('user_id',this.uid).in('id',dirty.map(n=>n.id));
-        if(sr.error)throw sr.error;
-        const copies=[];
-        (sr.data||[]).forEach(r=>{
-          const n=dirty.find(x=>x.id===r.id); if(!n)return;
-          const sn=this.fromRow(r); const sfp=this.fp(sn); n._srvUp=Math.max(n._srvUp||0,sn.updatedAt||0);
-          if(n._srvSeen===undefined||n._srvSeen===sfp||sfp===this.fp(n)||sn.deleted)return;   /* 처음 보는 노트·변화 없음·같은 내용·서버쪽 삭제 → 충돌 아님 */
-          const cp=Object.assign({},sn,{id:uid(),title:(sn.title||L('제목 없음','Untitled'))+L(' [다른 기기 · 사본]',' [other device · copy]'),
-            createdAt:Date.now(),updatedAt:Date.now(),dirty:true,_srvSeen:undefined,_srvUp:0});
-          copies.push(cp);
-        });
-        if(copies.length){ S.notes.unshift(...copies); dirty.push(...copies); save(); toast(L('다른 기기와 동시에 수정된 노트 '+copies.length+'개를 사본으로 보관했습니다.','Kept '+copies.length+' note(s) edited on another device as copies.')); }
-        const rows=dirty.map(n=>this.toRow(n));
-        const {error}=await c.from('notes').upsert(rows);
+        const {error}=await c.from('notes').upsert(dirty.map(n=>this.toRow(n)));
         if(error)throw error;
-        dirty.forEach((n,i)=>{n.dirty=false;n._srvSeen=this.fp(n);n._srvUp=rows[i].updated_at;});
-        if(copies.length&&!$('#edOverlay').classList.contains('show'))render();
+        dirty.forEach(n=>n.dirty=false);
       }
       if(folderDeleteIds.length){
         const {error}=await c.from('folders').delete().eq('user_id',this.uid).in('id',folderDeleteIds);
@@ -5344,20 +5302,20 @@ const SYNC={
       const haveLocal=(S.notes&&S.notes.length>0);
       const since=haveLocal?(S.settings.lastPull||0):0;
       let nq=c.from('notes').select('*').eq('user_id',this.uid).order('updated_at',{ascending:false}).limit(5000);
-      if(since>0&&this._fullPulled) nq=nq.gt('updated_at',since-864e5);   /* (v7.7.1) 시계 오차 여유 1일 + 세션당 첫 pull은 전체 */
+      if(since>0) nq=nq.gt('updated_at',since-60000);   // 시계 오차 1분 여유
       const [nr,fr]=await Promise.all([
         nq,
         c.from('folders').select('*').eq('user_id',this.uid).limit(500)
       ]);
       if(nr.error)throw nr.error;
-      const cutoff=Date.now()-30*864e5; let maxUp=S.settings.lastPull||0;
+      const cutoff=Date.now()-30*864e5;
       (nr.data||[]).forEach(r=>{
         if(r.deleted&&r.updated_at<cutoff)return;
         const sn=this.fromRow(r);
-        if(sn.updatedAt>maxUp)maxUp=sn.updatedAt;
-        this.applyServer(sn);   /* (v7.7.1) 시계 비교 대신 dirty 기준 */
+        const local=S.notes.find(n=>n.id===sn.id);
+        if(!local)S.notes.push(Object.assign(sn,{dirty:false}));
+        else if(sn.updatedAt>=(local.updatedAt||0))Object.assign(local,sn,{dirty:false});
       });
-      this._fullPulled=true;
       (fr.data||[]).forEach(r=>{
         const local=S.folders.find(f=>f.id===r.id);
         if(local){local.name=r.name;local._synced=true}
@@ -5367,7 +5325,7 @@ const SYNC={
       /* (v6.1) 오래된 삭제 노트 정리는 '내 것만'. 원래는 user_id 조건이 없어서
          모든 기기가 전체 테이블을 지우려 들었다. 서버 cron으로 옮기는 것이 이상적. */
       c.from('notes').delete().eq('user_id',this.uid).eq('deleted',true).lt('updated_at',cutoff).then(()=>{},()=>{});
-      S.settings.lastPull=maxUp;   /* (v7.7.1) 이 기기 시계가 아니라 서버에서 받은 updated_at 최대값 */
+      S.settings.lastPull=Date.now();
       S.settings.lastSync=Date.now();save();scheduleReminders();
       if(!$('#edOverlay').classList.contains('show'))render();
       setStatus('ok');
@@ -5383,8 +5341,9 @@ const SYNC={
           if(!$('#edOverlay').classList.contains('show'))render(); return }
         const r=p.new;if(!r)return;
         const sn=this.fromRow(r);
-        this.applyServer(sn);   /* (v7.7.1) */
-        if(sn.updatedAt>(S.settings.lastPull||0))S.settings.lastPull=sn.updatedAt;
+        const local=S.notes.find(n=>n.id===sn.id);
+        if(!local)S.notes.push(Object.assign(sn,{dirty:false}));
+        else if(sn.updatedAt>=(local.updatedAt||0))Object.assign(local,sn,{dirty:false});
         save();
         if(!$('#edOverlay').classList.contains('show'))render();
       })
