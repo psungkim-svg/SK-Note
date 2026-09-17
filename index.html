@@ -1,8 +1,18 @@
 <!DOCTYPE html>
 <!--
 ═══════════════════════════════════════════════════════════════
-  soonenote  —  V7.6.8
+  soonenote  —  V7.6.9
   (V6.0 → ... → V6.6 → V6.7 → V6.7.1)
+
+  V7.6.9 changes  (2026-09)  ← user-feedback (7 items)
+   1. Bottom bar: 📁 icon replaced by the word '폴더'.
+   2. Bottom bar slightly darker (#e3ded8).
+   3. Folder hub: tapping the 'notes N' block enters folder-select mode
+      (checkbox on each card, delete bar) → move selected folders to trash.
+   4. Folder card: thin drop shadow.
+   5. Folder color (5, same palette as notes) picked when adding a folder.
+   6. Folder hub ⋮: '정렬 기준' (name / recent / count) restored.
+   7. All trash icons unified to the folder-top-bar SVG trash icon.
 
   V7.6.8 changes  (2026-09)
    1. Folder hub card: no empty space under the folder name (32px -> 6px);
@@ -266,7 +276,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-09uCda8/3wL2Hz6C2Ou0bhJCzy/66kSYDEnkCz17MHw='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-fW3/ND4+wVx5iyzM94LFQ3IqOJM1hWi9ampoubt0t4A='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
 <!-- (요구3) 전화기 화면에 딱 맞게 · 자동 확대(핀치 줌 포함) 완전 금지 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#f5f2ef">
@@ -365,7 +375,7 @@ header{
 #folderNav{
   order:3; bottom:0; z-index:30;
   /* (v6.1) 일반 노트 하단바 = Ivory 계열. Vault는 .vault → Sage 계열 */
-  background:#eeebe7;
+  background:#e3ded8;   /* (v7.6.9) 살짝 더 진하게 (was #eeebe7) */
   box-shadow:0 -1px 3px rgba(0,0,0,.12);
   /* (요청) 일반 노트 하단바 높이를 약 80%로 축소 */
   /* (v7.0 패치E) 요청1 = 바 높이를 80%로. 칩은 그대로(48px)이고 남는 건 안쪽 여백이라 그걸 접는다. */
@@ -663,6 +673,7 @@ html[data-theme="dark"] .syncdot{border-color:rgba(255,255,255,.35)}
 #folderBar .pinrow{position:sticky;right:0;z-index:2;flex:none;display:flex;gap:.3em;
   margin-left:.05em;padding-left:.35em;background:linear-gradient(to right,rgba(238,235,231,0),#eeebe7 30%)}
 html[data-theme="dark"] #folderBar .pinrow{background:linear-gradient(to right,rgba(43,39,37,0),#2b2725 30%)}
+#folderNav:not(.vault) #folderBar .pinrow{background:linear-gradient(to right,rgba(227,222,216,0),#e3ded8 30%)}
 #folderNav.vault #folderBar .pinrow{background:linear-gradient(to right,rgba(223,224,214,0),#dfe0d6 30%)}
 .chip{
   flex:none;background:var(--chip);color:var(--text);border:none;border-radius:1em;
@@ -827,13 +838,26 @@ html[data-theme="dark"] mark{background:#8a6f62;color:#fff}
   /* (v7.6.7) 카드 윗부분: 백색 → 연한 브라운, 폴더 아이콘 위 여백 축소 */
   background:#f3e6e1;border-color:#e4cfc7;padding-top:.28em!important;gap:.16em;justify-content:flex-start}
 #fhFolderGrid.view-grid-s .fh-folder{padding-top:.2em!important}
-html[data-theme="dark"] .fh-folder{background:#3a302d;border-color:#4d403b}
+html[data-theme="dark"] .fh-folder{background:var(--fcbg,#3a302d);border-color:#4d403b}
 .fh-folder .fc{position:absolute;left:0;right:0;bottom:0;height:25%;margin:0!important;border-radius:0;font-size:.6em;color:#fff;font-weight:800;background:var(--accent2);display:flex;align-items:center;justify-content:center}
 /* (v7.6.8) 폴더 이름 아래 여백 제거: 카드 높이 = 아이콘+이름+갈색 블록(하단 블록은 좌우 끝까지) */
 .fh-folder{min-height:0!important;padding-bottom:0!important;display:grid;grid-template-rows:auto auto auto;grid-template-columns:100%;gap:.16em;align-items:start;justify-items:center}
 .fh-folder .fi{margin:0}
 /* .fc는 font-size .6em이므로 카드 padding(.45em/.25em)을 .6으로 나눠 같은 px가 되게 한다 */
 .fh-folder .fc{position:static;height:auto;min-height:1.9em;width:auto;margin:.14em calc(-.45em / .6) 0!important;justify-self:stretch;transform:none}
+/* (v7.6.9) 카드 뒤 얇은 그림자 + 폴더 색상(5색: 노트 팔레트와 동일) */
+.fh-folder{box-shadow:0 1px 4px rgba(70,52,44,.16),0 0 0 1px rgba(70,52,44,.05)!important}
+.fh-folder{background:var(--fcbg,#f3e6e1)}
+.fh-folder .fsel{position:absolute;top:.28em;right:.28em;z-index:4;width:1.75em;height:1.75em;border-radius:.34em;border:1.5px solid rgba(70,52,44,.62);background:rgba(255,255,255,.97);display:none;align-items:center;justify-content:center;font-size:.525em;font-weight:900;color:transparent;box-shadow:0 1px 3px rgba(90,70,60,.28)}
+#fhFolderGrid.fsel-on .fh-folder .fsel{display:flex}
+.fh-folder.fsel-checked .fsel{background:var(--accent);border-color:#b88d84;color:#4a332e}
+.fh-folder.fsel-checked{outline:3px solid var(--accent);outline-offset:-3px}
+.fh-cdots{display:flex;gap:.3em;align-items:center;flex:none;padding:0 .2em}
+.fh-cdot{width:1.35em;height:1.35em;border-radius:50%;border:2px solid rgba(70,52,44,.25);padding:0;cursor:pointer}
+.fh-cdot.on{border-color:#4a332e;box-shadow:0 0 0 2px #fff inset}
+.fh-selbar{display:none;align-items:center;gap:.4em;margin:0 0 .4em;font-size:.75em}
+.fh-selbar.show{display:flex}
+.fh-selbar .cnt{flex:1;color:var(--sub);font-weight:700}
 #fhFolderGrid.view-grid-s .fh-folder .fc{margin-left:calc(-.25em / .6)!important;margin-right:calc(-.25em / .6)!important}
 #fhFolderGrid.view-grid-s .fh-folder{min-height:5.95em;padding:.48em .25em;border-radius:.65em}
 #fhFolderGrid.view-grid-s .fh-folder .fi{font-size:1.8em}
@@ -1340,7 +1364,7 @@ html[data-theme="dark"] #folderOverlay:not(.vault-folder),html[data-theme="dark"
   <span class="cnt" id="selCount">0<span data-i18n="sel_count"> selected</span></span>
   <button class="sbtn restore" id="selRestore" style="display:none"><span class="ic">↺</span> <span class="lbl" data-i18n="restore">Restore</span></button>
   <button class="sbtn" id="selMove" style="display:none">➡️ <span class="lbl" data-i18n="move">Move</span></button>   <!-- (v7.5.5 요청2) 이동: 우측 화살표, 눈에 띄게 -->
-  <button class="sbtn" id="selDelete">🗑️ <span class="lbl" data-i18n="delete">Delete</span></button>
+  <button class="sbtn" id="selDelete"><svg class="fh-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13M10 11v5M14 11v5"/></svg> <span class="lbl" data-i18n="delete">Delete</span></button>
 </div>
 
 <header>
@@ -1352,7 +1376,7 @@ html[data-theme="dark"] #folderOverlay:not(.vault-folder),html[data-theme="dark"
     <span class="syncdot" id="syncDot" title="Sync status"></span>
     <button class="iconbtn" id="btnView" data-i18n-title="View" title="View">▦</button>
     <!-- (요청) 구름(계정·동기화) 아이콘은 상단바에서 제거 — 설정 → 계정·동기화로 진입 -->
-    <button class="iconbtn" id="btnTrash" data-i18n-title="Trash" title="Trash">🗑️</button>
+    <button class="iconbtn" id="btnTrash" data-i18n-title="Trash" title="Trash"><svg class="fh-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13M10 11v5M14 11v5"/></svg></button>
     <button class="iconbtn" id="btnSettings" data-i18n-title="Settings" title="Settings">⚙️</button>
     <button class="iconbtn hidden" id="btnVaultMore" data-i18n-title="More" title="More" aria-label="Vault options">⋮</button>
   </div>
@@ -1362,7 +1386,7 @@ html[data-theme="dark"] #folderOverlay:not(.vault-folder),html[data-theme="dark"
 
 <!-- (v6.4) 휴지통 화면임을 분명히 알려주는 띠 -->
 <div id="trashBanner" class="hidden">
-  <span class="tbIcon">🗑️</span>
+  <span class="tbIcon"><svg class="fh-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13M10 11v5M14 11v5"/></svg></span>
   <span class="tbText" id="tbText">Trash</span>
   <button class="tbExit" id="tbExit">✕</button>
 </div>
@@ -1440,7 +1464,7 @@ html[data-theme="dark"] #folderOverlay:not(.vault-folder),html[data-theme="dark"
         <button class="ib" id="imgFloatR" title="Photo right · text wraps left">◨</button>
         <button class="ib" id="imgClear" title="Default (own line, left)">▤</button>
         <button class="ib" id="imgPreview">🔍</button>
-        <button class="ib danger" id="imgDelete">🗑</button>
+        <button class="ib danger" id="imgDelete"><svg class="fh-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13M10 11v5M14 11v5"/></svg></button>
         <button class="ib" id="imgClose">✕</button>
       </div>
     </div>
@@ -1680,8 +1704,9 @@ html[data-theme="dark"] #folderOverlay:not(.vault-folder),html[data-theme="dark"
         </div>
         <div class="vault-unlocked hidden" id="fhVaultStatus">Vault Unlocked</div>
         <div class="fh-tools hidden" id="fhSearchRow"><input type="search" id="fhSearch" placeholder="Search folders or notes" autocomplete="off"><button class="iconbtn" id="fhSearchClose" title="Close search">✕</button></div>
-        <div class="fh-tools hidden" id="fhAddRow"><input type="text" id="fhAddInput" placeholder="New folder name" maxlength="80" autocomplete="off"><button class="btn primary" id="fhAddSave">Add</button><button class="iconbtn" id="fhAddClose" title="Cancel">✕</button></div>
+        <div class="fh-tools hidden" id="fhAddRow"><input type="text" id="fhAddInput" placeholder="New folder name" maxlength="80" autocomplete="off"><span class="fh-cdots" id="fhAddColors" aria-label="Folder color"></span><button class="btn primary" id="fhAddSave">Add</button><button class="iconbtn" id="fhAddClose" title="Cancel">✕</button></div>
         <div class="fh-more hidden" id="fhMoreMenu" role="menu"></div>
+        <div class="fh-selbar" id="fhSelBar"><span class="cnt" id="fhSelCnt"></span><button class="btn danger" id="fhSelDelete"><svg class="fh-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13M10 11v5M14 11v5"/></svg> <span data-i18n="delete">Delete</span></button><button class="iconbtn" id="fhSelClose" title="Cancel">✕</button></div>
         <div id="fhFolderGrid" class="view-grid-m"></div>
       </section>
       <section class="folder-page hidden" id="folderDetailPage" aria-label="Folder notes">
@@ -1777,7 +1802,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='soonenote';
-const APP_VER='7.6.8';
+const APP_VER='7.6.9';
 /* ══════════ (v7.6.1) 기능 스위치 ══════════
    sync:false 로 바꾸면 동기화(Supabase)가 UI·네트워크·타이머 모두에서 비활성화된다.
    SYNC 객체와 계정 화면 코드는 남아 있되(프리미엄 대비) 어떤 경로도 실행되지 않는다.
@@ -1843,7 +1868,7 @@ const I18N={
   title_ph:{en:'Title'},save:{en:'Save'},edit_hint:{en:'Edit mode'},format_t:{en:'Format'},
   img_btn:{en:'Link photo'},color_btn:{en:'Color'},more:{en:'More'},
   body_ph:{en:'Type something...'},add_item:{en:'+ Add item'},
-  img_smaller:{en:'−'},img_bigger:{en:'＋'},img_preview:{en:'🔍'},img_delete:{en:'🗑'},img_close:{en:'✕'},
+  img_smaller:{en:'−'},img_bigger:{en:'＋'},img_preview:{en:'🔍'},img_delete:{en:''},img_close:{en:'✕'},
   undo:{en:'Undo'},undone:{en:'Undone'},
   sec_screen:{en:'Display'},language:{en:'Language / 언어'},lang_auto:{en:'Auto (follow system)'},lang_en:{en:'English'},lang_ko:{en:'한국어'},
   theme:{en:'Theme'},auto:{en:'Auto'},light:{en:'Light'},dark:{en:'Dark'},
@@ -2108,7 +2133,7 @@ const I18N_KO={
   img_smaller:'−',
   img_bigger:'＋',
   img_preview:'🔍',
-  img_delete:'🗑',
+  img_delete:'',
   img_close:'✕',
   lang_en:'English',
   lang_ko:'한국어',
@@ -2244,7 +2269,7 @@ const I18N_JA={
   img_smaller:'−',
   img_bigger:'＋',
   img_preview:'🔍',
-  img_delete:'🗑',
+  img_delete:'',
   img_close:'✕',
   lang_en:'English',
   lang_ko:'한국어',
@@ -2394,7 +2419,7 @@ const I18N_ZH={
   img_smaller:'−',
   img_bigger:'＋',
   img_preview:'🔍',
-  img_delete:'🗑',
+  img_delete:'',
   img_close:'✕',
   lang_en:'English',
   lang_ko:'한국어',
@@ -2544,7 +2569,7 @@ const I18N_ES={
   img_smaller:'−',
   img_bigger:'＋',
   img_preview:'🔍',
-  img_delete:'🗑',
+  img_delete:'',
   img_close:'✕',
   lang_en:'English',
   lang_ko:'한국어',
@@ -3246,7 +3271,7 @@ function render(){
       bar.append(b);
     });
     const pin=document.createElement('div');pin.className='pinrow';bar.append(pin);   /* (v6.9 1) 오른쪽 고정 묶음 */
-    const add=document.createElement('button');add.className='chip';add.textContent='📁';add.title=tr('Folders','folder_mgr');add.onclick=openFolderMgr;pin.append(add);
+    const add=document.createElement('button');add.className='chip';add.textContent=L('폴더','Folders');add.title=tr('Folders','folder_mgr');add.onclick=openFolderMgr;pin.append(add);   /* (v7.6.9) 아이콘 대신 글자 */
     // (요구9) 보관 버튼: 열쇠 아이콘만
     const vault=document.createElement('button');vault.className='chip';vault.textContent='🔐';vault.title=tr('🔐 Vault','vault_title');
     vault.onclick=()=>VLT.open();pin.append(vault);                                /* (v6.9 1) 🔐 도 함께 고정 */
@@ -3553,7 +3578,7 @@ function updateSelBar(){
   cntEl.style.display=ui.trash?'none':'';
   cntEl.style.flex=ui.trash?'0':'1';
   $('#selRestore').style.display=ui.trash?'':'none';
-  $('#selDelete').innerHTML='🗑️ <span class="lbl">'+(ui.trash?L('영구삭제','Delete forever'):L('삭제','Delete'))+'</span>';
+  $('#selDelete').innerHTML='<svg class="fh-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13M10 11v5M14 11v5"/></svg> <span class="lbl">'+(ui.trash?L('영구삭제','Delete forever'):L('삭제','Delete'))+'</span>';
   const none=ui.selected.size===0;
   $('#selRestore').disabled=none; $('#selDelete').disabled=none;
   /* (v7.5.4 요청2) 이동 버튼: 선택 모드(휴지통 제외)에서만, 휴지통 좌측에 표시 */
@@ -4754,7 +4779,7 @@ function buildKebab(){
   /* (v7.5.8 요청3) '전체 텍스트 선택'·'폴더로 이동'·'Vault로 이동' 항목 제거 — 이동은 폴더 화면의 선택→➡️ 이동으로 통일 */
   item(n.type==='check'?'📝':'☑️', n.type==='check'?L('메모로 전환','To note'):L('체크리스트로 전환','To checklist'),()=>switchType(n.type==='check'?'note':'check'));
   if(ui.vault)item('📤',L('일반 노트로 이동','Move to regular notes'),()=>moveFromVault(n));
-  item('🗑️',L('삭제','Delete'),()=>deleteFromEditor(),'danger');
+  item('<svg class="fh-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13M10 11v5M14 11v5"/></svg>',L('삭제','Delete'),()=>deleteFromEditor(),'danger');
   /* (v6.9 요청4) '글자 굵기 (이 노트만)' 메뉴는 없앤다 — 노트별 굵기는 설정의 전역 값 하나로 통일. */
   /* applyEditorWeight() 는 그대로 쓴다(전역 설정을 에디터에 반영). */
 }
@@ -4862,7 +4887,15 @@ const FOLDER_VIEWS=['grid-s','grid-m','grid-l','list','titles'];
 const FOLDER_SORTS=['name','recent','count'];
 const NOTE_VIEWS=['grid','list','titles'];
 const NOTE_SORTS=['color','updated','created','title','manual'];
-const folderHub={page:'hub',id:'',searchOpen:false,detailSearchOpen:false,addOpen:false,more:'',sub:'',select:new Set(),selectMode:'notes',trashTab:'notes'};
+const folderHub={page:'hub',id:'',searchOpen:false,detailSearchOpen:false,addOpen:false,more:'',sub:'',select:new Set(),selectMode:'notes',trashTab:'notes',fsel:new Set(),fselOn:false,addColor:0};
+/* (v7.6.9) 폴더 색상(0~4, 노트 팔레트와 동일) */
+function folderColorIdx(f){const c=parseInt(f&&f.color,10);return isNaN(c)?-1:((c%NCOLORS)+NCOLORS)%NCOLORS}
+function folderColorBg(f){const i=folderColorIdx(f);if(i<0)return isDark()?'#3a302d':'#f3e6e1';return (isDark()?COLORS_D:COLORS)[i]}
+function renderAddColors(){const box=$('#fhAddColors');if(!box)return;box.innerHTML='';COLORS.forEach((c,i)=>{const d=document.createElement('button');d.type='button';d.className='fh-cdot'+(folderHub.addColor===i?' on':'');d.style.background=c;d.title=L('색상 ','Color ')+(i+1);d.onclick=e=>{e.stopPropagation();folderHub.addColor=i;renderAddColors()};box.append(d)})}
+function toggleFolderSel(id){if(folderHub.fsel.has(id))folderHub.fsel.delete(id);else folderHub.fsel.add(id);renderFolderHub()}
+function exitFolderSel(){folderHub.fselOn=false;folderHub.fsel.clear();renderFolderHub()}
+function renderFolderSelBar(){const bar=$('#fhSelBar');if(!bar)return;bar.classList.toggle('show',!!folderHub.fselOn);$('#fhSelCnt').textContent=L(folderHub.fsel.size+'개 폴더 선택',folderHub.fsel.size+' folder(s) selected');$('#fhSelDelete').disabled=!folderHub.fsel.size}
+async function trashSelectedFolders(){const ids=[...folderHub.fsel];if(!ids.length)return;if(!await dlg(L(`선택한 ${ids.length}개 폴더를 휴지통으로 옮길까요?\n폴더 안 노트의 연결은 유지되어 복원할 수 있습니다.`,`Move ${ids.length} folder(s) to trash? Note links are kept so they can be restored.`),{danger:true,okText:L('휴지통으로','Move to trash')}))return;const before=[];ALL_FOLDERS().filter(f=>ids.includes(f.id)).forEach(f=>{before.push([f,{deleted:!!f.deleted,deletedAt:f.deletedAt||0,synced:f._synced,syncDelete:!!f._syncDelete}]);f.deleted=true;f.deletedAt=Date.now();f._synced=true;f._syncDelete=!ui.vault});const saved=await persistFolderState();if(!saved){before.forEach(([f,b])=>{f.deleted=b.deleted;f.deletedAt=b.deletedAt;f._synced=b.synced;f._syncDelete=b.syncDelete});toast(L('폴더를 저장하지 못했습니다.','Could not save the folders.'));return}if(!ui.vault)syncSoon();folderHub.fselOn=false;folderHub.fsel.clear();renderFolderHub();render();toast(L('폴더를 휴지통으로 옮겼습니다.','Folders moved to trash.'))}
 function folderRaw(){return ALL_FOLDERS().find(f=>f.id===folderHub.id)||null}
 function folderName(f){return f&&f.name?f.name:L('(이름 없는 폴더)','(untitled folder)')}
 function fHit(n,q){if(!q)return true;return (n.title||'').toLowerCase().includes(q)||plain(n.content||'').toLowerCase().includes(q)||(n.items||[]).some(i=>(i.text||'').toLowerCase().includes(q))}
@@ -4898,7 +4931,7 @@ function openFolderMgr(){closeVaultMainMore();syncFolderBarH();folderHub.id='';f
 function folderHubBack(){if(folderHub.page==='detail'){folderHub.id='';setFolderHubPage('hub');renderFolderHub();return}if(folderHub.page==='select'&&folderHub.selectMode==='move'){if((folderHub.moveLevel||0)===1){folderHub.moveLevel=0;folderHub.moveDest='';renderFolderMoveTargets();return}folderHub.selectMode='notes';renderFolderSelect();return}if(folderHub.page==='select'||folderHub.page==='trash'){setFolderHubPage('hub');renderFolderHub()}}
 /* (v7.5.3 요청2) 폴더 타일 '길게 눌러 이름 변경' 기능 제거 — 탭으로만 폴더를 연다. 이름 변경은 폴더 상세 제목 인라인 박스(startFolderInlineRename) */
 function sortFolderCollection(list){const mode=folderSort(curSettings());return list.sort((a,b)=>{const ac=NOTES().filter(n=>!n.deleted&&n.folder===a.id).length,bc=NOTES().filter(n=>!n.deleted&&n.folder===b.id).length;if(mode==='recent')return(b.createdAt||0)-(a.createdAt||0);if(mode==='count')return bc-ac||folderName(a).localeCompare(folderName(b),locale());return folderName(a).localeCompare(folderName(b),locale())})}
-function renderFolderHub(){setFolderHubPage('hub');vaultFolderStatus();const sc=curSettings();$('#fhTitle').textContent=ui.vault?'Vault':L('폴더','Folders');$('#fhSearch').placeholder=L('폴더 또는 노트 검색','Search folders or notes');$('#fhAddInput').placeholder=L('새 폴더 이름','New folder name');$('#fhAddRow').classList.toggle('hidden',!folderHub.addOpen);$('#fhSearchRow').classList.toggle('hidden',!folderHub.searchOpen);const q=$('#fhSearch').value.trim().toLowerCase(),grid=$('#fhFolderGrid');grid.className='view-grid-s';grid.style.setProperty('--folder-hub-cols',4);   /* (v7.5.3 request 4) folders fixed at 4 per row — normal+Vault */grid.innerHTML='';let arr=ALL_FOLDERS().filter(f=>!f.deleted);if(q)arr=arr.filter(f=>folderName(f).toLowerCase().includes(q)||NOTES().some(n=>!n.deleted&&n.folder===f.id&&fHit(n,q)));sortFolderCollection(arr).forEach(f=>{const b=document.createElement('button');b.type='button';b.className='fh-folder';b.dataset.id=f.id;const count=NOTES().filter(n=>!n.deleted&&n.folder===f.id).length,icon=document.createElement('span'),name=document.createElement('span'),meta=document.createElement('span');icon.className='fi';icon.innerHTML=FH_ICONS.folder;name.className='fn';name.textContent=folderName(f);meta.className='fc';meta.textContent=L('노트 ','notes ')+count;b.append(icon,name,meta);b.onclick=()=>openFolderDetail(f.id);grid.append(b)   /* (v7.5.3 요청2) 롱프레스 제거 */});if(!arr.length){const e=document.createElement('div');e.className='fh-empty';e.textContent=q?L('찾는 폴더나 노트가 없습니다.','No matching folders or notes.'):L('아직 폴더가 없습니다. 상단의 ＋로 새 폴더를 만드세요.','No folders yet. Use ＋ at the top to create one.');grid.append(e)}}
+function renderFolderHub(){setFolderHubPage('hub');vaultFolderStatus();const sc=curSettings();$('#fhTitle').textContent=ui.vault?'Vault':L('폴더','Folders');$('#fhSearch').placeholder=L('폴더 또는 노트 검색','Search folders or notes');$('#fhAddInput').placeholder=L('새 폴더 이름','New folder name');$('#fhAddRow').classList.toggle('hidden',!folderHub.addOpen);$('#fhSearchRow').classList.toggle('hidden',!folderHub.searchOpen);const q=$('#fhSearch').value.trim().toLowerCase(),grid=$('#fhFolderGrid');grid.className='view-grid-s';grid.style.setProperty('--folder-hub-cols',4);   /* (v7.5.3 request 4) folders fixed at 4 per row — normal+Vault */grid.innerHTML='';grid.classList.toggle('fsel-on',!!folderHub.fselOn);renderFolderSelBar();renderAddColors();let arr=ALL_FOLDERS().filter(f=>!f.deleted);if(q)arr=arr.filter(f=>folderName(f).toLowerCase().includes(q)||NOTES().some(n=>!n.deleted&&n.folder===f.id&&fHit(n,q)));sortFolderCollection(arr).forEach(f=>{const b=document.createElement('button');b.type='button';b.className='fh-folder';b.dataset.id=f.id;b.style.setProperty('--fcbg',folderColorBg(f));const count=NOTES().filter(n=>!n.deleted&&n.folder===f.id).length,icon=document.createElement('span'),name=document.createElement('span'),meta=document.createElement('span'),sel=document.createElement('span');sel.className='fsel';sel.textContent='✓';icon.className='fi';icon.innerHTML=FH_ICONS.folder;name.className='fn';name.textContent=folderName(f);meta.className='fc';meta.textContent=L('노트 ','notes ')+count;b.append(sel,icon,name,meta);if(folderHub.fsel.has(f.id))b.classList.add('fsel-checked');/* (v7.6.9) '노트 N' 블록을 누르면 삭제 선택 모드, 선택 모드에서는 카드 탭 = 토글 */b.onclick=e=>{if(folderHub.fselOn){toggleFolderSel(f.id);return}if(e.target.closest('.fc')){folderHub.fselOn=true;folderHub.fsel.add(f.id);renderFolderHub();return}openFolderDetail(f.id)};grid.append(b)   /* (v7.5.3 요청2) 롱프레스 제거 */});if(!arr.length){const e=document.createElement('div');e.className='fh-empty';e.textContent=q?L('찾는 폴더나 노트가 없습니다.','No matching folders or notes.'):L('아직 폴더가 없습니다. 상단의 ＋로 새 폴더를 만드세요.','No folders yet. Use ＋ at the top to create one.');grid.append(e)}}
 function sortDetailNotes(arr){const sort=folderNoteSort(curSettings());return arr.sort((a,b)=>{if(sort==='color')return(a.color||0)-(b.color||0)||b.updatedAt-a.updatedAt;if(sort==='updated')return(b.pinned?1:0)-(a.pinned?1:0)||b.updatedAt-a.updatedAt;if(sort==='created')return(b.pinned?1:0)-(a.pinned?1:0)||b.createdAt-a.createdAt;if(sort==='title')return(a.title||'').localeCompare(b.title||'',locale());return(b.pinned?1:0)-(a.pinned?1:0)||(a.sortIndex||0)-(b.sortIndex||0)})}
 function hq(txt,q){const raw=esc(txt||'');if(!q)return raw;try{return raw.replace(new RegExp(esc(q).replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'),m=>'<mark>'+m+'</mark>')}catch(_){return raw}}
 function folderNoteCard(n,q){const dark=isDark(),PAL=dark?COLORS_D:COLORS,HEAD=dark?HEADS_D:HEADS_L,el=document.createElement('div');el.className='note';el.dataset.id=n.id;el.style.setProperty('--nc',PAL[n.color||0]);el.style.setProperty('--tc',HEAD[n.color||0]);let body='';if(n.type==='check'){const done=(n.items||[]).filter(i=>i.done).length,tot=(n.items||[]).length;body=`<div class="body">${(n.items||[]).slice(0,4).map(i=>`${i.done?'☑':'☐'} ${hq(i.text,q)}`).join('<br>')}</div><div class="prog">☑ ${done}/${tot}</div>`}else body=`<div class="body">${hq(plain(n.content||'').slice(0,160),q)}</div>`;const rem=n.remindAt&&n.remindAt>Date.now();
@@ -4946,7 +4979,9 @@ function renderMore(which){
   menu.append(moreButton(L('저장된 모든 노트 선택','Select all saved notes'),openAllNoteSelect));
   menu.append(moreButton(L('노트 이동','Move notes'),openAllNoteSelect));
   if(hub){
-    /* (v7.5.3 request 4) folder view options removed — 4 per row is fixed */
+    /* (v7.6.9) '정렬 기준' 복원 */
+    menu.append(moreHead(L('정렬 기준','Sort by')));
+    [['name',L('이름순','Name')],['recent',L('최근 만든 순','Recently created')],['count',L('노트 많은 순','Most notes')]].forEach(([v,lab])=>{menu.append(moreButton((folderSort(sc)===v?'✓ ':'　')+lab,()=>{closeFolderMore();setFolderSort(v)},folderSort(sc)===v?'on':''))});
   }
   /* (v7.5.9 요청1·2) 폴더 hub/상세 ⋮의 '정렬'·'폴더(노트) 한 줄 개수' 항목 제거 */
   if(!hub){
@@ -4963,7 +4998,7 @@ function openDetailViewMenu(){const menu=$('#fdViewMenu'),sc=curSettings();
   menu.innerHTML='';
   [['grid',L('Grid','Grid')],['list',L('List','List')],['titles',L('Simple list','Simple list')]].forEach(([v,t])=>menu.append(moreButton((folderNoteView(sc)===v?'✓  ':'')+t,()=>setFolderDetailView(v))));
   menu.classList.remove('hidden');histPush();}function closeDetailViewMenu(consume=true){closeMenuSlot('#fdViewMenu',consume)}
-async function addFolderFromHub(){const v=$('#fhAddInput').value.trim();if(!v)return;const f={id:uid(),name:v.slice(0,80),createdAt:Date.now(),_synced:false,deleted:false};ALL_FOLDERS().push(f);const saved=await persistFolderState();if(!saved){const a=ALL_FOLDERS();a.splice(a.indexOf(f),1);toast(L('폴더를 저장하지 못했습니다.','Could not save the folder.'));return}if(!ui.vault)syncSoon();$('#fhAddInput').value='';folderHub.addOpen=false;renderFolderHub();toast(L('새 폴더를 만들었습니다.','Folder created.'))}
+async function addFolderFromHub(){const v=$('#fhAddInput').value.trim();if(!v)return;const f={id:uid(),name:v.slice(0,80),color:folderHub.addColor||0,createdAt:Date.now(),_synced:false,deleted:false};   /* (v7.6.9) 폴더 색상 */ALL_FOLDERS().push(f);const saved=await persistFolderState();if(!saved){const a=ALL_FOLDERS();a.splice(a.indexOf(f),1);toast(L('폴더를 저장하지 못했습니다.','Could not save the folder.'));return}if(!ui.vault)syncSoon();$('#fhAddInput').value='';folderHub.addOpen=false;renderFolderHub();toast(L('새 폴더를 만들었습니다.','Folder created.'))}
 async function renameFolderById(id){
   const f=ALL_FOLDERS().find(x=>x.id===id);if(!f||f.deleted)return;
   const v=await dlg(L('새 폴더 이름','New folder name'),{input:true,def:f.name,okText:L('변경','Rename')});if(v===null||v===undefined||!String(v).trim())return;
@@ -5068,7 +5103,7 @@ async function restoreTrashFolder(id){const f=ALL_FOLDERS().find(x=>x.id===id);i
 async function deleteTrashFolder(id){const f=ALL_FOLDERS().find(x=>x.id===id);if(!f)return;if(!await dlg(L(`'${folderName(f)}' 폴더를 영구 삭제할까요? 연결된 노트는 '폴더 없음'으로 남습니다.`,`Delete '${folderName(f)}' forever? Linked notes will remain with no folder.`),{danger:true,okText:L('삭제','Delete')}))return;const coll=ALL_FOLDERS(),i=coll.indexOf(f),affected=NOTES().filter(n=>n.folder===id).map(n=>[n,n.folder,n.updatedAt,!!n.dirty]),queue=[...(S.settings.folderDeletes||[])];if(!ui.vault)S.settings.folderDeletes=[...new Set([...queue,id])];affected.forEach(([n])=>{n.folder='';n.updatedAt=Date.now();n.dirty=true});coll.splice(i,1);const saved=await persistFolderState();if(!saved){coll.splice(i,0,f);affected.forEach(([n,old,at,dirty])=>{n.folder=old;n.updatedAt=at;n.dirty=dirty});S.settings.folderDeletes=queue;toast(L('영구 삭제를 저장하지 못했습니다.','Could not save deletion.'));return}if(!ui.vault)syncSoon();renderFolderTrash();render()}
 function renderVaultMainMore(){const menu=$('#vaultMainMore'),sc=VLT.settings;const wasOpen=!menu.classList.contains('hidden');menu.innerHTML='';if(!wasOpen)histPush();menu.classList.remove('hidden');const add=(label,fn,cls)=>menu.append(moreButton(label,fn,cls));add(L('저장된 모든 노트 선택','Select all saved notes'),()=>{openFolderMgr();openAllNoteSelect()});add(L('노트 이동','Move notes'),()=>{openFolderMgr();openAllNoteSelect()});/* (v7.5.8 요청2) 보기 방식·정렬·노트 한 줄 개수 항목 제거 */const al=document.createElement('div');al.className='subchoices';al.append(moreHead(L('Vault 자동 잠금','Vault auto-lock')));const select=document.createElement('select');select.id='vaultAutoQuick';['1','5','15','30'].forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v+L('분',' min');select.append(o)});select.value=VLT.autoLockValue();select.onchange=()=>VLT.setAutoLock(select.value);al.append(select);menu.append(al)}
 function closeVaultMainMore(consume=true){closeMenuSlot('#vaultMainMore',consume);folderHub.sub=''}
-$('#fhHome').onclick=folderHome;$('#fhSearchBtn').onclick=()=>setFolderSearch('hub',!folderHub.searchOpen);$('#fhSearchClose').onclick=()=>setFolderSearch('hub',false);$('#fhSearch').addEventListener('input',renderFolderHub);$('#fhAddBtn').onclick=()=>{folderHub.addOpen=!folderHub.addOpen;renderFolderHub();if(folderHub.addOpen)setTimeout(()=>$('#fhAddInput').focus(),20)};$('#fhAddClose').onclick=()=>{folderHub.addOpen=false;$('#fhAddInput').value='';renderFolderHub()};$('#fhAddSave').onclick=addFolderFromHub;$('#fhAddInput').addEventListener('keydown',e=>{if(e.key==='Enter')addFolderFromHub()});$('#fhTrashBtn').onclick=openFolderTrash;$('#fhMoreBtn').onclick=()=>renderMore('hub');const folderBackBtn=()=>{const before=folderHub.page,wasMove=folderHub.selectMode==='move',wasL1=wasMove&&(folderHub.moveLevel||0)===1;folderHubBack();if($('#folderOverlay').classList.contains('show')){if(wasL1)histPop();else if(before!=='hub'&&folderHub.page==='hub')histPop();else if(before==='select'&&wasMove&&folderHub.selectMode==='notes')histPop();}};$('#fdBack').onclick=folderBackBtn;/* (v7.5.3 요청3) 폴더 상세 왼쪽 상단 폴더명 탭 → 그 자리에 현재 이름이 들어간 인라인 입력 박스 (일반+Vault 공용) */
+$('#fhHome').onclick=folderHome;$('#fhSelDelete').onclick=trashSelectedFolders;$('#fhSelClose').onclick=exitFolderSel;$('#fhSearchBtn').onclick=()=>setFolderSearch('hub',!folderHub.searchOpen);$('#fhSearchClose').onclick=()=>setFolderSearch('hub',false);$('#fhSearch').addEventListener('input',renderFolderHub);$('#fhAddBtn').onclick=()=>{folderHub.addOpen=!folderHub.addOpen;renderFolderHub();if(folderHub.addOpen)setTimeout(()=>$('#fhAddInput').focus(),20)};$('#fhAddClose').onclick=()=>{folderHub.addOpen=false;$('#fhAddInput').value='';renderFolderHub()};$('#fhAddSave').onclick=addFolderFromHub;$('#fhAddInput').addEventListener('keydown',e=>{if(e.key==='Enter')addFolderFromHub()});$('#fhTrashBtn').onclick=openFolderTrash;$('#fhMoreBtn').onclick=()=>renderMore('hub');const folderBackBtn=()=>{const before=folderHub.page,wasMove=folderHub.selectMode==='move',wasL1=wasMove&&(folderHub.moveLevel||0)===1;folderHubBack();if($('#folderOverlay').classList.contains('show')){if(wasL1)histPop();else if(before!=='hub'&&folderHub.page==='hub')histPop();else if(before==='select'&&wasMove&&folderHub.selectMode==='notes')histPop();}};$('#fdBack').onclick=folderBackBtn;/* (v7.5.3 요청3) 폴더 상세 왼쪽 상단 폴더명 탭 → 그 자리에 현재 이름이 들어간 인라인 입력 박스 (일반+Vault 공용) */
 $('#fdTitle').onclick=()=>startFolderInlineRename();$('#fdTitle').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();startFolderInlineRename()}};$('#fdSearchBtn').onclick=()=>setFolderSearch('detail',!folderHub.detailSearchOpen);$('#fdSearchClose').onclick=()=>setFolderSearch('detail',false);$('#fdSearch').addEventListener('input',renderFolderDetail);$('#fdAddBtn').onclick=()=>{const f=folderRaw();if(!f)return;const n=newNote('note',f.id);openEditor(n.id)};$('#fdViewBtn').onclick=openDetailViewMenu;$('#fdTrashBtn').onclick=openFolderTrash;$('#fdMoreBtn').onclick=()=>renderMore('detail');$('#fsBack').onclick=folderBackBtn;$('#fsAll').onclick=()=>{const arr=NOTES().filter(n=>!n.deleted&&fHit(n,$('#fsSearch').value.trim().toLowerCase())),all=arr.length&&arr.every(n=>folderHub.select.has(n.id));if(all)arr.forEach(n=>folderHub.select.delete(n.id));else arr.forEach(n=>folderHub.select.add(n.id));renderFolderSelect()};$('#fsSearch').addEventListener('input',renderFolderSelect);$('#fsSearchClear').onclick=()=>{$('#fsSearch').value='';renderFolderSelect()};$('#fsMove').onclick=()=>{if(!folderHub.select.size)return;if(folderHub.selectMode!=='move')histPush();folderHub.moveLevel=0;folderHub.moveDest='';folderHub.selectMode='move';renderFolderSelect()};$('#fsDelete').onclick=deleteSelectedNotes;$('#ftBack').onclick=folderBackBtn;$('#ftNotesTab').onclick=()=>{folderHub.trashTab='notes';renderFolderTrash()};$('#ftFoldersTab').onclick=()=>{folderHub.trashTab='folders';renderFolderTrash()};$('#btnVaultMore').onclick=()=>{const m=$('#vaultMainMore');if(!m.classList.contains('hidden')){closeVaultMainMore();return;}renderVaultMainMore()};$('#fhFab').onclick=()=>{if(folderHub.page==='hub'){folderHub.addOpen=true;renderFolderHub();setTimeout(()=>$('#fhAddInput').focus(),20);return;}if(folderHub.page==='detail'){const f=folderRaw();if(f)openEditor(newNote('note',f.id).id);}};
 
 
