@@ -283,7 +283,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-qvFlR3fFOh1KrSyS+qo2QWHnKwx/mQesvn6DOu0YUrA='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-cGiJAKto7t+vuDs1EUOSvZ8mnLtI/4vUqfYlVViiHAs='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
 <!-- (요구3) 전화기 화면에 딱 맞게 · 자동 확대(핀치 줌 포함) 완전 금지 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#f5f2ef">
@@ -2997,6 +2997,7 @@ function sanitizeHTML(html){
   return tpl.innerHTML;
 }
 /* 안전하게 innerHTML 설정 */
+function setSafeHTML(el,html){ if(el)el.innerHTML=sanitizeHTML(html); }
 
 /* (요청6) 본문 속 URL을 클릭 가능한 링크로 변환 (보기 모드용) */
 function linkify(html){
@@ -4638,6 +4639,21 @@ function tpRestoreRange(){
   try{ const s=window.getSelection(); s.removeAllRanges(); s.addRange(_tpSavedRange); return true; }
   catch(e){ return false; }
 }
+function bindTypeSlider(sl,valEl,setVal,apply,fmt){
+  const save=()=>tpSaveRange();
+  sl.addEventListener('pointerdown',save);
+  sl.addEventListener('touchstart',save,{passive:true});
+  sl.addEventListener('mousedown',save);
+  sl.addEventListener('input',()=>{ setVal(sl.value); valEl.textContent=fmt(); });
+  sl.addEventListener('change',()=>{
+    setVal(sl.value);
+    tpRestoreRange();
+    apply();                       // 선택 영역에 실제로 적용 (한 번만)
+    valEl.textContent=fmt();
+    const r=typeSelRange(); if(r)_tpSavedRange=r.cloneRange();   // 적용 후 바뀐 선택을 다시 기억
+  });
+  sl.addEventListener('click',e=>e.stopPropagation());
+}
 function typeSelRange(){ const s=window.getSelection(); if(!s.rangeCount)return null;
   const r=s.getRangeAt(0); if(!$('#edBody').contains(r.commonAncestorContainer))return null; return r; }
 /* ══════════ (v6.5) T(서식) 창 옮기기 ══════════
@@ -4697,6 +4713,41 @@ function makeTypePopDraggable(p,handle){
    [해결] ① 선택 안에 이미 들어 있는 font-size 를 전부 지운 뒤
           ② 하나의 span 으로만 감싼다.
           ③ 감싼 뒤 껍데기만 남은 span 은 정리한다.                              */
+function applyTypeFontSize(){
+  const r=typeSelRange();
+  if(!r||r.collapsed){ toast(L('크기를 바꿀 텍스트를 먼저 선택하세요','Select text to resize first')); updateTpVals(); return; }
+  const body=$('#edBody');
+  body.focus();
+  try{ document.execCommand('styleWithCSS',false,true); }catch(_){}
+
+  const frag=r.extractContents();
+
+  /* ① 안쪽에 남아 있는 크기 지정을 전부 제거 (이게 없으면 줄이기가 안 먹는다) */
+  frag.querySelectorAll&&frag.querySelectorAll('[style*="font-size"]').forEach(el=>{
+    el.style.removeProperty('font-size');
+  });
+  /* 옛날 <font size=..> 태그도 정리 */
+  frag.querySelectorAll&&frag.querySelectorAll('font[size]').forEach(el=>el.removeAttribute('size'));
+
+  /* ② 한 겹만 감싼다 */
+  const sp=document.createElement('span');
+  sp.style.fontSize=typeFs+'pt';
+  sp.appendChild(frag);
+  r.insertNode(sp);
+
+  /* ③ 스타일이 하나도 안 남은 빈 span 은 풀어 준다 (중첩 누적 방지) */
+  sp.querySelectorAll('span').forEach(el=>{
+    if(!el.getAttribute('style')&&!el.className){
+      while(el.firstChild) el.parentNode.insertBefore(el.firstChild,el);
+      el.remove();
+    }
+  });
+
+  const ns=window.getSelection(); ns.removeAllRanges();
+  const nr=document.createRange(); nr.selectNodeContents(sp); ns.addRange(nr);
+  {const _e=$('#tpFsVal'); if(_e)_e.textContent=typeFs+'pt';}
+  schedSave();
+}
 /* ══════════ (v6.1) 줄간격 수정 ══════════
    [문제] 예전 코드는 누를 때마다 선택 영역을 새 <span style="line-height:...">로 한 겹씩
           더 감쌌다. line-height는 바깥 span이 아니라 '가장 안쪽' 값이 이기므로,
@@ -4727,6 +4778,25 @@ function lhTargets(r){
   if(!out.size)out.add(body);
   return [...out];
 }
+function applyTypeLh(){
+  const r=typeSelRange();
+  const body=$('#edBody');
+  let targets;
+  if(!r||r.collapsed){
+    /* (v6.1) 선택이 없으면 커서가 있는 줄에 적용 — 선택 안 했다고 아무 일도 안 하던 불편 해소 */
+    if(r){ targets=lhTargets(r); }
+    else { targets=[body]; }
+  }else{
+    targets=lhTargets(r);
+  }
+  targets.forEach(el=>{
+    el.style.lineHeight=String(typeLh);
+    /* 안쪽에 박혀 있는 line-height 제거 → 바깥 값이 확실히 먹는다 (줄이기가 되는 핵심) */
+    el.querySelectorAll('[style*="line-height"]').forEach(k=>{ k.style.lineHeight=''; if(!k.getAttribute('style'))k.removeAttribute('style'); });
+  });
+  {const _e=$('#tpLhVal'); if(_e)_e.textContent=typeLh.toFixed(1);}
+  schedSave();
+}
 /* 현재 커서/선택 위치의 실제 줄간격을 읽어와 표시값을 맞춘다 */
 function readCurrentLh(){
   const r=typeSelRange(); const body=$('#edBody'); if(!body)return;
@@ -4743,6 +4813,9 @@ function updateTpVals(){
   readCurrentLh();                                   /* (v6.1) 실제 값을 읽어와 표시 */
   {const _e=$('#tpFsVal'); if(_e)_e.textContent=typeFs+'pt';}
   {const _e=$('#tpLhVal'); if(_e)_e.textContent=typeLh.toFixed(1);}
+  /* (v6.7) 슬라이더 손잡이 위치도 현재 값에 맞춘다 */
+  const fr=$('#tpFsRange'); if(fr)fr.value=String(typeFs);
+  const lr=$('#tpLhRange'); if(lr)lr.value=String(typeLh);
 }
 $('#edTypeBtn').onclick=e=>{e.stopPropagation();
   const tp=$('#edTypePop');
@@ -4990,8 +5063,12 @@ function renderFolderDetail(){const f=folderRaw();if(!f||f.deleted){folderHubBac
 function openFolderDetail(id){if($('#folderOverlay').classList.contains('show')){closeFolderMore();closeDetailViewMenu();if(folderHub.page!=='detail')histPush();}folderHub.id=id;folderHub.detailSearchOpen=false;$('#fdSearch').value='';setFolderHubPage('detail');renderFolderDetail()}
 function folderColorRow(){const f=folderRaw(),row=document.createElement('div');row.className='fh-crow';const HEAD=FOLDER_PAL,cur=folderColorIdx(f);COLORS.forEach((c,i)=>{const d=document.createElement('button');d.type='button';d.className='fh-cdot'+(cur===i?' on':'');d.style.background=HEAD[i];d.setAttribute('aria-label',cnName(i));d.title=cnName(i);d.onclick=async e=>{e.stopPropagation();if(!f)return;const old=f.color;f.color=i;f._synced=false;const ok=await persistFolderState();if(!ok){f.color=old;toast(L('폴더 색을 저장하지 못했습니다.','Could not save folder color.'));return}if(!ui.vault)syncSoon();closeFolderMore();renderFolderDetail();toast(L('폴더 색을 변경했습니다.','Folder color changed.'))};row.append(d)});return row}
 function moreButton(label,fn,cls){const b=document.createElement('button');b.type='button';b.textContent=label;if(cls)b.className=cls;b.onclick=fn;return b}function moreHead(t){const d=document.createElement('div');d.className='morehead';d.textContent=t;return d}
+function setFolderView(v){const sc=curSettings();sc.folderView=v;if(v==='grid-s')sc.folderBox='4';if(v==='grid-m')sc.folderBox='3';if(v==='grid-l')sc.folderBox='2';persistFolderState().catch(()=>{});renderFolderHub()}
+function setFolderBox(v){const sc=curSettings();sc.folderBox=v;sc.folderView='grid-'+({1:'l',2:'l',3:'m',4:'s'}[v]||'m');persistFolderState().catch(()=>{});renderFolderHub()}
 function setFolderSort(v){curSettings().folderSort=v;persistFolderState().catch(()=>{});renderFolderHub()}
 function setFolderDetailView(v){curSettings().folderNoteView=v;persistFolderState().catch(()=>{});closeDetailViewMenu();renderFolderDetail()}
+function setFolderNoteBox(v){curSettings().folderNoteBox=v;persistFolderState().catch(()=>{});renderFolderDetail()}
+function setFolderNoteSort(v){curSettings().folderNoteSort=v;persistFolderState().catch(()=>{});renderFolderDetail()}
 function openAllNoteSelect(){if($('#folderOverlay').classList.contains('show')){closeFolderMore();if(folderHub.page!=='select')histPush();}folderHub.selectMode='notes';folderHub.select.clear();setFolderHubPage('select');renderFolderSelect()}
 function renderMore(which){
   const hub=which==='hub',menu=$(hub?'#fhMoreMenu':'#fdMoreMenu'),sc=curSettings();
