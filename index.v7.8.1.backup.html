@@ -283,7 +283,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-VbfDrRntqyjX9w0sXMMDxNPKVY8tS3xLZf6Svp45lAM='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-FsHD38NBEAkpyvb9I7MNB7OY1jM/I/8IUiFAvwv9Na4='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
 <!-- (요구3) 전화기 화면에 딱 맞게 · 자동 확대(핀치 줌 포함) 완전 금지 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#f5f2ef">
@@ -1623,9 +1623,9 @@ html[data-theme="dark"] #folderOverlay:not(.vault-folder),html[data-theme="dark"
       </div>
       <div class="slrow">
         <span class="sllab" data-i18n="fc_ls">Letter spacing</span>
-        <input type="range" id="stLsRange" min="-0.5" max="2" step="0.1" value="0" list="stLsTicks"
+        <input type="range" id="stLsRange" min="-0.5" max="2" step="0.1" value="0"
                data-i18n-title="fc_ls" title="Letter spacing">
-        <span class="slval" id="stLsVal">0.0</span><datalist id="stLsTicks"><option value="0"></option></datalist>
+        <span class="slval" id="stLsVal">0.0</span>
       </div>
       <div class="slrow">
         <span class="sllab" data-i18n="fc_lh">Line spacing</span>
@@ -1819,7 +1819,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='soonenote';
-const APP_VER='7.8.2';
+const APP_VER='7.8.1';
 /* ══════════ (v7.6.1) 기능 스위치 ══════════
    sync:false 로 바꾸면 동기화(Supabase)가 UI·네트워크·타이머 모두에서 비활성화된다.
    SYNC 객체와 계정 화면 코드는 남아 있되(프리미엄 대비) 어떤 경로도 실행되지 않는다.
@@ -2754,15 +2754,12 @@ function persistActive(){ if(ui.vault) VLT.persist(); else save(); }
 /* (요청6) 일반 노트와 Vault는 서로 '설정'의 영향을 주지 않음.
    현재 화면(보관 모드면 VLT.settings, 아니면 S.settings)을 돌려준다. */
 function curSettings(){ return ui.vault ? VLT.settings : S.settings; }
-/* (v7.8.2) 글자 설정(크기·굵기·자간·줄간격)은 앱 전체 공통 — Vault도 일반 노트와 똑같이 보여야 하므로
-   항상 일반 설정(S.settings)에서 읽는다. Vault 전용 설정(자동 잠금·보기·기본 색)은 그대로 VLT.settings. */
-function typoSettings(){ return S.settings; }
 
 /* (요청7/요청1) 글자 크기: 'pt 숫자(10~25)' 하나로 통일 — 노트별 크기 기능은 폐지, 크기는 설정에서만.
    모든 크기는 --note 인라인으로만 적용되어 UI(17pt)와 완전 분리됨 */
 function ptClamp(v){ v=parseInt(v)||12; return Math.max(10,Math.min(25,v)); }
 /* (v6.7) 자간 -0.5~2.0px · 줄간격 1.0~2.0 — 잘못된 값이 들어와도 안전하게 */
-function lsClamp(v){ v=parseFloat(v); if(!isFinite(v))v=0; v=Math.max(-0.5,Math.min(2,Math.round(v*10)/10)); if(Math.abs(v)<0.15)v=0; return v; }   /* (v7.8.2) 자간 0 반고정: ±0.1은 0으로 붙인다 */
+function lsClamp(v){ v=parseFloat(v); if(!isFinite(v))v=0; return Math.max(-0.5,Math.min(2,Math.round(v*10)/10)); }
 function noteLhClamp(v){ v=parseFloat(v); if(!isFinite(v))v=1.25; return Math.max(1,Math.min(2,Math.round(v*20)/20)); }
 /* (v7.7.9) 줄간격 기본 1.05→1.25: 사용자가 손대지 않은 옛 기본값(1.05/미설정)만 1회 올림. 다른 값은 그대로 (fwVer=4 마커) */
 function lhMigrate125(st){ if(!st||(st.fwVer||0)>=4)return; if(st.fontLh==null||String(st.fontLh)==='1.05')st.fontLh='1.25'; st.fwVer=4; }
@@ -3213,16 +3210,15 @@ async function sha256(str){
 function applyPrefs(){
   const sc=curSettings();
   document.documentElement.dataset.theme=isDark()?'dark':'light';
-  const ts=typoSettings();   /* (v7.8.2) 글자 설정은 일반/폴더/Vault 공통 */
-  document.documentElement.style.setProperty('--note', ptClamp(ts.font)+'pt');   /* (요청7) 본문 글자 크기 10~25pt — UI(17pt)와 분리 */
+  document.documentElement.style.setProperty('--note', ptClamp(sc.font)+'pt');   /* (요청7) 본문 글자 크기 10~25pt — UI(17pt)와 분리 */
   const mainCols=['1','2','3','4'].includes(String(sc.box))?String(sc.box):'4';
   document.documentElement.dataset.cols=mainCols;
   /* 홈 카드의 조밀 보기와 폴더 상세의 조밀 보기는 서로 독립이다. */
   document.body.classList.toggle('cols-tight',parseInt(mainCols,10)>=5);
-  document.documentElement.dataset.notefw=FONT_WEIGHTS[ts.fontWeight]||'500';   /* (요구3) 본문 굵기: 키→숫자 값 변환으로 CSS[data-notefw]와 정합 (v5.1) */
+  document.documentElement.dataset.notefw=FONT_WEIGHTS[sc.fontWeight]||'500';   /* (요구3) 본문 굵기: 키→숫자 값 변환으로 CSS[data-notefw]와 정합 (v5.1) */
   /* (v6.7) 본문 자간·줄간격 — 노트 본문에만 적용(홈 카드 미리보기는 그대로) */
-  document.documentElement.style.setProperty('--notels', lsClamp(ts.fontLs)+'px');
-  document.documentElement.style.setProperty('--notelh', String(noteLhClamp(ts.fontLh)));
+  document.documentElement.style.setProperty('--notels', lsClamp(sc.fontLs)+'px');
+  document.documentElement.style.setProperty('--notelh', String(noteLhClamp(sc.fontLh)));
 }
 function visibleNotes(){
   let arr=NOTES().filter(n=>ui.trash?!!n.deleted:!n.deleted);
@@ -4855,7 +4851,8 @@ function showNoteInfo(n){
 }
 /* 노트별 본문 굵기 적용: 현재 노트값(또는 전역)을 FONT_WEIGHTS로 변환해 --notefw에 덮어씀 */
 function applyEditorWeight(n){
-  const fw=FONT_WEIGHTS[typoSettings().fontWeight]||'500';   /* (v7.5.2 요청4) 전역 설정만 적용 — 모든 노트 동일 (v7.8.2: Vault 포함) */
+  const sc=curSettings();
+  const fw=FONT_WEIGHTS[sc.fontWeight]||'500';   /* (v7.5.2 요청4) 전역 설정만 적용 — 모든 노트 동일 */
   document.documentElement.dataset.notefw=fw;
 }
 function moveFromVault(n){
@@ -5778,7 +5775,7 @@ function openSettings(){
   $('#stStartLbl').textContent=L('첫 화면','Start screen');const so=$('#stStart').options;so[0].text=L('전체','All');so[1].text=L('노트','Notes');so[2].text=L('폴더','Folders');$('#stStart').value=['all','notes','folders'].includes(S.settings.startScreen)?S.settings.startScreen:'all';
   $('#stSort').value=sc.sort;$('#stBox').value=sc.box;
   updateFontStepUI();   /* (요청7) 글자크기 스테퍼 + 샘플 */
-  $('#stFontWeight').value=typoSettings().fontWeight||'n';   /* (v7.8.2) 글자 설정은 공통(S.settings) */
+  $('#stFontWeight').value=sc.fontWeight||'n';   /* (v7.5.4 요청1) 본문 굵기 3단계(500/600/700) — 기본 'n'(보통=500) */
   $('#stRule').value=sc.rule||'none';
   $('#stPinBtn').textContent=hasVaultPin()?tr('Change / Reset','pin_change_btn'):tr('Set','pin_set_btn2');
   $('#stVaultAutoRow').classList.toggle('hidden',!ui.vault);
@@ -5813,8 +5810,8 @@ function applySettingsFromUI(){
   sc.sort=$('#stSort').value;
   /* (v7.8.0) 크기·자간·줄간격은 슬라이더 change 시점에 이미 저장됨 — 여기서 다시 읽지 않는다
      (스침으로 움직인 손잡이 값이 닫을 때 저장되던 경로 차단). 값은 정규화만 한다. */
-  { const ts=typoSettings(); ts.font=String(ptClamp(ts.font)); ts.fontLs=String(lsClamp(ts.fontLs)); ts.fontLh=String(noteLhClamp(ts.fontLh));
-    ts.fontWeight=$('#stFontWeight').value||'n'; if(ui.vault)save(); }   /* (v7.8.2) 글자 설정은 항상 일반 설정에 저장 (Vault에서 바꿔도 공통) */
+  sc.font=String(ptClamp(sc.font)); sc.fontLs=String(lsClamp(sc.fontLs)); sc.fontLh=String(noteLhClamp(sc.fontLh));
+  sc.fontWeight=$('#stFontWeight').value||'n';   /* (v7.5.4 요청1) 드롭다운 글자 키 그대로 저장 */
   sc.box=$('#stBox').value;
   sc.rule=$('#stRule').value;                          // (요청3) 줄 없음 / 줄쳐진 노트
   S.settings.startScreen=$('#stStart').value||'all';   /* (v7.7.3) 첫 화면(일반 설정에만 저장) */
@@ -5833,7 +5830,7 @@ $('#stLang').addEventListener('change',()=>{
 ['#stTheme','#stView','#stSort','#stFontWeight','#stBox','#stRule'].forEach(sel=>$(sel).addEventListener('change',applySettingsFromUI));
 /* (요청7) 글자크기 스테퍼: − / ＋ 1pt씩, 10~25, 미리보기 샘플 동시 갱신 */
 function updateFontStepUI(){
-  const sc=typoSettings();   /* (v7.8.2) 공통 글자 설정 */
+  const sc=curSettings();
   const pt=ptClamp(sc.font), ls=lsClamp(sc.fontLs), lh=noteLhClamp(sc.fontLh);
   $('#stFontVal').textContent=pt;
   const lsv=$('#stLsVal'); if(lsv)lsv.textContent=ls.toFixed(1);
@@ -5849,7 +5846,7 @@ function updateFontStepUI(){
 /* ══ (v6.7) 노트 글자 조절 슬라이더 — 크기 · 자간 · 줄간격 ══
    드래그 중에는 화면에만 즉시 반영하고, 손을 뗄 때 저장한다(저장 폭주 방지). */
 function fcReadSliders(){
-  const sc=typoSettings();   /* (v7.8.2) 공통 글자 설정 */
+  const sc=curSettings();
   const r1=$('#stFontRange'), r2=$('#stLsRange'), r3=$('#stLhRange');
   if(r1)sc.font  =String(ptClamp(r1.value));
   if(r2)sc.fontLs=String(lsClamp(r2.value));
@@ -5869,7 +5866,7 @@ let _slArmed=null;
     fcReadSliders(); applyPrefs(); updateFontStepUI(); });
   el.addEventListener('change',()=>{ if(_slArmed!==el&&document.activeElement!==el){ updateFontStepUI(); return; }
     fcReadSliders(); applyPrefs(); updateFontStepUI();
-    save(); _slArmed=null; });   /* (v7.8.2) 글자 설정은 항상 일반 설정(S.settings)에 저장 */
+    if(ui.vault)VLT.persistSettings(); else save(); _slArmed=null; });
 });
 /* (v6.7.1) 설정창 −/＋ 스테퍼는 슬라이더로 대체 → fontStep() 및 핸들러 삭제(승인 완료) */
 $('#setSave').onclick=()=>{ applySettingsFromUI(); toast(tr('Settings saved','toast_settings_saved')); ovCloseUi($('#setOverlay')); };

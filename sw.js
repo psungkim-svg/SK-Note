@@ -2,7 +2,7 @@
    v6.1 수정: HTML은 네트워크 우선(network-first) → 새 버전 배포 시 즉시 반영.
    나머지 정적 파일만 캐시 우선(cache-first).
    v7.5: reliable Back stack, timed Vault re-entry, and cache version raised to retire prior assets. */
-const VERSION = "7.8.1";
+const VERSION = "7.8.2";
 const CACHE = 'soonenote-v' + VERSION;
 const ASSETS = [
   './', './index.html', './manifest.webmanifest',
@@ -50,21 +50,22 @@ self.addEventListener('fetch', e => {
                 url.pathname.endsWith('.html');
 
   if (isDoc) {
-    // ── HTML: 항상 네트워크 먼저. 실패할 때만 캐시 ──
+    /* ── (v7.8.2) HTML: 캐시 먼저 즉시 응답 + 뒤에서 네트워크로 갱신(stale-while-revalidate) ──
+       이전(네트워크 우선)에는 앱을 켤 때마다 네트워크 응답을 기다린 뒤에야 첫 화면을 그려
+       Android PWA 스플래시(큰 아이콘)가 1초 이상 떠 있었다. 이제 첫 화면은 캐시에서 즉시 뜨고,
+       새 버전은 다음 실행(또는 앱이 백그라운드로 갈 때 swApplyUpdate)에 반영된다. */
     e.respondWith(
-      fetch(e.request)
-        .then(res => {
+      caches.match('./index.html').then(hit => {
+        const net = fetch(e.request).then(res => {
           if (res && res.ok) {
-            const copy = res.clone();
-            /* (v7.5.1) 루트 './' 캐시도 함께 갱신 — install 시점 문서는 오프라인
-               폴백으로만 남지 않게 한다. */
-            caches.open(CACHE).then(c => { c.put('./index.html', copy); return c.put('./', copy); }).catch(() => {});
+            const c1 = res.clone(), c2 = res.clone();
+            caches.open(CACHE).then(c => Promise.all([c.put('./index.html', c1), c.put('./', c2)])).catch(() => {});
           }
           return res;
-        })
-        .catch(() =>
-          caches.match('./index.html').then(hit => hit || caches.match('./'))
-        )
+        }).catch(() => hit || caches.match('./'));
+        if (hit) { e.waitUntil(net.catch(() => {})); return hit; }
+        return net;
+      })
     );
     return;
   }
