@@ -2,7 +2,7 @@
    v6.1 수정: HTML은 네트워크 우선(network-first) → 새 버전 배포 시 즉시 반영.
    나머지 정적 파일만 캐시 우선(cache-first).
    v7.5: reliable Back stack, timed Vault re-entry, and cache version raised to retire prior assets. */
-const VERSION = "7.8.3";
+const VERSION = "7.8.4";
 const CACHE = 'soonenote-v' + VERSION;
 const ASSETS = [
   './', './index.html', './manifest.webmanifest',
@@ -14,7 +14,8 @@ self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE).then(c =>
       // 하나가 404여도 나머지는 캐시되도록 개별 처리
-      Promise.all(ASSETS.map(u => c.add(u).catch(() => {})))
+      /* (v7.8.4) 설치 때는 브라우저 HTTP 캐시를 건너뛰고(cache:'reload') 서버에서 새 파일을 받는다 — 호스팅이 Cache-Control 을 길게 주면 옛 index.html 이 새 캐시에 들어가던 문제 방지 */
+      Promise.all(ASSETS.map(u => c.add(new Request(u, { cache: 'reload' })).catch(() => {})))
     )
   );
   self.skipWaiting();
@@ -56,7 +57,7 @@ self.addEventListener('fetch', e => {
        새 버전은 다음 실행(또는 앱이 백그라운드로 갈 때 swApplyUpdate)에 반영된다. */
     e.respondWith(
       caches.match('./index.html').then(hit => {
-        const net = fetch(e.request).then(res => {
+        const net = fetch(e.request, { cache: 'no-cache' }).then(res => {   /* (v7.8.4) 서버에 항상 재확인 */
           if (res && res.ok) {
             const c1 = res.clone(), c2 = res.clone();
             caches.open(CACHE).then(c => Promise.all([c.put('./index.html', c1), c.put('./', c2)])).catch(() => {});

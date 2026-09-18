@@ -3,7 +3,7 @@
 # index.html has a baseline CSP meta. Send this stronger HTTP header too,
 # because browsers ignore frame-ancestors when it comes from a meta element.
 
-Content-Security-Policy: default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-YPH99hjDdvf8GG5odVJECZVWDrVM9IXv04ViPpZ7rJk='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests
+Content-Security-Policy: default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-fKkq+cGsP35FVq1Pdk4WuU/mvJcdiw/QzyITS5Vq/E4='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests
 X-Content-Type-Options: nosniff
 Referrer-Policy: no-referrer
 Permissions-Policy: camera=(self), microphone=(), geolocation=(), payment=(), usb=()
@@ -14,3 +14,9 @@ Notes:
 - The app can use the camera/photo feature, so camera=(self) is intentional. If unused, camera=() is stricter.
 - The app allows standard Supabase project HTTPS/WebSocket endpoints. Review and narrow connect-src before adding any other service.
 - Any change to the inline script requires recalculating the CSP SHA-256 hash.
+
+# (v7.8.4) Update reliability — send these caching headers:
+#   index.html, sw.js, manifest.webmanifest :  Cache-Control: no-cache
+#   icons/*, vendor/*                        :  Cache-Control: public, max-age=31536000
+# Without "no-cache" on index.html / sw.js, a hosting/CDN may keep serving the previous
+# version for hours and the app shows the old version number after an update.
