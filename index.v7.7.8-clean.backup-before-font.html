@@ -283,7 +283,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-FVlu4zkk9lCaD/kIn8wKca0o6QzRDcK3zLKX1dnNr6o='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-qvFlR3fFOh1KrSyS+qo2QWHnKwx/mQesvn6DOu0YUrA='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
 <!-- (요구3) 전화기 화면에 딱 맞게 · 자동 확대(핀치 줌 포함) 완전 금지 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#f5f2ef">
@@ -303,16 +303,16 @@
   --ivory:#E1DAD3; --nude:#E4C9B6; --rose:#D7A49A; --sage:#B8BBA3;
   --blue:#A4B1BA;  --lav:#C9C3DD;  --white:#FFFFFF;
 
-  --bg:#f5f2ef; --bg2:#efebe7; --card:#ffffff; --text:#000000; --sub:#8d857e;
+  --bg:#f5f2ef; --bg2:#efebe7; --card:#ffffff; --text:#3a3430; --sub:#8d857e;
   --line:#e0d9d3; --accent:#ddb2a9; --accent2:#b88d84; --bar:#fbf9f7; --chip:#ede9e5;
   --danger:#b98079; --ok:#9aa88c; --shadow:0 1px 3px rgba(90,75,65,.10);
   /* ── 핵심 분리: 앱 UI 글자(--ui, 절대 고정 17pt)와 본문 글자(--note, 14~22pt 가변) ── */
   --ui:17pt;          /* 앱 UI·아이콘·버튼·설정창·메뉴·입력창 제목·도구. 본문 설정과 무관하게 절대 안 변함 */
   --note:14pt;        /* 사용자가 입력한 본문(에디터·목록 미리보기·체크리스트). 설정과 노트별 옵션으로만 변함 */
-  --notefw:700;       /* (v7.7.9) 본문 기본 굵기(보통)=700 — 삼성 기본 글꼴은 400/700만 있어 500은 400으로 보였음 */
+  --notefw:500;       /* 본문 기본 굵기(보통). 너무 굵지도, 너무 가늘지도 않은 중간값 */
   /* (v6.7) 본문 자간·줄간격. 기본값은 V6.6과 똑같이 보이는 값 → 기존 노트 모양 변화 없음 */
   --notels:0px;       /* 노트 본문 자간 (설정 슬라이더) */
-  --notelh:1.25;      /* (v7.7.9) 노트 본문 줄간격 기본 1.25 (설정 슬라이더) */
+  --notelh:1.05;      /* 노트 본문 줄간격 (설정 슬라이더) */
   --boxmin:165px;
 }
 html[data-theme="dark"]{
@@ -328,7 +328,6 @@ html[data-notefw="400"]{--notefw:400}   /* 이전 버전 값(하위 호환) */
 html[data-notefw="500"]{--notefw:500}
 html[data-notefw="600"]{--notefw:600}   /* 이전 버전 값(하위 호환) */
 html[data-notefw="700"]{--notefw:700}
-html[data-notefw="800"]{--notefw:800}
 html[data-notefw="900"]{--notefw:900}
 /* 노트박스: 한 줄에 1~7개 (v7.0 요청2 — '세로로 하나씩'까지 내려가고 '가로로 7개씩'까지 올라간다) */
 html[data-cols="1"]{--cols:1} html[data-cols="2"]{--cols:2} html[data-cols="3"]{--cols:3} html[data-cols="4"]{--cols:4}
@@ -1635,9 +1634,9 @@ html[data-theme="dark"] #folderOverlay:not(.vault-folder),html[data-theme="dark"
       </div>
       <div class="setrow"><label data-i18n="font_weight">Note font weight</label>
         <select id="stFontWeight">
-          <option value="n" data-i18n="fw_n">Normal</option>
-          <option value="b" data-i18n="fw_b">Medium bold</option>
-          <option value="x" data-i18n="fw_x">Bold</option>
+          <option value="n" data-i18n="fw_n">Normal (500) — recommended</option>
+          <option value="b" data-i18n="fw_b">SemiBold (600)</option>
+          <option value="x" data-i18n="fw_x">Bold (700)</option>
         </select>
       </div>
       <div class="setrow"><label data-i18n="box_size">Box size (columns)</label>
@@ -1819,7 +1818,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='soonenote';
-const APP_VER='7.7.9';
+const APP_VER='7.7.8';
 /* ══════════ (v7.6.1) 기능 스위치 ══════════
    sync:false 로 바꾸면 동기화(Supabase)가 UI·네트워크·타이머 모두에서 비활성화된다.
    SYNC 객체와 계정 화면 코드는 남아 있되(프리미엄 대비) 어떤 경로도 실행되지 않는다.
@@ -1896,8 +1895,8 @@ const I18N={
   /* (v6.7) 노트 글자 조절 슬라이더 + ☑ 저장하고 돌아가기 */
   font_ctrl:{en:'Note text controls'},fc_size:{en:'Size'},fc_ls:{en:'Letter spacing'},fc_lh:{en:'Line spacing'},
   save_back:{en:'Save and go back'},
-  font_weight:{en:'Note font weight'},fw_l:{en:'Light (300)'},fw_n:{en:'Normal'},
-  fw_b:{en:'Medium bold'},fw_x:{en:'Bold'},box_size:{en:'Box size (columns)'},
+  font_weight:{en:'Note font weight'},fw_l:{en:'Light (300)'},fw_n:{en:'Normal (500) — recommended'},
+  fw_b:{en:'SemiBold (600)'},fw_x:{en:'Bold (700)'},box_size:{en:'Box size (columns)'},
   box1:{en:'1 column'},box2:{en:'2 columns'},box3:{en:'3 columns'},box4:{en:'4 columns'},box5:{en:'5 columns'},box6:{en:'6 columns'},box7:{en:'7 columns'},note_shape:{en:'Note shape'},
   shape_none:{en:'Plain'},shape_line:{en:'Lined paper'},
   default_color:{en:'Default note color'},
@@ -2047,9 +2046,9 @@ const I18N_KO={
   font_preview:'가나다 Abc 123 — 지금 크기 미리보기',
   font_weight:'노트 글자 굵기 (입력 텍스트만)',
   fw_l:'가벼움 (300)',
-  fw_n:'보통',
-  fw_b:'중간굵게',
-  fw_x:'굵게',
+  fw_n:'보통 (500) — 권장',
+  fw_b:'중간굵게 (600)',
+  fw_x:'굵게 (700)',
   box_size:'노트박스 크기 (한 줄 개수)',
   box1:'가로 1개씩 (한 줄에 하나)',
   box2:'가로 2개씩',
@@ -2247,7 +2246,7 @@ const I18N_JA={
   font_ctrl:'本文の文字調整',fc_size:'サイズ',fc_ls:'字間',fc_lh:'行間',
   save_back:'保存して戻る',
   font_size:'本文の文字サイズ (10〜25pt)',font_preview:'サンプル Abc 123 — プレビュー',
-  font_weight:'本文の太さ',fw_l:'細い (300)',fw_n:'標準',fw_b:'中太',fw_x:'太い',
+  font_weight:'本文の太さ',fw_l:'細い (300)',fw_n:'標準 (500) — 推奨',fw_b:'中太 (600)',fw_x:'太い (700)',
   box_size:'ボックスの大きさ（列数）',box2:'2列',box3:'3列',box4:'4列',
   note_shape:'ノートの形式',shape_none:'なし',shape_line:'罫線',
   default_color:'既定のノート色',
@@ -2397,7 +2396,7 @@ const I18N_ZH={
   font_ctrl:'正文文字调整',fc_size:'大小',fc_ls:'字距',fc_lh:'行距',
   save_back:'保存并返回',
   font_size:'正文字号 (10–25pt)',font_preview:'示例 Abc 123 — 预览',
-  font_weight:'正文粗细',fw_l:'细 (300)',fw_n:'标准',fw_b:'半粗',fw_x:'粗',
+  font_weight:'正文粗细',fw_l:'细 (300)',fw_n:'标准 (500) — 推荐',fw_b:'半粗 (600)',fw_x:'粗 (700)',
   box_size:'卡片大小（列数）',box2:'2 列',box3:'3 列',box4:'4 列',
   note_shape:'笔记样式',shape_none:'无',shape_line:'横线',
   default_color:'默认笔记颜色',
@@ -2547,7 +2546,7 @@ const I18N_ES={
   font_ctrl:'Ajuste del texto',fc_size:'Tamaño',fc_ls:'Espaciado',fc_lh:'Interlineado',
   save_back:'Guardar y volver',
   font_size:'Tamaño de letra (10–25 pt)',font_preview:'Muestra Abc 123 — vista previa',
-  font_weight:'Grosor de letra',fw_l:'Fina (300)',fw_n:'Normal',fw_b:'Seminegrita',fw_x:'Negrita',
+  font_weight:'Grosor de letra',fw_l:'Fina (300)',fw_n:'Normal (500) — recomendado',fw_b:'Seminegrita (600)',fw_x:'Negrita (700)',
   box_size:'Tamaño de tarjeta (columnas)',box2:'2 columnas',box3:'3 columnas',box4:'4 columnas',
   note_shape:'Estilo de nota',shape_none:'Liso',shape_line:'Con renglones',
   default_color:'Color predeterminado',
@@ -2760,9 +2759,7 @@ function curSettings(){ return ui.vault ? VLT.settings : S.settings; }
 function ptClamp(v){ v=parseInt(v)||12; return Math.max(10,Math.min(25,v)); }
 /* (v6.7) 자간 -0.5~2.0px · 줄간격 1.0~2.0 — 잘못된 값이 들어와도 안전하게 */
 function lsClamp(v){ v=parseFloat(v); if(!isFinite(v))v=0; return Math.max(-0.5,Math.min(2,Math.round(v*10)/10)); }
-function noteLhClamp(v){ v=parseFloat(v); if(!isFinite(v))v=1.25; return Math.max(1,Math.min(2,Math.round(v*20)/20)); }
-/* (v7.7.9) 줄간격 기본 1.05→1.25: 사용자가 손대지 않은 옛 기본값(1.05/미설정)만 1회 올림. 다른 값은 그대로 (fwVer=4 마커) */
-function lhMigrate125(st){ if(!st||(st.fwVer||0)>=4)return; if(st.fontLh==null||String(st.fontLh)==='1.05')st.fontLh='1.25'; st.fwVer=4; }
+function noteLhClamp(v){ v=parseFloat(v); if(!isFinite(v))v=1.05; return Math.max(1,Math.min(2,Math.round(v*20)/20)); }
 function lhText(v){ const n=noteLhClamp(v); return (Math.round(n*100)%10===0)?n.toFixed(1):n.toFixed(2); }
 const FONT_KEYS_PT={'xs':12,'s':14,'m':16,'l':18,'xl':20};   /* (v5.3 이전) 구버전 5단계 → pt 마이그레이션 */
 function migFont(f){ if(f==null)return '12'; if(FONT_KEYS_PT[f]!=null)return String(FONT_KEYS_PT[f]); return String(ptClamp(f)); }
@@ -2770,13 +2767,13 @@ function migFont(f){ if(f==null)return '12'; if(FONT_KEYS_PT[f]!=null)return Str
 /* (요구3) 본문 굵기 4단계 — 단계 간 차이가 확실하게 구분되도록 (v5.2):
    가벼움 300(Light) · 보통 500(Medium) · 굵게 700(Bold) · 매우굵게 900(Black).
    FONT_WEIGHTS 맵이 '글자 키(l/n/b/x) ↔ 숫자 값' 변환의 유일한 기준. 모든 저장·로드·적용은 이 맵을 거침 */
-const FONT_WEIGHTS={n:'700',b:'800',x:'900'};   /* (v7.7.9) 3단계: 700·800·900 (v7.5.4: 500·600·700) */
+const FONT_WEIGHTS={n:'500',b:'600',x:'700'};   /* (v7.5.4 요청1) 3단계: 500·600·700 (v7.5.2: 500·700·900) */
 /* (v6.7) fontLs(자간, px) · fontLh(줄간격) 추가. 기본값은 V6.6과 똑같이 보이는 값 */
 /* (v6.8 STEP2) favA/favB = 하단바에 고정해 두는 즐겨찾기 폴더 ID 2개.
    폴더 데이터에는 손대지 않는다. 예전 설정에 이 값이 없으면 아래 기본값('')이 자동으로 채워진다. */
-const DEF={theme:'auto',view:'grid',sort:'color',font:'12',fontWeight:'n',fontLs:'0',fontLh:'1.25',box:'2',fldCols:'2',folderView:'grid-m',folderSort:'name',folderBox:'3',folderNoteView:'grid',folderNoteSort:'color',folderNoteBox:'2',vaultAutoLock:'5',rule:'none',defColor:0,sbUrl:'',sbKey:'',lastSync:0,lastPull:0,pinHash:null,pinSalt:null,lang:'auto',favA:'',favB:'',folderDeletes:[]};
+const DEF={theme:'auto',view:'grid',sort:'color',font:'12',fontWeight:'n',fontLs:'0',fontLh:'1.05',box:'2',fldCols:'2',folderView:'grid-m',folderSort:'name',folderBox:'3',folderNoteView:'grid',folderNoteSort:'color',folderNoteBox:'2',vaultAutoLock:'5',rule:'none',defColor:0,sbUrl:'',sbKey:'',lastSync:0,lastPull:0,pinHash:null,pinSalt:null,lang:'auto',favA:'',favB:'',folderDeletes:[]};
 /* (요청6) Vault 전용 설정 기본값 — 일반 노트 설정과 별도로 저장됨 */
-const VAULT_DEF={theme:'auto',view:'grid',sort:'color',font:'12',fontWeight:'n',fontLs:'0',fontLh:'1.25',box:'2',fldCols:'2',folderView:'grid-m',folderSort:'name',folderBox:'3',folderNoteView:'grid',folderNoteSort:'color',folderNoteBox:'2',vaultAutoLock:'5',rule:'none',defColor:0};
+const VAULT_DEF={theme:'auto',view:'grid',sort:'color',font:'12',fontWeight:'n',fontLs:'0',fontLh:'1.05',box:'2',fldCols:'2',folderView:'grid-m',folderSort:'name',folderBox:'3',folderNoteView:'grid',folderNoteSort:'color',folderNoteBox:'2',vaultAutoLock:'5',rule:'none',defColor:0};
 function load(){
   /* v2.x → v3 자동 마이그레이션 */
   try{
@@ -2827,7 +2824,6 @@ function load(){
   }else if(!['l','n','b','x'].includes(S.settings.fontWeight))S.settings.fontWeight='n';
   /* (v7.5.2 요청3) Light(300) 단계 폐지 — 저장된 'l'은 'n'(500)으로 이관 (fwVer=3 마커) */
   if((S.settings.fwVer||0)<3){ if(S.settings.fontWeight==='l')S.settings.fontWeight='n'; S.settings.fwVer=3; }
-  lhMigrate125(S.settings);
   if(!['1','2','3','4'].includes(String(S.settings.box)))S.settings.box='4';
   if(!['1','2','3','4','5','6','7'].includes(String(S.settings.fldCols)))S.settings.fldCols=S.settings.box;
   if(!['grid-s','grid-m','grid-l','list','titles'].includes(String(S.settings.folderView)))S.settings.folderView='grid-m';
@@ -3213,7 +3209,7 @@ function applyPrefs(){
   document.documentElement.dataset.cols=mainCols;
   /* 홈 카드의 조밀 보기와 폴더 상세의 조밀 보기는 서로 독립이다. */
   document.body.classList.toggle('cols-tight',parseInt(mainCols,10)>=5);
-  document.documentElement.dataset.notefw=FONT_WEIGHTS[sc.fontWeight]||'700';   /* (요구3) 본문 굵기: 키→숫자 값 변환으로 CSS[data-notefw]와 정합 (v5.1) */
+  document.documentElement.dataset.notefw=FONT_WEIGHTS[sc.fontWeight]||'500';   /* (요구3) 본문 굵기: 키→숫자 값 변환으로 CSS[data-notefw]와 정합 (v5.1) */
   /* (v6.7) 본문 자간·줄간격 — 노트 본문에만 적용(홈 카드 미리보기는 그대로) */
   document.documentElement.style.setProperty('--notels', lsClamp(sc.fontLs)+'px');
   document.documentElement.style.setProperty('--notelh', String(noteLhClamp(sc.fontLh)));
@@ -4742,12 +4738,7 @@ function readCurrentLh(){
   if(isFinite(v)) typeLh=lhClamp(v);
 }
 /* (v6.7.1) T창 −/＋ 버튼이 슬라이더로 대체되어 holdRepeat()/holdRepeatFs() 삭제(승인 완료) */
-function execTypeCmd(cmd){ const body=$('#edBody'); body.focus(); const marked=tpSelectMarked(); if(!marked)tpRestoreRange();
-  /* (v7.7.9) 기본 굵기가 700이 되면서 execCommand('bold')가 "이미 굵다"고 판단해 볼드를 해제하던 문제 —
-     명령 실행 동안만 본문 기본 굵기를 400으로 내려 <b> 마크업 기준으로 토글되게 한다(저장되는 HTML엔 영향 없음) */
-  const tmp=(cmd==='bold'); if(tmp)body.style.fontWeight='400';
-  try{ document.execCommand(cmd,false,null); }finally{ if(tmp)body.style.fontWeight=''; }
-  if(marked)tpCollapseSel(); schedSave(); }
+function execTypeCmd(cmd){ $('#edBody').focus(); const marked=tpSelectMarked(); if(!marked)tpRestoreRange(); document.execCommand(cmd,false,null); if(marked)tpCollapseSel(); schedSave(); }
 function updateTpVals(){
   readCurrentLh();                                   /* (v6.1) 실제 값을 읽어와 표시 */
   {const _e=$('#tpFsVal'); if(_e)_e.textContent=typeFs+'pt';}
@@ -4814,7 +4805,7 @@ function buildKebab(){
 /* 노트별 본문 굵기 적용: 현재 노트값(또는 전역)을 FONT_WEIGHTS로 변환해 --notefw에 덮어씀 */
 function applyEditorWeight(n){
   const sc=curSettings();
-  const fw=FONT_WEIGHTS[sc.fontWeight]||'700';   /* (v7.5.2 요청4) 전역 설정만 적용 — 모든 노트 동일 */
+  const fw=FONT_WEIGHTS[sc.fontWeight]||'500';   /* (v7.5.2 요청4) 전역 설정만 적용 — 모든 노트 동일 */
   document.documentElement.dataset.notefw=fw;
 }
 function moveFromVault(n){
@@ -5805,7 +5796,7 @@ function updateFontStepUI(){
   /* 샘플 상자에 크기·자간·줄간격·굵기를 그대로 보여준다 */
   const sm=$('#stFontSample');
   if(sm){ sm.style.fontSize=pt+'pt'; sm.style.letterSpacing=ls+'px';
-          sm.style.lineHeight=String(lh); sm.style.fontWeight=FONT_WEIGHTS[sc.fontWeight]||'700'; }
+          sm.style.lineHeight=String(lh); sm.style.fontWeight=FONT_WEIGHTS[sc.fontWeight]||'500'; }
 }
 /* ══ (v6.7) 노트 글자 조절 슬라이더 — 크기 · 자간 · 줄간격 ══
    드래그 중에는 화면에만 즉시 반영하고, 손을 뗄 때 저장한다(저장 폭주 방지). */
@@ -6218,15 +6209,15 @@ const VLT={
     try{legacySettings=JSON.parse(STORE.getItem('sk.vault.settings'))||{}}catch(_){}
     const legacyAuth=(S.settings.pinSalt&&S.settings.pinHash)?{v:1,kdf:'PBKDF2-SHA256',iter:PBKDF2_ITER,salt:S.settings.pinSalt,hash:S.settings.pinHash,legacy:true}:null;
     const raw=STORE.getItem('sk.vault');
-    if(!raw){this.auth=legacyAuth;this.folders=legacyFolders;this.settings=Object.assign({},VAULT_DEF,legacySettings);lhMigrate125(this.settings);this.legacyMeta=!!(legacyFolders.length||Object.keys(legacySettings).length||legacyAuth);return;}
+    if(!raw){this.auth=legacyAuth;this.folders=legacyFolders;this.settings=Object.assign({},VAULT_DEF,legacySettings);this.legacyMeta=!!(legacyFolders.length||Object.keys(legacySettings).length||legacyAuth);return;}
     try{
       const obj=JSON.parse(raw);
       if(obj&&obj.__enc===1){
         this.encrypted=true;this._blob=obj;this.format=Number(obj.fmt)||1;this.auth=obj.auth||legacyAuth;
-        if(this.format<2){this.folders=legacyFolders;this.settings=Object.assign({},VAULT_DEF,legacySettings);lhMigrate125(this.settings);this.legacyMeta=true;}
+        if(this.format<2){this.folders=legacyFolders;this.settings=Object.assign({},VAULT_DEF,legacySettings);this.legacyMeta=true;}
       }else if(Array.isArray(obj)){
         /* Legacy plaintext is never rewritten until the user proves the PIN and encryption succeeds. */
-        this.notes=obj;this.folders=legacyFolders;this.settings=Object.assign({},VAULT_DEF,legacySettings);lhMigrate125(this.settings);this.auth=legacyAuth;this.legacyMeta=true;
+        this.notes=obj;this.folders=legacyFolders;this.settings=Object.assign({},VAULT_DEF,legacySettings);this.auth=legacyAuth;this.legacyMeta=true;
       }
     }catch(_){this.notes=[];}
   },
@@ -6236,7 +6227,7 @@ const VLT={
       const json=await aesDecrypt(key,this._blob);const data=JSON.parse(json);
       if(this.format>=2){
         if(!data||!Array.isArray(data.notes)||!Array.isArray(data.folders)||!data.settings)throw new Error('invalid vault payload');
-        this.notes=data.notes;this.folders=data.folders;this.settings=Object.assign({},VAULT_DEF,data.settings);lhMigrate125(this.settings);this.photolinks=(data.photolinks&&typeof data.photolinks==='object')?data.photolinks:{};if(this.settings.fontWeight==='l')this.settings.fontWeight='n';   /* (v7.5.2 요청3) */
+        this.notes=data.notes;this.folders=data.folders;this.settings=Object.assign({},VAULT_DEF,data.settings);this.photolinks=(data.photolinks&&typeof data.photolinks==='object')?data.photolinks:{};if(this.settings.fontWeight==='l')this.settings.fontWeight='n';   /* (v7.5.2 요청3) */
       }else if(Array.isArray(data)){this.notes=data;this.legacyMeta=true;}
       else throw new Error('invalid legacy vault');
       this.settings.unlockMinutes=0;if(!['1','5','15','30'].includes(String(this.settings.vaultAutoLock)))this.settings.vaultAutoLock='5';this.key=key;return true;
