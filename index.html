@@ -283,7 +283,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-fKkq+cGsP35FVq1Pdk4WuU/mvJcdiw/QzyITS5Vq/E4='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-LESrqjrtByc0K7MrjGh5tQa0qE5beYPRKgR+vGcLsJ4='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
 <!-- (요구3) 전화기 화면에 딱 맞게 · 자동 확대(핀치 줌 포함) 완전 금지 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#f5f2ef">
@@ -1277,20 +1277,38 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
    하얀 박스 안에 "암호입력" 글자 + 그 아래 큰 입력칸(안은 비움) + 확인 버튼 하나만 */
 #remindOverlay{z-index:90}   /* (v7.5.8 요청3) 편집기(z55) 위에 떠야 알림 설정이 보인다 */
 #vGate{align-items:center;justify-content:center;background:rgba(15,16,20,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
-#vGate .vgateCard{border-radius:12px;max-width:280px;width:calc(100% - 3em);background:#fff;
-  /* (요구4) 전체 높이를 기존의 약 1/3로 축소 */
-  padding:.9em 1.2em .9em;text-align:center;position:relative;color:#111;
-  box-shadow:0 12px 44px rgba(0,0,0,.35);animation:vpop .22s ease-out}
+#vGate .vgateCard{border-radius:20px;max-width:300px;width:calc(100% - 2.6em);background:#fff;
+  padding:1.5em 1.35em 1.25em;text-align:center;position:relative;color:#111;
+  box-shadow:0 18px 60px rgba(0,0,0,.4);animation:vpop .22s ease-out}   /* (v7.8.7 ③) */
+#vGate .vgateIco{width:60px;height:60px;border-radius:50%;background:#eaf1ec;color:#4f7a5c;margin:0 auto .8em;display:flex;align-items:center;justify-content:center}
+#vGate .vgateIco svg{width:30px;height:30px}
+#vGate .vgateSub{font-size:.72em;color:#6b6f75;margin:0 0 1.1em;line-height:1.4;word-break:keep-all}
+#vGate .vgateField{position:relative;margin:0 0 .45em}
+#vGate .vgateEye{position:absolute;right:.7em;top:50%;transform:translateY(-50%);width:28px;height:28px;border:0;background:none;padding:0;color:#333;opacity:.6;cursor:pointer}
+#vGate .vgateEye svg{width:22px;height:22px}
+#vGate .vgateEye .eyeOff{display:none} #vGate .vgateEye[aria-pressed="true"] .eyeOn{display:none} #vGate .vgateEye[aria-pressed="true"] .eyeOff{display:inline}
+#vGate .vgateErr{font-size:.72em;color:#c9302c;min-height:1.25em;margin:0 0 .55em;font-weight:700;word-break:keep-all}
+#vGate .vpass.err{border-color:#d9534f!important;background:#fff5f5;animation:vshake .3s}
+@keyframes vshake{0%,100%{transform:none}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+#vGate .vpass.show{letter-spacing:.02em;font-size:1em}
+#vGate .vgateNote{font-size:.66em;color:#8a8e94;margin:.85em 0 0;word-break:keep-all}
+html[data-theme="dark"] #vGate .vgateCard{background:#1e2024;color:#f1f1f1}
+html[data-theme="dark"] #vGate .vgateIco{background:#2b3a30;color:#9cc3a6}
+html[data-theme="dark"] #vGate .vgateSub{color:#a7abb1}
+html[data-theme="dark"] #vGate .vpass{background:#2a2d32;border-color:#3a3e45;color:#fff}
+html[data-theme="dark"] #vGate .vgateEye{color:#ddd}
+html[data-theme="dark"] #vGate .vgateNote{color:#7f848b}
 @keyframes vpop{from{transform:scale(.94);opacity:0}to{transform:none;opacity:1}}
-#vGate .vgateTitle{font-size:.9em;font-weight:800;color:#111;margin:0 0 .55em}
-#vGate .vpass{display:block;width:100%;box-sizing:border-box;text-align:center;font-size:1.15em;
-  letter-spacing:.15em;padding:.45em .4em;border-radius:8px;margin:0 0 .7em;
-  background:#f6f6f7;border:2px solid #d9d9de;color:#111;outline:none;min-height:2.3em;
+#vGate .vgateTitle{font-size:1.15em;font-weight:800;color:inherit;margin:0 0 .25em;letter-spacing:-.01em}
+#vGate .vpass{display:block;width:100%;box-sizing:border-box;text-align:center;font-size:1.25em;
+  letter-spacing:.28em;padding:.62em 2.4em .62em 1em;border-radius:14px;margin:0;
+  background:#f3f4f6;border:2px solid #e3e5e9;color:#111;outline:none;min-height:2.6em;
   word-break:break-all;caret-color:#111}   /* (v7.5.6 요청1) 입력창 같은 모양의 contenteditable */
 #vGate .vpass:empty::before{content:attr(data-ph);color:#9a9aa0;letter-spacing:0}
-#vGate .vpass:focus{border-color:#b9a48f}
+#vGate .vpass:focus{border-color:#7f9c86;background:#fff;box-shadow:0 0 0 4px rgba(127,156,134,.18)}
+html[data-theme="dark"] #vGate .vpass:focus{background:#2a2d32}
 #vGate input[type=password]:focus{border-color:var(--accent);background:#fff}
-#vGate .btn.vunlock{width:50%;margin:0 auto;display:block;padding:.5em;border-radius:8px;font-size:.82em;font-weight:800}
+#vGate .btn.vunlock{width:100%;margin:0;display:block;padding:.8em;border-radius:14px;font-size:.92em;font-weight:800;background:#7f9c86!important;color:#fff!important;border:0;box-shadow:0 6px 18px rgba(127,156,134,.35)}
 #vGate .hidden{display:none!important}
 
 /* 토스트 */
@@ -1582,15 +1600,7 @@ html[data-theme="dark"] #folderOverlay:not(.vault-folder),html[data-theme="dark"
     <div class="setsec">
       <h4 data-i18n="sec_screen">Display</h4>
       <div class="setrow"><label data-i18n="language">Language</label>
-        <select id="stLang">
-          <!-- (v6.2 요청3) 순서: 시스템 언어 → English → Español → 한국어 → 日本語 → 中文 -->
-          <option value="auto" data-i18n="lang_auto">System language</option>
-          <option value="en">English</option>
-          <option value="es">Español</option>
-          <option value="ko">한국어</option>
-          <option value="ja">日本語</option>
-          <option value="zh">中文（简体）</option>
-        </select>
+        <span class="stat" id="stLangInfo" data-i18n="lang_auto">Auto (follow system)</span>   <!-- (v7.8.8) 언어 선택 제거: 시스템 언어 자동 -->
       </div>
       <div class="setrow"><label data-i18n="theme">Theme</label>
         <select id="stTheme"><option value="auto" data-i18n="auto">Auto</option><option value="light" data-i18n="light">Light</option><option value="dark" data-i18n="dark">Dark</option></select>
@@ -1613,26 +1623,14 @@ html[data-theme="dark"] #folderOverlay:not(.vault-folder),html[data-theme="dark"
       <!-- (v6.7) 글자 샘플 → 노트 글자 조절(크기·자간·줄간격) → 굵기 순서 -->
       <div class="fontsample" id="stFontSample" data-i18n="font_preview">Sample Abc 123 — preview</div>
       <div class="subhead" data-i18n="font_ctrl">Note text controls</div>
-      <div class="slrow">
-        <span class="sllab" data-i18n="fc_size">Size</span>
-        <span class="slmin">A</span>
-        <input type="range" id="stFontRange" min="10" max="25" step="1" value="14"
-               data-i18n-title="fc_size" title="Size">
-        <span class="slmax">A</span>
-        <span class="slval"><span id="stFontVal">14</span><span class="fsunit">pt</span></span>
-      </div>
-      <div class="slrow">
-        <span class="sllab" data-i18n="fc_ls">Letter spacing</span>
-        <input type="range" id="stLsRange" min="-0.5" max="2" step="0.1" value="0" list="stLsTicks"
-               data-i18n-title="fc_ls" title="Letter spacing">
-        <span class="slval" id="stLsVal">0.0</span><datalist id="stLsTicks"><option value="0"></option></datalist>
-      </div>
-      <div class="slrow">
-        <span class="sllab" data-i18n="fc_lh">Line spacing</span>
-        <input type="range" id="stLhRange" min="1" max="2" step="0.05" value="1.25"
-               data-i18n-title="fc_lh" title="Line spacing">
-        <span class="slval" id="stLhVal">1.25</span>
-      </div>
+      <!-- (v7.8.6) 슬라이더 → 숫자 선택(select). 스치거나 흔들려도 값이 바뀌지 않는다. 저장키(font/fontLs/fontLh)는 그대로. -->
+      <div class="setrow"><label data-i18n="fc_size">Size</label>
+        <select id="stFontSel" data-i18n-title="fc_size" title="Size"></select></div>
+      <div class="setrow"><label data-i18n="fc_ls">Letter spacing</label>
+        <select id="stLsSel" data-i18n-title="fc_ls" title="Letter spacing"></select></div>
+      <div class="setrow"><label data-i18n="fc_lh">Line spacing</label>
+        <select id="stLhSel" data-i18n-title="fc_lh" title="Line spacing"></select></div>
+      <span id="stFontVal" hidden></span><span id="stLsVal" hidden></span><span id="stLhVal" hidden></span>
       <div class="setrow"><label data-i18n="font_weight">Note font weight</label>
         <select id="stFontWeight">
           <option value="n" data-i18n="fw_n">Normal</option>
@@ -1678,11 +1676,11 @@ html[data-theme="dark"] #folderOverlay:not(.vault-folder),html[data-theme="dark"
     <div class="setsec">
       <h4 data-i18n="sec_data">Data</h4>
       <div class="btnrow">
-        <button class="btn primary" id="stExport" data-i18n="btn_backup">💾 Backup (save on this device)</button>
+        <button class="btn primary" id="stExport" data-i18n="btn_backup">💾 Back up (this device + Downloads folder)</button>
         <button class="btn" id="stImport" data-i18n="btn_restore">♻️ Restore (saved backups)</button>
       </div>
       <div class="btnrow">
-        <button class="btn" id="stExportEn" data-i18n="btn_export_en">📤 Export Notes (save to Google Drive, etc.)</button>
+        <button class="btn" id="stExportEn" data-i18n="btn_export_en">📤 Share backup file (to Google Drive, email…)</button>
         <button class="btn" id="stImportEn" data-i18n="btn_import_en">📥 Import Notes (from a file)</button>
       </div>
       <div class="btnrow">
@@ -1775,10 +1773,17 @@ html[data-theme="dark"] #folderOverlay:not(.vault-folder),html[data-theme="dark"
 
 <!-- ───────── Vault (Vault) ───────── -->
 <div class="overlay" id="vGate" style="z-index:80">
-  <div class="vgateCard">
-    <div class="vgateTitle" data-i18n="gate_title">Password</div>
-    <div class="vpass" id="vGatePass" role="password" contenteditable="plaintext-only" data-ph="Password" spellcheck="false" aria-label="Vault password"></div>   <!-- (v7.5.6 요청1) contenteditable 마스킹 입력 — 브라우저(구글) 저장된 비밀번호 자동완성 대상 아님 -->
-    <button class="btn primary vunlock" id="vPassBtn" data-i18n="gate_ok">OK</button>
+  <div class="vgateCard">   <!-- (v7.8.7 ③) 화면만 개선: 아이콘·제목·설명·표시/숨김·인라인 오류. 입력 방식/검증 로직은 그대로 -->
+    <div class="vgateIco" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10.5" width="16" height="10" rx="2.5"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.5" r="1.3" fill="currentColor" stroke="none"/></svg></div>
+    <div class="vgateTitle">Vault</div>
+    <div class="vgateSub" data-i18n="gate_sub">Your private notes are encrypted on this device.<br>Enter the password to unlock.</div>
+    <div class="vgateField">
+      <div class="vpass" id="vGatePass" role="password" contenteditable="plaintext-only" data-ph="Password" data-i18n-ph="gate_title" spellcheck="false" aria-label="Vault password"></div>   <!-- (v7.5.6 요청1) contenteditable 마스킹 입력 — 브라우저(구글) 저장된 비밀번호 자동완성 대상 아님 -->
+      <button type="button" class="vgateEye" id="vGateEye" aria-label="Show password" aria-pressed="false"><svg class="eyeOn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><svg class="eyeOff" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 10.6a3 3 0 0 0 4.2 4.2"/><path d="M9.9 5.1A10.4 10.4 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4.1"/><path d="M6.6 6.6A17.4 17.4 0 0 0 2 12s3.5 7 10 7a9.7 9.7 0 0 0 4.4-1"/></svg></button>
+    </div>
+    <div class="vgateErr" id="vGateErr" role="alert" aria-live="polite"></div>
+    <button class="btn primary vunlock" id="vPassBtn" data-i18n="gate_ok">Unlock</button>
+    <div class="vgateNote" data-i18n="gate_note">If you forget the password, it cannot be recovered.</div>
   </div>
 </div>
 
@@ -1819,7 +1824,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='soonenote';
-const APP_VER='7.8.4';
+const APP_VER='7.8.8';
 /* ══════════ (v7.6.1) 기능 스위치 ══════════
    sync:false 로 바꾸면 동기화(Supabase)가 UI·네트워크·타이머 모두에서 비활성화된다.
    SYNC 객체와 계정 화면 코드는 남아 있되(프리미엄 대비) 어떤 경로도 실행되지 않는다.
@@ -1859,20 +1864,17 @@ const LS={notes:'sk.notes',folders:'sk.folders',settings:'sk.settings'};
 /* (v6.2 요청3) 기본은 미국 영어(en-US). 표시 순서도 영어 우선. */
 const SUPPORTED=['en','es','ko','ja','zh'];
 const DEFAULT_LANG='en';
-const SYS_LANG=(navigator.language||navigator.userLanguage||'en').toLowerCase();
+/* (v7.8.8) 브라우저/시스템 언어 목록을 순서대로 보고, 언어 코드(en-US→en)만 뽑아 지원 언어와 맞춘다. 없으면 영어. */
 function detectSysLang(){
-  const l=SYS_LANG;
-  if(l.startsWith('es'))return 'es';
-  if(l.startsWith('ko'))return 'ko';
-  if(l.startsWith('ja'))return 'ja';
-  if(l.startsWith('zh'))return 'zh';
-  return DEFAULT_LANG;      /* 그 외 전부 미국 영어 */
+  const list=(navigator.languages&&navigator.languages.length)?navigator.languages:[navigator.language||'en'];
+  for(const l of list){ const code=String(l).toLowerCase().split(/[-_]/)[0]; if(SUPPORTED.includes(code))return code; }
+  return DEFAULT_LANG;
 }
 let LANG=DEFAULT_LANG;      /* (v6.2) 설정을 읽기 전 기본값도 영어 */
 let IS_KO=(LANG==='ko');                 /* 기존 코드 호환용 */
-function computeLang(){                  // 반드시 load() 이후에 호출
-  const o=(S&&S.settings&&S.settings.lang)||'auto';
-  LANG=(o!=='auto'&&SUPPORTED.includes(o))?o:detectSysLang();
+function computeLang(){
+  /* (v7.8.8) 언어 = 항상 시스템 언어. 예전 S.settings.lang 값은 지우지 않되 더 이상 읽지 않는다. */
+  LANG=detectSysLang();
   IS_KO=(LANG==='ko');
   const d=document.documentElement;
   if(d)d.lang=(LANG==='zh'?'zh-CN':(LANG==='en'?'en-US':LANG));
@@ -1906,8 +1908,8 @@ const I18N={
   sec_vault:{en:'Vault'},vault_hint:{en:'Regular notes need no password. Vault requires its password and automatically locks after the selected inactivity time.'},
   vault_open:{en:'🔐 Vault'},open:{en:'Open'},vault_pin:{en:'Vault password'},pin_set:{en:'Set / Change'},
   vault_unlock_time:{en:'Stay unlocked for'},vault_always:{en:'Always ask'},
-  sec_data:{en:'Data'},btn_backup:{en:'💾 Backup (save on this device)'},btn_restore:{en:'♻️ Restore (saved backups)'},
-  btn_export_en:{en:'📤 Export Notes (save to Google Drive, etc.)'},btn_import_en:{en:'📥 Import Notes (from a file)'},
+  sec_data:{en:'Data'},btn_backup:{en:'💾 Back up (this device + Downloads folder)'},btn_restore:{en:'♻️ Restore (saved backups)'},
+  btn_export_en:{en:'📤 Share backup file (to Google Drive, email…)'},btn_import_en:{en:'📥 Import Notes (from a file)'},
   btn_wipe:{en:'Delete all'},btn_emptytrash:{en:'Empty trash'},
   bk_title:{en:'♻️ Saved backups'},bk_hint:{en:'Backups stored on this device. Tap one to restore, or load a file below.'},
   bk_from_file:{en:'📂 Load from file'},bk_clear:{en:'Clear backup list'},
@@ -1940,7 +1942,7 @@ const I18N={
   empty_folder:{en:'No notes in this folder'},empty_trash:{en:'Trash is empty (deleted notes are removed after 30 days)'},
   chip_all:{en:'All'},chip_notes:{en:'Notes'},chip_addfolder:{en:'+ Folder'},
   chip_backnormal:{en:'← Normal notes'},folder_mgr:{en:'Folders'},vault_folder_mgr:{en:'🔐 Vault folders'},
-  gate_title:{en:'Password'},gate_ok:{en:'OK'},
+  gate_title:{en:'Password'},gate_ok:{en:'Unlock'},gate_sub:{en:'Your private notes are encrypted on this device.<br>Enter the password to unlock.'},gate_note:{en:'If you forget the password, it cannot be recovered.'},gate_left:{en:'Wrong password · {n} attempts left'},
   toast_saved:{en:'Saved'},toast_settings_saved:{en:'Settings saved'},def_color_saved:{en:'Default color saved'},toast_backup:{en:'Backup saved (normal + vault notes included)'},
   toast_import_ok:{en:'Import done'},toast_img_added:{en:'Image added'},toast_trash:{en:'Moved to trash'},
   toast_restored:{en:'Restored'},toast_vault_locked:{en:'Vault locked'},toast_folder_moved:{en:'Moved to folder'},
@@ -2075,9 +2077,9 @@ const I18N_KO={
   vault_unlock_time:'자동 잠금 시간',
   vault_always:'항상 비밀번호 물어보기',
   sec_data:'데이터 / Data',
-  btn_backup:'💾 백업하기 (이 기기에 저장)',
+  btn_backup:'💾 백업하기 (이 기기 + 다운로드 폴더)',
   btn_restore:'♻️ 복구하기 (저장된 백업 목록)',
-  btn_export_en:'📤 Export Notes (Google Drive 등 외부에 저장)',
+  btn_export_en:'📤 백업 파일 내보내기 (Google Drive·메일 등으로 공유)',
   btn_import_en:'📥 Import Notes (외부에서 가져오기)',
   btn_wipe:'전체 삭제 · Delete all',
   btn_emptytrash:'휴지통 비우기',
@@ -2085,8 +2087,8 @@ const I18N_KO={
   add2:'추가',
   pin_title:'🔐 Vault 비밀번호',
   pin_remove:'삭제 (잠금 해제)',
-  gate_title:'암호입력',
-  gate_ok:'확인',
+  gate_title:'비밀번호',
+  gate_ok:'잠금 해제',gate_sub:'비밀 노트는 이 기기에서 암호화되어 있습니다.<br>비밀번호를 입력해 잠금을 해제하세요.',gate_note:'비밀번호를 잊으면 복구할 수 없습니다.',gate_left:'비밀번호가 틀렸습니다 · 남은 시도 {n}회',
   bk_title:'♻️ 저장된 백업',
   bk_hint:'이 기기에 자동 저장된 백업 목록입니다. 하나를 눌러 복구하거나, 아래에서 파일을 불러올 수도 있습니다.',
   bk_from_file:'📂 파일에서 가져오기',
@@ -2728,7 +2730,7 @@ function applyI18n(){
     if(e!==null&&e!==undefined&&e!=='')el.innerHTML=e;   // 일부 값에 <b> 등 마크업 포함
   });
   document.querySelectorAll('[data-i18n-ph]').forEach(el=>{
-    const e=t(el.getAttribute('data-i18n-ph')); if(e)el.setAttribute('placeholder',e);
+    const e=t(el.getAttribute('data-i18n-ph')); if(e){el.setAttribute('placeholder',e); if(el.hasAttribute('data-ph'))el.setAttribute('data-ph',e);}   /* (v7.8.7) contenteditable 자리표시자도 번역 */
   });
   document.querySelectorAll('[data-i18n-title]').forEach(el=>{
     const e=t(el.getAttribute('data-i18n-title')); if(e)el.setAttribute('title',e);
@@ -3151,9 +3153,10 @@ function dlg(msg,opt={}){
     inp.type=opt.password?'password':'text';
     ok.textContent=opt.okText!==undefined&&opt.okText!==''?opt.okText:L('확인','OK');
     ok.className='btn '+(opt.danger?'danger':'primary');
+    const no=$('#dlgNo'); no.textContent=opt.noText||L('취소','Cancel');   /* (v7.8.6) 두 번째 선택지 문구(옵션) */
     ovOpen(ov);
     const done=v=>{ovCloseUi(ov);ok.onclick=null;$('#dlgNo').onclick=null;inp.onkeydown=null;document.removeEventListener('keydown',esc2);res(v)};
-    const esc2=e=>{if(e.key==='Escape')done(opt.input?null:false)};
+    const esc2=e=>{if(e.key==='Escape')done(opt.input?null:(opt.noText?undefined:false))};   /* noText 가 있으면 Esc = 취소(undefined) */
     ok.onclick=()=>done(opt.input?inp.value.trim():true);
     $('#dlgNo').onclick=()=>done(opt.input?null:false);
     inp.onkeydown=e=>{if(e.key==='Enter')done(inp.value.trim())};
@@ -5790,7 +5793,6 @@ function openSettings(){
   $('#stPinBtn').textContent=hasVaultPin()?tr('Change / Reset','pin_change_btn'):tr('Set','pin_set_btn2');
   $('#stVaultAutoRow').classList.toggle('hidden',!ui.vault);
   if(ui.vault)$('#stVaultAuto').value=VLT.autoLockValue();
-  const langSel=$('#stLang'); if(langSel)langSel.value=S.settings.lang||'auto';   /* (v6) 언어(자동/영어/한국어) */
   buildDefColor();
   updateDataSize();   /* (v7.6.1) */
   ovOpen($('#setOverlay'));
@@ -5831,11 +5833,6 @@ function applySettingsFromUI(){
 $('#btnSettings').onclick=openSettings;
 $('#stAccountBtn').onclick=()=>{ovCloseUi($('#setOverlay'));openAccount()};
 /* (v6) 언어 변경 → 즉시 저장 후 새로고침해 영어/한국어를 재적용 */
-$('#stLang').addEventListener('change',()=>{
-  S.settings.lang=$('#stLang').value; save();
-  ovCloseUi($('#setOverlay'));
-  location.reload();
-});
 /* 미리보기: 선택만 해도 즉시 반영(피드백) */
 ['#stTheme','#stView','#stSort','#stFontWeight','#stBox','#stRule'].forEach(sel=>$(sel).addEventListener('change',applySettingsFromUI));
 /* (요청7) 글자크기 스테퍼: − / ＋ 1pt씩, 10~25, 미리보기 샘플 동시 갱신 */
@@ -5845,9 +5842,9 @@ function updateFontStepUI(){
   $('#stFontVal').textContent=pt;
   const lsv=$('#stLsVal'); if(lsv)lsv.textContent=ls.toFixed(1);
   const lhv=$('#stLhVal'); if(lhv)lhv.textContent=lhText(lh);
-  const r1=$('#stFontRange'); if(r1&&document.activeElement!==r1)r1.value=pt;
-  const r2=$('#stLsRange');   if(r2&&document.activeElement!==r2)r2.value=ls;
-  const r3=$('#stLhRange');   if(r3&&document.activeElement!==r3)r3.value=lh;
+  /* (v7.8.6) 숫자 선택 select 에 현재값 반영 (저장값이 목록에 없으면 항목을 추가해 호환 유지) */
+  const setSel=(id,val,fmt)=>{const el=$(id);if(!el)return;const v=String(val);if(![...el.options].some(o=>o.value===v)){const o=document.createElement('option');o.value=v;o.textContent=fmt(val);el.append(o);}el.value=v;};
+  setSel('#stFontSel',pt,v=>v+'pt'); setSel('#stLsSel',ls,v=>Number(v).toFixed(1)); setSel('#stLhSel',lh,v=>lhText(v));
   /* 샘플 상자에 크기·자간·줄간격·굵기를 그대로 보여준다 */
   const sm=$('#stFontSample');
   if(sm){ sm.style.fontSize=pt+'pt'; sm.style.letterSpacing=ls+'px';
@@ -5857,7 +5854,7 @@ function updateFontStepUI(){
    드래그 중에는 화면에만 즉시 반영하고, 손을 뗄 때 저장한다(저장 폭주 방지). */
 function fcReadSliders(){
   const sc=typoSettings();   /* (v7.8.2) 공통 글자 설정 */
-  const r1=$('#stFontRange'), r2=$('#stLsRange'), r3=$('#stLhRange');
+  const r1=$('#stFontSel'), r2=$('#stLsSel'), r3=$('#stLhSel');   /* (v7.8.6) select */
   if(r1)sc.font  =String(ptClamp(r1.value));
   if(r2)sc.fontLs=String(lsClamp(r2.value));
   if(r3)sc.fontLh=String(noteLhClamp(r3.value));
@@ -5865,18 +5862,16 @@ function fcReadSliders(){
 /* (v7.8.0) 슬라이더 값이 "저절로" 바뀌던 문제: 설정 화면을 스크롤하다 손가락이 슬라이더를 스치면
    input 이벤트가 발생해 값이 바뀌고 저장되었다. → 손잡이를 실제로 잡고(pointerdown이 슬라이더에서 시작)
    움직인 경우에만 반영하고, 스치기(pointerdown 없이 온 input)는 즉시 원래 값으로 되돌린다. */
-let _slArmed=null;
-['#stFontRange','#stLsRange','#stLhRange'].forEach(sel=>{
+/* (v7.8.6) 숫자 선택 목록 채우기: 크기 10~25pt / 자간 -0.5~2.0(0.1) / 줄간격 1.00~2.00(0.05) */
+(function fillTypoSelects(){
+  const fill=(id,vals,fmt)=>{const el=$(id);if(!el)return;el.innerHTML='';vals.forEach(v=>{const o=document.createElement('option');o.value=String(v);o.textContent=fmt(v);el.append(o);});};
+  fill('#stFontSel',Array.from({length:16},(_,i)=>10+i),v=>v+'pt');
+  fill('#stLsSel',Array.from({length:26},(_,i)=>Number((-0.5+i*0.1).toFixed(1))).map(v=>Object.is(v,-0)?0:v),v=>v.toFixed(1));
+  fill('#stLhSel',Array.from({length:21},(_,i)=>Number((1+i*0.05).toFixed(2))),v=>lhText(v));
+})();
+['#stFontSel','#stLsSel','#stLhSel'].forEach(sel=>{
   const el=$(sel); if(!el)return;
-  el.addEventListener('pointerdown',()=>{_slArmed=el;},{passive:true});
-  el.addEventListener('keydown',()=>{_slArmed=el;});                 /* 키보드/접근성 조작도 의도된 조작 */
-  const disarm=()=>{ setTimeout(()=>{ if(_slArmed===el)_slArmed=null; },0); };
-  el.addEventListener('pointerup',disarm,{passive:true}); el.addEventListener('pointercancel',disarm,{passive:true});
-  el.addEventListener('input', ()=>{ if(_slArmed!==el){ updateFontStepUI(); return; }   /* 스침 → 저장값으로 되돌림 */
-    fcReadSliders(); applyPrefs(); updateFontStepUI(); });
-  el.addEventListener('change',()=>{ if(_slArmed!==el&&document.activeElement!==el){ updateFontStepUI(); return; }
-    fcReadSliders(); applyPrefs(); updateFontStepUI();
-    save(); _slArmed=null; });   /* (v7.8.2) 글자 설정은 항상 일반 설정(S.settings)에 저장 */
+  el.addEventListener('change',()=>{ fcReadSliders(); applyPrefs(); updateFontStepUI(); save(); });   /* 글자 설정은 항상 S.settings 에 저장 */
 });
 /* (v6.7.1) 설정창 −/＋ 스테퍼는 슬라이더로 대체 → fontStep() 및 핸들러 삭제(승인 완료) */
 $('#setSave').onclick=()=>{ applySettingsFromUI(); toast(tr('Settings saved','toast_settings_saved')); ovCloseUi($('#setOverlay')); };
@@ -5929,7 +5924,7 @@ $('#stEmptyTrash').onclick=async()=>{
   touch();render();toast(L('휴지통을 비웠습니다','Trash emptied'));
 };
 /* ───────── (요구) 백업/복구: 이 기기 백업 목록 + 외부(Google Drive 등) Export/Import ───────── */
-let bkDetail=-1; const bkSel=new Set();
+let bkDetail=-1; const bkSel=new Set(); let bkExternal=null;   /* (v7.8.6) 파일에서 가져온 백업(선택 가져오기용) */
 function vaultSnapshotForBackup(){
   if(!VLT.encrypted||!VLT._blob||VLT.format<2||!VLT.auth)return null;
   /* JSON round-trip ensures a detached ciphertext-only snapshot. */
@@ -6048,13 +6043,38 @@ function scheduleAutoSnap(){ clearTimeout(autoSnapTimer); autoSnapTimer=setTimeo
 $('#stExport').onclick=async()=>{
   await VLT.flush();
   const payload=buildBackup();
+  if(!(await warnIfVaultMissing(payload)))return;   /* (v7.8.5 D) */
   const inDevice=saveLocalBackup(payload);
   downloadBackup(payload);
   if(!inDevice)toast(L('⚠ 백업 파일은 내려받았지만, 저장 공간 부족으로 기기 내 목록에 보관하지 못했습니다. 오래된 노트·백업을 정리하세요.','⚠ Backup file downloaded, but it could not be kept in the on-device list (storage full). Delete old notes/backups.'));
-  else toast(payload.vault
-        ? L('백업 저장: 일반 노트 + 🔐 암호화된 Vault 스냅샷','Backup saved: normal notes + encrypted vault snapshot')
-        : L('백업 저장: 일반 노트만 (Vault 스냅샷 없음)','Backup saved: normal notes only (no vault snapshot)'));
+  backupWhere(payload,'device');   /* (v7.8.5 B) */
 };
+/* (v7.8.5 D) Vault가 백업에 빠지는 경우(잠금 해제 전·구형식) — 조용히 넘기지 않고 경고창 */
+async function warnIfVaultMissing(payload){
+  if(payload.vault)return true;
+  const hasVault=!!(VLT&&(VLT._blob||VLT.encrypted||(VLT.notes&&VLT.notes.length)));
+  if(!hasVault)return true;   /* Vault를 안 쓰는 사용자 */
+  return dlg(L('⚠ 이 백업에는 Vault(비밀 노트)가 들어가지 않습니다.\n\nVault를 한 번 열어(잠금 해제) 다시 백업하면 Vault가 암호화된 상태로 함께 저장됩니다.\n\n그래도 일반 노트만 백업할까요?','⚠ This backup will NOT include the Vault (private notes).\n\nUnlock the Vault once and back up again to include it (still encrypted).\n\nBack up normal notes only anyway?'),{okText:L('일반 노트만 백업','Normal notes only')});
+}
+/* (v7.8.5 B) 백업이 어디에 저장됐는지 분명히 알려 준다 */
+function backupWhere(payload,where){
+  const n=(payload.notes||[]).length, v=payload.vault?L('🔐 Vault 포함(암호화)','🔐 Vault included (encrypted)'):L('Vault 없음','no Vault');
+  const w={device:L('이 기기 안 백업 목록 + 폰의 다운로드 폴더','on-device list + phone Downloads folder'),
+           share:L('선택한 앱(Google Drive 등) + 이 기기 안 백업 목록','the app you chose (Google Drive etc.) + on-device list'),
+           picker:L('선택한 위치 + 이 기기 안 백업 목록','chosen location + on-device list'),
+           download:L('폰의 다운로드 폴더 + 이 기기 안 백업 목록','phone Downloads folder + on-device list')}[where];
+  return dlg(L('백업 완료\n\n파일: ','Backup done\n\nFile: ')+backupName()+L('\n내용: 일반 노트 ','\nContents: notes ')+n+' · '+v+L('\n저장 위치: ','\nSaved to: ')+w+L('\n\n※ 자동 백업은 이 기기 안에만 저장됩니다. 클라우드에 두려면 📤 내보내기로 Google Drive 등에 공유하세요.','\n\n※ Automatic backups stay on this device only. To keep a copy in the cloud, use 📤 Share to Google Drive etc.'),{okText:L('확인','OK')});
+}
+/* (v7.8.5 A) 폰에서는 공유 시트(Drive·메일·메시지…)로 파일을 보낸다 — 진짜 Drive에 저장 가능 */
+async function shareBackupFile(json,name){
+  try{
+    if(!navigator.share||!navigator.canShare)return false;
+    const file=new File([json],name,{type:'application/json'});
+    if(!navigator.canShare({files:[file]}))return false;
+    await navigator.share({files:[file],title:name});
+    return true;
+  }catch(e){ if(e&&e.name==='AbortError')return 'abort'; return false; }
+}
 function downloadBackup(payload){
   const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
@@ -6096,8 +6116,9 @@ function openBkList(){
 }
 function renderBkDetail(){
   const list=$('#bkList');list.innerHTML='';
-  const arr=localBackups(); if(bkDetail<0||!arr[bkDetail]){openBkList();return;}
-  const b=arr[bkDetail], d=b.data;
+  const arr=localBackups(); const ext=bkDetail===-2&&bkExternal;   /* (v7.8.6) -2 = 파일에서 가져온 백업 */
+  if(!ext&&(bkDetail<0||!arr[bkDetail])){openBkList();return;}
+  const b=ext?bkExternal:arr[bkDetail], d=b.data;
   const norm=(d.notes||[]).map(n=>({id:n.id,title:n.title||'',type:n.type,preview:n.type==='check'?(n.items||[]).slice(0,3).map(i=>i.text).join(' · '):plain(n.content).slice(0,90)}));
   /* Encrypted v5 vault data is deliberately not expanded into title/body previews. */
   const all=[...norm];
@@ -6105,13 +6126,13 @@ function renderBkDetail(){
   /* 상단 도구줄 */
   const top=document.createElement('div');top.className='btnrow';top.style.marginBottom='.3em';
   const back=document.createElement('button');back.className='btn';back.textContent=L('← 목록','← List');
-  back.onclick=()=>openBkList();
+  back.onclick=()=>{bkExternal=null;openBkList();};
   const sall=document.createElement('button');sall.className='btn';sall.textContent=L('전체 선택','All');
   sall.onclick=()=>{all.forEach(x=>bkSel.add(x.id));renderBkDetail();};
   const clr=document.createElement('button');clr.className='btn';clr.textContent=L('해제','None');
   clr.onclick=()=>{bkSel.clear();renderBkDetail();};
   const ttl=document.createElement('span');ttl.style.flex='1';ttl.style.fontWeight='700';ttl.style.fontSize='.75em';
-  ttl.textContent=fmtTime(b.at)+' · '+L(`노트 ${all.length}`,'notes '+all.length);
+  ttl.textContent=(ext?L('📥 파일: ','📥 File: ')+(b.name||''):fmtTime(b.at))+' · '+L(`노트 ${all.length}`,'notes '+all.length);
   top.append(back,ttl,sall,clr);list.append(top);
   const hint=document.createElement('div');hint.className='hint';hint.style.marginBottom='.4em';
   hint.innerHTML=L('복구할 노트를 체크한 뒤 아래 버튼을 누르세요. 체크 안 한 노트·기존 내용은 그대로 둡니다.','Check the notes to restore, then use the buttons below. Unchecked notes and current content are kept as-is.');
@@ -6138,6 +6159,7 @@ function renderBkDetail(){
   aSel.textContent=L('선택한 것만 복구','Restore selected');
   aSel.onclick=()=>{ if(!bkSel.size){toast(L('복구할 노트를 하나 이상 선택하세요','Select at least one note to restore'));return;} doApply(d,[...bkSel]); };
   act.append(aAll,aSel);list.append(act);
+  if(ext)return;   /* (v7.8.6) 파일 가져오기에는 '이 백업 삭제' 없음 */
   const delRow=document.createElement('div');delRow.className='btnrow';
   const rem=document.createElement('button');rem.className='btn danger';
   rem.textContent=L('이 백업 삭제','Delete this backup');
@@ -6167,21 +6189,28 @@ async function doApply(d, ids){
 $('#stExportEn').onclick=async()=>{
   await VLT.flush();
   const payload=buildBackup();
+  if(!(await warnIfVaultMissing(payload)))return;   /* (v7.8.5 D) */
   const json=JSON.stringify(payload,null,2);
   const name=backupName();
+  /* (v7.8.5 A) 폰(Android/iOS): 공유 시트 → 'Drive에 저장' 등 선택 가능. PC: 아래 위치 선택창. */
+  if(!window.showSaveFilePicker){
+    const r=await shareBackupFile(json,name);
+    if(r==='abort')return;
+    if(r===true){ saveLocalBackup(payload); backupWhere(payload,'share'); return; }
+  }
   try{
     if(window.showSaveFilePicker){
       const handle=await window.showSaveFilePicker({suggestedName:name,
         types:[{description:'soonenote backup',accept:{'application/json':['.json']}}]});
       const w=await handle.createWritable();await w.write(json);await w.close();
       if(!saveLocalBackup(payload))toast(L('⚠ 파일은 선택한 위치에 저장했지만, 기기 내 사본은 저장 공간 부족으로 보관하지 못했습니다.','⚠ File saved to the chosen location, but the on-device copy could not be kept (storage full).'));
-      else toast(IS_KO?'선택한 위치(Google Drive 등)에 저장했습니다':'Saved to the chosen location');
+      backupWhere(payload,'picker');   /* (v7.8.5 B) */
       return;
     }
   }catch(e){ if(e&&e.name==='AbortError')return; }
   downloadBackup(payload);
   if(!saveLocalBackup(payload))toast(L('⚠ 다운로드로 저장했지만, 기기 내 사본은 저장 공간 부족으로 보관하지 못했습니다.','⚠ Saved as download, but the on-device copy could not be kept (storage full).'));
-  else toast(IS_KO?'이 브라우저는 위치 선택을 지원하지 않아 다운로드로 저장했습니다':'Saved as download');
+  backupWhere(payload,'download');   /* (v7.8.5 B) */
 };
 /* 📥 Import Notes: 외부에 저장된 백업 파일 가져오기 */
 $('#stImportEn').onclick=()=>$('#importFile').click();
@@ -6190,6 +6219,13 @@ $('#importFile').addEventListener('change',e=>{
   const r=new FileReader();
   r.onload=async()=>{try{
     const d=JSON.parse(r.result);
+    if(!d||typeof d!=='object'||(!Array.isArray(d.notes)&&!d.vault))throw new Error('bad');
+    /* (v7.8.6 ①) 전체 가져오기 / 골라서 가져오기 — 골라서: 제목·내용 미리보기 + 체크(기존 보기/복구 화면 재사용) */
+    const n=(d.notes||[]).length, hasV=validVaultSnapshot(d.vault);
+    const pick=await dlg(L(`백업 파일: 일반 노트 ${n}개${hasV?' · 🔐 암호화된 Vault 포함':' · Vault 없음'}\n\n어떻게 가져올까요?\n• 전체 가져오기: 노트·폴더 모두 합치기${hasV?' (Vault는 이어서 확인)':''}\n• 골라서 가져오기: 제목·내용을 보고 체크한 노트만`,
+                          `Backup file: ${n} notes${hasV?' · 🔐 encrypted Vault included':' · no Vault'}\n\nHow to import?\n• Import all: merge all notes & folders${hasV?' (Vault confirmed next)':''}\n• Choose: preview titles/contents and pick notes`),{okText:L('골라서 가져오기','Choose'),noText:L('전체 가져오기','Import all')});
+    if(pick===undefined)return;
+    if(pick===true){ bkExternal={at:Date.now(),name:f.name,data:d}; bkDetail=-2; bkSel.clear(); renderBkDetail(); ovOpen($('#bkOverlay')); return; }
     const res=await applyBackup(d);
     /* v5 external backups carry the vault as a separate ciphertext snapshot. Never merge it as plaintext. */
     const vaultRestored=validVaultSnapshot(d.vault)?await restoreVaultSnapshot(d.vault):false;
@@ -6247,7 +6283,9 @@ $('#btnTrash').onclick=()=>{ui.trash=!ui.trash;exitSel();render()};
 const _vGateEl=$('#vGatePass');
 let vGatePlain='';
 function vGateClear(){ vGatePlain=''; _vGateEl.textContent=''; }
-function vGatePaint(){ _vGateEl.textContent=vGatePlain?'•'.repeat(vGatePlain.length):'';
+let vGateShow=false;   /* (v7.8.7 ③) 표시/숨김 — 화면 표시만 바뀌고 vGatePlain 처리 방식은 동일 */
+function vGateError(msg){ const e=$('#vGateErr'); if(e)e.textContent=msg||''; if(msg){_vGateEl.classList.remove('err');void _vGateEl.offsetWidth;_vGateEl.classList.add('err');} else _vGateEl.classList.remove('err'); }
+function vGatePaint(){ _vGateEl.textContent=vGatePlain?(vGateShow?vGatePlain:'•'.repeat(vGatePlain.length)):''; if(vGatePlain)vGateError('');
   try{ const r=document.createRange(); r.selectNodeContents(_vGateEl); r.collapse(false);
   const sel=getSelection(); if(sel){sel.removeAllRanges();sel.addRange(r);} }catch(_){} }
 _vGateEl.addEventListener('beforeinput',e=>{
@@ -6258,9 +6296,10 @@ _vGateEl.addEventListener('beforeinput',e=>{
   if(!ins)return;
   e.preventDefault(); vGatePlain=(vGatePlain+ins).slice(0,128); vGatePaint();
 });
+(function(){const eye=$('#vGateEye');if(!eye)return;eye.addEventListener('mousedown',e=>e.preventDefault());eye.onclick=()=>{vGateShow=!vGateShow;eye.setAttribute('aria-pressed',String(vGateShow));_vGateEl.classList.toggle('show',vGateShow);vGatePaint();};})();
 _vGateEl.addEventListener('input',()=>{   /* beforeinput을 우회해 외부(자동화 등)가 평문을 넣은 경우 */
   const t=(_vGateEl.textContent||'');
-  if(!t||!/[^•]/.test(t))return;
+  if(!t||(!vGateShow&&!/[^•]/.test(t))||(vGateShow&&t===vGatePlain))return;
   vGatePlain=t.replace(/[\r\n]/g,'').slice(0,128); vGatePaint();
 });
 
@@ -6361,7 +6400,7 @@ const VLT={
       else{this.enter();return;}
     }
     if(this.encrypted&&!hasVaultPin()){toast(L('Vault 인증 정보가 없습니다. 비밀번호를 재설정하지 말고 백업으로 복구하세요.','Vault authentication data is missing. Do not reset the password; restore from a backup.'));return;}
-    vGateClear();ovOpen($('#vGate'));setTimeout(()=>{_vGateEl.focus();try{const r=document.createRange();r.selectNodeContents(_vGateEl);r.collapse(true);const s=getSelection();s.removeAllRanges();s.addRange(r);}catch(_){}},80);
+    vGateClear();vGateError('');vGateShow=false;{const ey=$('#vGateEye');if(ey)ey.setAttribute('aria-pressed','false');_vGateEl.classList.remove('show');}ovOpen($('#vGate'));setTimeout(()=>{_vGateEl.focus();try{const r=document.createRange();r.selectNodeContents(_vGateEl);r.collapse(true);const s=getSelection();s.removeAllRanges();s.addRange(r);}catch(_){}},80);
   },
   enter(){
     const g=$('#vGate');if(OVS.indexOf(g)>-1)ovCloseUi(g);else g.classList.remove('show');
@@ -6388,9 +6427,9 @@ const VLT={
       try{await setVaultPin(a);if(this.pendingTransfer){const moved=await finishPendingVaultTransfer();if(moved)this.enter();return;}this.enter();   /* (v7.5.8 요청1) '다시 열어 주세요' 대신 곧바로 진입 */}catch(_){toast(L('Vault 설정에 실패했습니다','Could not set up the vault'));}return;
     }
     const v=vGatePlain;if(!v){toast(tr('Enter the password','dlg_pin_enter'));return}
-    if(this.failCount>=5&&Date.now()<this.lockUntil){const sec=Math.ceil((this.lockUntil-Date.now())/1000);toast(L(`너무 여러 번 틀렸습니다. ${sec}초 후 다시 시도하세요.`,`Too many attempts. Try again in ${sec}s.`));return;}
+    if(this.failCount>=5&&Date.now()<this.lockUntil){const sec=Math.ceil((this.lockUntil-Date.now())/1000);{const m=L(`너무 여러 번 틀렸습니다. ${sec}초 후 다시 시도하세요.`,`Too many attempts. Try again in ${sec}s.`);toast(m);vGateError(m);}return;}
     const ok=eqConst(await pinHash(v,this.auth.salt),this.auth.hash);
-    if(!ok){this.failCount=(this.failCount||0)+1;if(this.failCount>=5)this.lockUntil=Date.now()+Math.min(300000,5000*Math.pow(2,this.failCount-5));try{STORE.setItem('sk.vault.rate',JSON.stringify({fails:this.failCount,until:this.lockUntil}));}catch(_){}toast(tr('Wrong password','dlg_pin_wrong'));vGateClear();return;}
+    if(!ok){this.failCount=(this.failCount||0)+1;if(this.failCount>=5)this.lockUntil=Date.now()+Math.min(300000,5000*Math.pow(2,this.failCount-5));try{STORE.setItem('sk.vault.rate',JSON.stringify({fails:this.failCount,until:this.lockUntil}));}catch(_){}vGateClear();{const left=Math.max(0,5-this.failCount);vGateError(left>0?tr('Wrong password · {n} attempts left','gate_left').replace('{n}',left):tr('Wrong password','dlg_pin_wrong'));}return;}
     this.failCount=0;this.lockUntil=0;try{STORE.removeItem('sk.vault.rate');}catch(_){}const key=await pinKey(v,this.auth.salt);
     try{this._keyBits=new Uint8Array(await pbkdf2Bits(v,this.auth.salt,256));}catch(_){}
     const good=await this.decryptInto(key);
@@ -6789,7 +6828,7 @@ function makeTutorialOnce(){
        사용자가 내용을 고치면 그때부터 일반 노트처럼 dirty가 되어 올라간다. */
     const f={id:uid(),name:ko?'튜토리얼':'Tutorial',color:4,createdAt:now,_synced:true,deleted:false};
     const guide={id:uid(),folder:f.id,color:4,type:'note',title:ko?'SoonNote 사용 설명서':'SoonNote User Guide',
-      content:ko?'<p><b>환영합니다!</b></p><p>SoonNote는 빠르고 단순한 텍스트 노트앱입니다. 이 노트와 폴더는 언제든 지워도 됩니다.</p><p><b>1. 새 노트</b></p><p>• 하단의 ＋ 를 누르면 새 메모, ☑ 를 누르면 체크리스트가 만들어집니다.</p><p>• 노트는 입력하는 즉시 자동 저장됩니다. 저장 버튼이 없습니다.</p><p><b>2. 제목</b></p><p>• 제목을 비워 두면 본문의 첫째 줄이 목록에서 제목처럼 보이고, 저장 시 \'제목 없음\'으로 표시됩니다.</p><p>• 제목 칸을 한 번 누르면 본문 첫째 줄이 제목으로 자동 입력됩니다.</p><p>• 제목 칸을 두 번 톡톡 누르면 제목 전체가 선택되어 바로 새 제목을 쓸 수 있습니다.</p><p>• 폴더 화면에서 폴더 이름을 한 번 누르면 그 자리에서 이름을 바꿀 수 있습니다.</p><p><b>3. 글자 꾸미기 (T 버튼)</b></p><p>• 글자를 선택한 뒤 편집기 하단의 T 를 누르면 굵게 · 밑줄 · 글자색을 바꿀 수 있습니다.</p><p>• 글자 크기·굵기·자간·줄간격은 설정에서 앱 전체에 한 번에 적용됩니다.</p><p><b>4. 웹 주소</b></p><p>• https:// 로 시작하는 주소를 쓰고 줄바꿈하면 파란 링크가 됩니다. 보기 상태에서 누르면 열립니다.</p><p><b>5. 폴더와 이동</b></p><p>• 하단의 폴더 를 눌러 폴더 화면을 엽니다. 상단 ＋ 로 새 폴더를 만듭니다.</p><p>• 노트를 열고 상단 ⋮ → 이동 으로 다른 폴더, 첫 화면, Vault로 옮길 수 있습니다.</p><p>• 첫 화면에서 노트를 길게 누르면 여러 개를 선택해 한꺼번에 옮기거나 지울 수 있습니다.</p><p><b>6. 색상</b></p><p>• 노트마다 5가지 파스텔 색 중 하나를 고를 수 있습니다. 설정에서 새 노트의 기본 색을 정할 수 있습니다.</p><p><b>7. 검색</b></p><p>• 상단 검색창에 단어를 넣으면 제목과 본문에서 찾아 표시합니다.</p><p><b>8. 상단 고정 · 알림</b></p><p>• ⋮ → 상단 고정 으로 중요한 노트를 맨 위에 둡니다.</p><p>• ⋮ → 알림 설정 으로 원하는 시각에 알림을 받을 수 있습니다.</p><p><b>9. 노트 정보</b></p><p>• ⋮ → 노트 정보 에서 노트가 있는 폴더, 만든 날짜, 마지막 수정 시각, 글자 수를 볼 수 있습니다.</p><p><b>10. Vault (비밀 노트)</b></p><p>• 하단 🔐 를 눌러 Vault를 엽니다. 처음 한 번 비밀번호(8자 이상)를 정합니다.</p><p>• Vault 노트는 기기 안에서 암호화되어 저장됩니다. 비밀번호를 잊으면 복구할 수 없습니다.</p><p>• 설정에서 자동 잠금 시간을 정할 수 있습니다.</p><p><b>11. 사진</b></p><p>• 편집 중 📷 로 사진을 연결하면 사진 자체가 아니라 연결 정보만 저장되어 노트가 가벼운 상태로 유지됩니다.</p><p><b>12. 휴지통</b></p><p>• 지운 노트는 휴지통에 보관되며, 폴더 화면의 휴지통에서 복원하거나 영구 삭제할 수 있습니다.</p><p><b>13. 설정</b></p><p>• 하단 ⚙ 에서 테마, 첫 화면(전체/노트/폴더), 글자 크기·굵기·자간·줄간격, 노트박스 크기(한 줄 개수 — 첫 화면·폴더·Vault 공통), 언어를 바꿉니다.</p><p>• 설정은 화면을 닫으면 자동 저장됩니다.</p><p><b>14. 백업 (중요)</b></p><p>• <b>자동 백업</b>: 노트를 고칠 때마다 앱이 스스로 이 기기 안에 백업본(스냅샷)을 만듭니다(최소 5분 간격, 최근 12개 보관). 별도 조작이 필요 없습니다.</p><p>• <b>수동 백업</b>: 설정 → 💾 백업하기를 누르면 그 순간의 백업이 기기 목록에 저장되고, 동시에 백업 파일(.json)이 내려받기 폴더에 저장됩니다. 이 파일을 클라우드 드라이브나 PC에 옮겨 두면 휴대폰을 잃어버려도 복구할 수 있습니다.</p><p>• <b>Vault도 함께 백업됩니다</b>: 자동·수동 백업 모두 Vault 노트를 포함하지만, <b>암호화된 상태 그대로</b> 담깁니다. 백업 파일을 열어도 Vault 내용은 보이지 않으며, 복구할 때 그 백업 당시의 Vault 비밀번호가 필요합니다. 비밀번호 없이는 누구도(개발자도) 풀 수 없습니다.</p><p>• <b>복구</b>: 설정 → ♻️ 복구하기에서 기기 안의 백업 목록을 고르거나 백업 파일을 불러옵니다. 일반 노트는 기존 노트와 합쳐지고(더 최근 것이 유지), Vault는 암호화된 묶음째로 되살아납니다.</p><p>• <b>주의</b>: 앱을 삭제하거나 앱 데이터를 지우면 기기 안의 자동 백업도 함께 사라집니다. 중요한 노트는 가끔 수동 백업으로 파일을 받아 다른 곳에 보관하세요.</p><p><b>15. 동기화 (PC ↔ 휴대폰)</b></p><p>• 설정 → 계정에 로그인하면 일반 노트가 PC와 휴대폰 사이에서 동기화됩니다. 다른 기기에서 동시에 고친 내용은 지워지지 않고 \'사본\'으로 보존됩니다.</p><p>• <b>Vault 노트는 동기화되지 않습니다.</b> Vault는 이 기기 안에서만 암호화되어 보관되므로, 다른 기기로 옮기려면 백업 파일로 복구하세요.</p><p><b>16. 뒤로 가기</b></p><p>• 휴대폰의 뒤로 가기 버튼은 열려 있는 화면을 한 겹씩 닫습니다. 첫 화면에서 두 번 누르면 앱이 종료됩니다.</p>':'<p><b>Welcome!</b></p><p>SoonNote is a fast, simple text note app. You can delete this note and folder at any time.</p><p><b>1. New notes</b></p><p>• Tap ＋ at the bottom for a new note, or ☑ for a checklist.</p><p>• Notes save automatically as you type. There is no Save button.</p><p><b>2. Titles</b></p><p>• If you leave the title empty, the first line of the note is shown in the list and saved as \'No title\'.</p><p>• Tap the title box once to fill it with the first line of the note.</p><p>• Double-tap the title box to select the whole title and type a new one.</p><p>• In the folder screen, tap a folder name once to rename it in place.</p><p><b>3. Text style (T button)</b></p><p>• Select text, then tap T at the bottom of the editor for bold, underline and text color.</p><p>• Font size, weight, letter spacing and line spacing are set once for the whole app in Settings.</p><p><b>4. Web links</b></p><p>• Type an address starting with https:// and press Enter — it becomes a blue link. Tap it in view mode to open.</p><p><b>5. Folders and moving</b></p><p>• Tap Folders at the bottom to open the folder screen. Use ＋ at the top to create a folder.</p><p>• Open a note and use ⋮ → Move to move it to another folder, the first screen, or the Vault.</p><p>• Long-press a note on the first screen to select several and move or delete them together.</p><p><b>6. Colors</b></p><p>• Each note can use one of 5 pastel colors. The default color for new notes is set in Settings.</p><p><b>7. Search</b></p><p>• Type in the search box at the top to find words in titles and content.</p><p><b>8. Pin · Reminder</b></p><p>• ⋮ → Pin to top keeps important notes at the top.</p><p>• ⋮ → Reminder notifies you at a chosen time.</p><p><b>9. Note info</b></p><p>• ⋮ → Note info shows the folder, created date, last edited time and character count.</p><p><b>10. Vault (private notes)</b></p><p>• Tap 🔐 at the bottom to open the Vault. Set a password (8+ characters) the first time.</p><p>• Vault notes are encrypted on the device. If you forget the password it cannot be recovered.</p><p>• Auto-lock time can be set in Settings.</p><p><b>11. Photos</b></p><p>• Linking a photo with 📷 stores only a reference, not the photo itself, so notes stay small.</p><p><b>12. Trash</b></p><p>• Deleted notes go to the Trash in the folder screen, where they can be restored or deleted forever.</p><p><b>13. Settings</b></p><p>• Use ⚙ at the bottom for theme, start screen (All/Notes/Folders), font size·weight·letter spacing·line spacing, box size (notes per row — same for first screen, folders and Vault) and language.</p><p>• Settings are saved automatically when you close the screen.</p><p><b>14. Backup (important)</b></p><p>• <b>Automatic</b>: every time you change notes, the app saves a backup snapshot on this device by itself (at least 5 minutes apart, the latest 12 are kept). Nothing to do.</p><p>• <b>Manual</b>: Settings → 💾 Back up saves a snapshot to the device list and also downloads a backup file (.json). Copy that file to a cloud drive or PC so you can recover even if the phone is lost.</p><p>• <b>The Vault is included</b>: both automatic and manual backups contain your Vault notes, but <b>still encrypted</b>. Opening the file does not reveal Vault content, and restoring requires the Vault password from that time. Nobody (not even the developer) can open it without the password.</p><p>• <b>Restore</b>: Settings → ♻️ Restore lets you pick a backup from the device list or load a backup file. Normal notes are merged (newer version kept); the Vault is restored as one encrypted bundle.</p><p>• <b>Caution</b>: uninstalling the app or clearing its data also deletes the on-device automatic backups. Take a manual backup file now and then and keep it somewhere else.</p><p><b>15. Sync (PC ↔ phone)</b></p><p>• Sign in under Settings → Account to sync normal notes between PC and phone. Edits made on two devices at once are kept as a \'copy\', never lost.</p><p>• <b>Vault notes are not synced.</b> The Vault stays encrypted on this device only; to move it to another device, restore from a backup file.</p><p><b>16. Back button</b></p><p>• The phone\'s Back button closes one screen at a time. Press twice on the first screen to exit.</p>',items:[],pinned:false,createdAt:now,updatedAt:now,deleted:false,dirty:false,_synced:true,_tutorial:true};
+      content:ko?'<p><b>환영합니다!</b></p><p>SoonNote는 빠르고 단순한 텍스트 노트앱입니다. 이 노트와 폴더는 언제든 지워도 됩니다.</p><p><b>1. 새 노트</b></p><p>• 하단의 ＋ 를 누르면 새 메모, ☑ 를 누르면 체크리스트가 만들어집니다.</p><p>• 노트는 입력하는 즉시 자동 저장됩니다. 저장 버튼이 없습니다.</p><p><b>2. 제목</b></p><p>• 제목을 비워 두면 본문의 첫째 줄이 목록에서 제목처럼 보이고, 저장 시 \'제목 없음\'으로 표시됩니다.</p><p>• 제목 칸을 한 번 누르면 본문 첫째 줄이 제목으로 자동 입력됩니다.</p><p>• 제목 칸을 두 번 톡톡 누르면 제목 전체가 선택되어 바로 새 제목을 쓸 수 있습니다.</p><p>• 폴더 화면에서 폴더 이름을 한 번 누르면 그 자리에서 이름을 바꿀 수 있습니다.</p><p><b>3. 글자 꾸미기 (T 버튼)</b></p><p>• 글자를 선택한 뒤 편집기 하단의 T 를 누르면 굵게 · 밑줄 · 글자색을 바꿀 수 있습니다.</p><p>• 글자 크기·굵기·자간·줄간격은 설정에서 앱 전체에 한 번에 적용됩니다.</p><p><b>4. 웹 주소</b></p><p>• https:// 로 시작하는 주소를 쓰고 줄바꿈하면 파란 링크가 됩니다. 보기 상태에서 누르면 열립니다.</p><p><b>5. 폴더와 이동</b></p><p>• 하단의 폴더 를 눌러 폴더 화면을 엽니다. 상단 ＋ 로 새 폴더를 만듭니다.</p><p>• 노트를 열고 상단 ⋮ → 이동 으로 다른 폴더, 첫 화면, Vault로 옮길 수 있습니다.</p><p>• 첫 화면에서 노트를 길게 누르면 여러 개를 선택해 한꺼번에 옮기거나 지울 수 있습니다.</p><p><b>6. 색상</b></p><p>• 노트마다 5가지 파스텔 색 중 하나를 고를 수 있습니다. 설정에서 새 노트의 기본 색을 정할 수 있습니다.</p><p><b>7. 검색</b></p><p>• 상단 검색창에 단어를 넣으면 제목과 본문에서 찾아 표시합니다.</p><p><b>8. 상단 고정 · 알림</b></p><p>• ⋮ → 상단 고정 으로 중요한 노트를 맨 위에 둡니다.</p><p>• ⋮ → 알림 설정 으로 원하는 시각에 알림을 받을 수 있습니다.</p><p><b>9. 노트 정보</b></p><p>• ⋮ → 노트 정보 에서 노트가 있는 폴더, 만든 날짜, 마지막 수정 시각, 글자 수를 볼 수 있습니다.</p><p><b>10. Vault (비밀 노트)</b></p><p>• 하단 🔐 를 눌러 Vault를 엽니다. 처음 한 번 비밀번호(8자 이상)를 정합니다.</p><p>• Vault 노트는 기기 안에서 암호화되어 저장됩니다. 비밀번호를 잊으면 복구할 수 없습니다.</p><p>• 설정에서 자동 잠금 시간을 정할 수 있습니다.</p><p><b>11. 사진</b></p><p>• 편집 중 📷 로 사진을 연결하면 사진 자체가 아니라 연결 정보만 저장되어 노트가 가벼운 상태로 유지됩니다.</p><p><b>12. 휴지통</b></p><p>• 지운 노트는 휴지통에 보관되며, 폴더 화면의 휴지통에서 복원하거나 영구 삭제할 수 있습니다.</p><p><b>13. 설정</b></p><p>• 하단 ⚙ 에서 테마, 첫 화면(전체/노트/폴더), 글자 크기·굵기·자간·줄간격, 노트박스 크기(한 줄 개수 — 첫 화면·폴더·Vault 공통), 언어를 바꿉니다.</p><p>• 설정은 화면을 닫으면 자동 저장됩니다.</p><p><b>14. 백업 (중요)</b></p><p>• <b>자동 백업</b>: 노트를 고칠 때마다 앱이 스스로 백업본(스냅샷)을 만듭니다(최소 5분 간격, 최근 12개). <b>단, 이 기기 안에만 저장됩니다.</b> Google Drive 같은 클라우드로 자동으로 올라가지는 않습니다.</p><p>• <b>수동 백업(💾 백업하기)</b>: 기기 안 목록에 저장 + 백업 파일(.json)을 <b>폰의 다운로드 폴더</b>에 저장합니다. (Drive가 아닙니다.)</p><p>• <b>클라우드에 두려면(📤 백업 파일 내보내기)</b>: 폰에서는 공유 창이 열립니다. 여기서 <b>\'Drive에 저장\'</b>(또는 메일·메시지)을 고르면 Google Drive에 실제로 저장됩니다. PC에서는 저장 위치를 직접 고릅니다. 중요한 노트가 있다면 <b>이 방법으로 가끔 내보내 두세요.</b></p><p>• <b>Vault도 함께 백업됩니다</b>: 자동·수동 백업 모두 Vault 노트를 포함하지만, <b>암호화된 상태 그대로</b> 담깁니다. 백업 파일을 열어도 Vault 내용은 보이지 않으며, 복구할 때 그 백업 당시의 Vault 비밀번호가 필요합니다. 비밀번호 없이는 누구도(개발자도) 풀 수 없습니다.</p><p>• <b>복구</b>: 설정 → ♻️ 복구하기에서 기기 안의 백업 목록을 고르거나 백업 파일을 불러옵니다. 일반 노트는 기존 노트와 합쳐지고(더 최근 것이 유지), Vault는 암호화된 묶음째로 되살아납니다.</p><p>• <b>주의</b>: 앱을 삭제하거나 앱 데이터를 지우면 기기 안의 자동 백업도 함께 사라집니다. 중요한 노트는 가끔 수동 백업으로 파일을 받아 다른 곳에 보관하세요.</p><p><b>15. 동기화 (PC ↔ 휴대폰)</b></p><p>• 설정 → 계정에 로그인하면 일반 노트가 PC와 휴대폰 사이에서 동기화됩니다. 다른 기기에서 동시에 고친 내용은 지워지지 않고 \'사본\'으로 보존됩니다.</p><p>• <b>Vault 노트는 동기화되지 않습니다.</b> Vault는 이 기기 안에서만 암호화되어 보관되므로, 다른 기기로 옮기려면 백업 파일로 복구하세요.</p><p><b>16. 뒤로 가기</b></p><p>• 휴대폰의 뒤로 가기 버튼은 열려 있는 화면을 한 겹씩 닫습니다. 첫 화면에서 두 번 누르면 앱이 종료됩니다.</p>':'<p><b>Welcome!</b></p><p>SoonNote is a fast, simple text note app. You can delete this note and folder at any time.</p><p><b>1. New notes</b></p><p>• Tap ＋ at the bottom for a new note, or ☑ for a checklist.</p><p>• Notes save automatically as you type. There is no Save button.</p><p><b>2. Titles</b></p><p>• If you leave the title empty, the first line of the note is shown in the list and saved as \'No title\'.</p><p>• Tap the title box once to fill it with the first line of the note.</p><p>• Double-tap the title box to select the whole title and type a new one.</p><p>• In the folder screen, tap a folder name once to rename it in place.</p><p><b>3. Text style (T button)</b></p><p>• Select text, then tap T at the bottom of the editor for bold, underline and text color.</p><p>• Font size, weight, letter spacing and line spacing are set once for the whole app in Settings.</p><p><b>4. Web links</b></p><p>• Type an address starting with https:// and press Enter — it becomes a blue link. Tap it in view mode to open.</p><p><b>5. Folders and moving</b></p><p>• Tap Folders at the bottom to open the folder screen. Use ＋ at the top to create a folder.</p><p>• Open a note and use ⋮ → Move to move it to another folder, the first screen, or the Vault.</p><p>• Long-press a note on the first screen to select several and move or delete them together.</p><p><b>6. Colors</b></p><p>• Each note can use one of 5 pastel colors. The default color for new notes is set in Settings.</p><p><b>7. Search</b></p><p>• Type in the search box at the top to find words in titles and content.</p><p><b>8. Pin · Reminder</b></p><p>• ⋮ → Pin to top keeps important notes at the top.</p><p>• ⋮ → Reminder notifies you at a chosen time.</p><p><b>9. Note info</b></p><p>• ⋮ → Note info shows the folder, created date, last edited time and character count.</p><p><b>10. Vault (private notes)</b></p><p>• Tap 🔐 at the bottom to open the Vault. Set a password (8+ characters) the first time.</p><p>• Vault notes are encrypted on the device. If you forget the password it cannot be recovered.</p><p>• Auto-lock time can be set in Settings.</p><p><b>11. Photos</b></p><p>• Linking a photo with 📷 stores only a reference, not the photo itself, so notes stay small.</p><p><b>12. Trash</b></p><p>• Deleted notes go to the Trash in the folder screen, where they can be restored or deleted forever.</p><p><b>13. Settings</b></p><p>• Use ⚙ at the bottom for theme, start screen (All/Notes/Folders), font size·weight·letter spacing·line spacing, box size (notes per row — same for first screen, folders and Vault) and language.</p><p>• Settings are saved automatically when you close the screen.</p><p><b>14. Backup (important)</b></p><p>• <b>Automatic</b>: every time you change notes, the app saves a backup snapshot by itself (at least 5 minutes apart, latest 12). <b>It stays on this device only</b> — it is not uploaded to Google Drive or any cloud.</p><p>• <b>Manual (💾 Back up)</b>: saves to the on-device list + writes a backup file (.json) to the <b>phone Downloads folder</b> (not Drive).</p><p>• <b>To keep a copy in the cloud (📤 Share backup file)</b>: on a phone the share sheet opens — choose <b>\'Save to Drive\'</b> (or email/messages) and the file really goes to Google Drive. On PC you pick the location. <b>Do this now and then for important notes.</b></p><p>• <b>The Vault is included</b>: both automatic and manual backups contain your Vault notes, but <b>still encrypted</b>. Opening the file does not reveal Vault content, and restoring requires the Vault password from that time. Nobody (not even the developer) can open it without the password.</p><p>• <b>Restore</b>: Settings → ♻️ Restore lets you pick a backup from the device list or load a backup file. Normal notes are merged (newer version kept); the Vault is restored as one encrypted bundle.</p><p>• <b>Caution</b>: uninstalling the app or clearing its data also deletes the on-device automatic backups. Take a manual backup file now and then and keep it somewhere else.</p><p><b>15. Sync (PC ↔ phone)</b></p><p>• Sign in under Settings → Account to sync normal notes between PC and phone. Edits made on two devices at once are kept as a \'copy\', never lost.</p><p>• <b>Vault notes are not synced.</b> The Vault stays encrypted on this device only; to move it to another device, restore from a backup file.</p><p><b>16. Back button</b></p><p>• The phone\'s Back button closes one screen at a time. Press twice on the first screen to exit.</p>',items:[],pinned:false,createdAt:now,updatedAt:now,deleted:false,dirty:false,_synced:true,_tutorial:true};
     const items=(ko?['왼쪽 네모를 눌러 완료 표시하기','항목 끝에서 Enter(줄바꿈)를 누르면 다음 항목이 생깁니다','항목을 비우고 Enter를 누르면 지워집니다',"상단 ⋮ → '메모로 전환' 으로 일반 메모로 바꿀 수 있습니다",'이 항목은 완료된 모습입니다']
       :['Tap the box on the left to mark done','Press Enter at the end of an item to add the next one','Empty an item and press Enter to remove it',"Use ⋮ → 'To note' to turn this into a plain note",'This item is shown as done']).map((t,i,a)=>({text:t,done:i===a.length-1}));
     const check={id:uid(),folder:f.id,color:4,type:'check',title:ko?'체크리스트 사용해 보기':'Try a checklist',content:'',items,pinned:false,createdAt:now-1,updatedAt:now-1,deleted:false,dirty:false,_synced:true,_tutorial:true};
@@ -6797,6 +6836,31 @@ function makeTutorialOnce(){
   }catch(_){}
 }
 makeTutorialOnce();
+/* ══ (v7.8.6 ④) 주제별 매뉴얼 노트 7개 — 새 사용자·기존 사용자 모두.
+   규칙: 기존 '튜토리얼' 폴더/노트는 절대 건드리지 않는다. 매뉴얼은 별도 '매뉴얼' 폴더에, 노트마다 고정 키(_manual:'backup' 등)로 식별.
+   MANUAL_VER 가 올라가면 내용이 바뀐 노트만 갱신하되, 사용자가 편집한 노트(dirty 또는 _manualHash 불일치)는 덮어쓰지 않고 그대로 둔다.
+   로컬 전용(_synced:true, dirty:false) → 서버 동기화로 중복되지 않는다. */
+const MANUAL_KO=[["시작하기","<p><b>SoonNote에 오신 것을 환영합니다!</b></p> <p>SoonNote는 빠르고 단순한 노트앱입니다. 이 '매뉴얼' 폴더의 노트는 언제든 지워도 됩니다.</p> <p><b>첫 화면</b></p><p>• 노트가 색깔 상자(노트박스)로 늘어서 있습니다. 상자를 누르면 열립니다.</p><p>• 하단 ＋ : 새 메모 · ☑ : 새 체크리스트</p><p>• 상단 🔍 검색, 📁 폴더, ⋮ 메뉴, ⚙ 설정</p> <p><b>노트박스 한 줄 개수</b></p><p>• 설정 → 노트박스 크기, 또는 폴더·Vault의 ⋮ 메뉴에서 1~4개를 고릅니다. 첫 화면·폴더 안·Vault 모두 같은 값을 씁니다(기본 3).</p> <p><b>뒤로 가기</b></p><p>• 폰의 뒤로 가기 버튼은 열려 있는 창을 한 겹씩 닫습니다. 노트를 닫으면 자동 저장됩니다.</p> <p><b>다른 매뉴얼</b></p><p>• 노트 작성·편집 / 폴더와 정리 / Vault / 백업과 복구 / 동기화 / 설정·글꼴 — 이 폴더의 다른 노트를 보세요.</p>"],["노트 작성·편집","<p><b>새 노트</b></p><p>• ＋ 를 누르면 바로 씁니다. 제목을 비우면 '제목 없음'으로 저장됩니다.</p> <p><b>서식</b></p><p>• 글자를 드래그해 고른 뒤 도구줄에서 굵게·기울임·밑줄·색을 바꿉니다.</p><p>• 웹 주소(URL)를 쓰고 Enter를 누르면 파란 밑줄 링크가 됩니다.</p> <p><b>체크리스트</b></p><p>• 왼쪽 네모를 눌러 완료 표시. 항목 끝에서 Enter → 다음 항목. 빈 항목에서 Enter → 삭제.</p><p>• ⋮ → '메모로 전환' / '체크리스트로 전환'</p> <p><b>색상</b></p><p>• 노트 안 팔레트에서 5가지 파스텔 중 하나를 고릅니다. 첫 화면에서는 색상순 정렬도 됩니다.</p> <p><b>고정 알림</b></p><p>• ⋮ → 📌 고정 : 알림창에 노트를 붙여 둡니다(고정 해제 전까지 유지).</p> <p><b>노트 정보</b></p><p>• ⋮ → ⓘ 노트 정보 : 만든 시각·수정 시각·글자 수.</p> <p><b>휴지통</b></p><p>• 지운 노트는 휴지통에 30일 보관 후 자동 삭제됩니다. 그 전엔 되살릴 수 있습니다.</p>"],["폴더와 정리","<p><b>폴더 만들기</b></p><p>• 상단 📁 → ＋ 새 폴더. 이름과 색(5색)을 정합니다.</p> <p><b>노트를 폴더로 옮기기</b></p><p>• 노트 안 ⋮ → '이동' → 폴더 선택.</p><p>• 여러 개 한꺼번에: 첫 화면·폴더 화면에서 ⋮ → '노트 이동' → 체크 → 이동.</p> <p><b>폴더 화면</b></p><p>• 폴더를 누르면 그 안의 노트만 보입니다. 상단 제목을 누르면 바로 이름 변경.</p><p>• ⋮ 메뉴: 노트박스 크기 · 폴더 색상 · 이름 변경 · 폴더를 휴지통으로</p> <p><b>정렬</b></p><p>• 폴더 목록 ⋮ → 정렬 기준(색상순 · 이름순 · 최근 만든 순 · 노트 많은 순)</p> <p><b>폴더 삭제</b></p><p>• 폴더를 휴지통으로 보내도 안의 노트는 지워지지 않고 '폴더 없음'으로 남습니다.</p>"],["Vault (비밀 노트)","<p><b>Vault란</b></p><p>• 비밀번호로 잠기는 별도 공간입니다. Vault 노트는 <b>이 기기 안에서 암호화(AES-256)되어 저장</b>되며, 비밀번호 없이는 누구도(개발자도) 열 수 없습니다.</p> <p><b>처음 만들기</b></p><p>• 첫 화면 ⋮ → Vault → 비밀번호 8자 이상 설정(문장형 추천). <b>잊으면 복구할 방법이 없습니다.</b></p> <p><b>자동 잠금</b></p><p>• Vault ⋮ 또는 설정에서 1·5·15·30분을 고릅니다. 앱을 벗어나면 시간이 지난 뒤 다시 비밀번호를 묻습니다.</p> <p><b>노트 옮기기</b></p><p>• 일반 노트 ⋮ → '이동' → Vault 를 고르면 암호화되어 들어갑니다. 반대로도 가능합니다.</p> <p><b>동기화되지 않음</b></p><p>• Vault 노트는 서버로 올라가지 않습니다. 다른 기기로 옮기려면 '백업과 복구' 매뉴얼의 백업 파일을 쓰세요.</p> <p><b>비밀번호 변경</b></p><p>• 설정 → Vault 비밀번호. 기존 노트가 새 비밀번호로 다시 암호화됩니다.</p>"],["백업과 복구 (중요)","<p><b>백업은 두 종류입니다: 폰 안 자동 백업 / 내가 직접 하는 수동 백업</b></p> <p><b>1. 폰 안 자동 백업 (아무것도 안 해도 됨)</b></p> <p>• 일반 노트·폴더·사진 링크를 고칠 때마다 앱이 스스로 백업본(스냅샷)을 만듭니다. 최소 5분 간격, 최근 12개 보관.</p> <p>• <b>Vault도 자동 백업에 들어갑니다 — 단, 암호화된 상태 그대로.</b> 비밀번호 없이는 열 수 없습니다.</p> <p>• <b>저장 위치: 이 폰 안(앱 저장공간)뿐입니다.</b> Google Drive 같은 클라우드로 자동으로 올라가지 않습니다. 앱을 삭제하거나 앱 데이터를 지우면 함께 사라집니다.</p> <p><b>2. 수동 백업 — 💾 백업하기</b></p> <p>• 설정 → 💾 백업하기 : 폰 안 백업 목록에 저장 + 백업 파일(.json)을 <b>폰의 다운로드 폴더</b>에 저장합니다. (Drive가 아닙니다.)</p> <p><b>3. Google Drive에 저장 — 📤 백업 파일 내보내기</b></p> <p>• 설정 → 📤 백업 파일 내보내기 : 폰에서는 <b>공유 창</b>이 열립니다. 여기서 <b>'드라이브에 저장'</b>(또는 메일·메시지)을 고르면 Google Drive에 실제로 저장됩니다.</p> <p>• PC에서는 저장 위치를 직접 고르는 창이 열립니다.</p> <p>• 공유 창이 없는 환경이면 자동으로 <b>다운로드 폴더</b>에 저장되고, 그렇게 됐다고 알려 줍니다.</p> <p>• 백업이 끝나면 <b>파일 이름 · 노트 개수 · Vault 포함 여부 · 실제 저장된 위치</b>가 화면에 표시됩니다. 꼭 확인하세요.</p> <p><b>4. 백업 파일 안에 무엇이 들어가나</b></p> <p>• 일반 노트·폴더·사진 링크: 평문(그대로)</p> <p>• Vault: <b>암호문만</b>. 파일을 열어 봐도 Vault 제목·내용은 보이지 않습니다.</p> <p>• Vault를 쓰는데 백업에 Vault가 빠지는 상황이면 진행 전에 <b>경고창</b>이 뜹니다. 그때는 Vault를 한 번 연 뒤 다시 백업하세요.</p> <p><b>5. 복구 — ♻️ 복구하기 (폰 안 백업 목록)</b></p> <p>• 설정 → ♻️ 복구하기 → 목록에서 시각·노트 개수·🔐 표시를 보고 고릅니다.</p> <p>• <b>보기 / 복구</b>를 누르면 일반 노트가 <b>제목과 내용 미리보기</b>와 함께 나옵니다. <b>체크한 것만 복구</b>하거나 모두 복구할 수 있습니다.</p> <p>• 복구는 기존 노트를 지우지 않습니다. 없는 노트는 추가되고, 백업이 더 새로우면 갱신됩니다.</p> <p><b>6. 파일에서 가져오기 — 📥 (Google Drive 등에 둔 파일)</b></p> <p>• 설정 → 📥 가져오기 → 파일 선택 → <b>'전체 가져오기' 또는 '골라서 가져오기'</b>를 묻습니다.</p> <p>• 골라서 가져오기: 위 5번과 같은 화면에서 제목·내용을 보고 체크한 노트만 가져옵니다.</p> <p>• 예전 버전에서 만든 백업 파일도 그대로 가져올 수 있습니다.</p> <p><b>7. Vault 복구</b></p> <p>• 백업에 🔐 Vault가 있으면 '이 Vault 스냅샷 복구' 버튼이 따로 있습니다. 누르면 <b>현재 Vault 전체가 백업 당시 Vault로 교체</b>됩니다(확인창).</p> <p>• 복구 뒤 Vault를 열 때는 <b>그 백업을 만들 당시의 Vault 비밀번호</b>가 필요합니다.</p> <p><b>권장 습관</b></p><p>• 중요한 노트가 늘었다면 가끔 📤 내보내기로 Google Drive에 파일을 올려 두세요. 폰을 잃어버려도 그 파일 하나로 일반 노트와 Vault를 모두 되살릴 수 있습니다.</p>"],["동기화 (PC ↔ 폰)","<p><b>무엇이 동기화되나</b></p><p>• 설정 → 계정에 로그인하면 <b>일반 노트와 폴더</b>가 PC와 폰 사이에서 동기화됩니다.</p><p>• <b>Vault 노트는 동기화되지 않습니다.</b> 기기 안에서만 암호화되어 보관됩니다.</p><p>• 사진은 링크와 정보만 동기화되고 사진 파일 자체는 올라가지 않습니다.</p> <p><b>충돌</b></p><p>• 두 기기에서 같은 노트를 동시에 고치면 지우지 않고 '사본'으로 둘 다 보존합니다.</p> <p><b>오프라인</b></p><p>• 인터넷이 없어도 노트는 기기에 먼저 저장되고, 연결되면 올라갑니다.</p> <p><b>문제가 있을 때</b></p><p>• 동기화 실패는 하루 한 번만 알려 줍니다. 로컬 노트는 절대 지우지 않습니다.</p>"],["설정·글꼴","<p><b>글자</b></p><p>• 설정 → 노트 글자 조절: <b>크기(10~25pt) · 자간 · 줄간격</b>을 숫자 목록에서 고릅니다. 슬라이더가 아니라서 스쳐도 바뀌지 않습니다.</p><p>• 굵기: 보통 · 중간굵게 · 굵게. 첫 화면·폴더·Vault 노트 모두 같은 글자 설정을 씁니다.</p> <p><b>보기</b></p><p>• 테마(자동·밝게·어둡게) · 보기 방식(격자·목록) · 정렬 · 노트박스 크기(한 줄 개수) · 첫 화면(전체·노트·폴더)</p> <p><b>언어</b></p><p>• 한국어·English 등. 바꾸면 앱이 다시 열립니다.</p> <p><b>데이터</b></p><p>• 💾 백업하기 · ♻️ 복구하기 · 📤 내보내기 · 📥 가져오기 → '백업과 복구' 매뉴얼 참고.</p><p>• '모두 삭제'는 되돌릴 수 없습니다. 먼저 백업하세요.</p> <p><b>설정 저장</b></p><p>• 설정 창을 닫으면 자동 저장됩니다.</p>"]];
+const MANUAL_EN=[["Getting started","<p><b>Welcome to SoonNote!</b></p><p>SoonNote is a fast, simple notes app. You can delete this 'Manual' folder any time.</p> <p><b>Home screen</b></p><p>• Notes appear as colored boxes. Tap one to open.</p><p>• Bottom ＋ : new note · ☑ : new checklist</p><p>• Top: 🔍 search, 📁 folders, ⋮ menu, ⚙ settings</p> <p><b>Boxes per row</b></p><p>• Settings → Box size, or the ⋮ menu inside a folder / the Vault: 1–4. Home, folders and the Vault share the same value (default 3).</p> <p><b>Back button</b></p><p>• The phone's Back closes one layer at a time. Closing a note saves it.</p> <p><b>Other manuals</b></p><p>• Writing & editing / Folders / Vault / Backup & restore / Sync / Settings & fonts — see the other notes in this folder.</p>"],["Writing & editing","<p><b>New note</b></p><p>• Tap ＋ and start typing. An empty title is saved as 'No title'.</p> <p><b>Formatting</b></p><p>• Select text, then use the toolbar for bold, italic, underline and color.</p><p>• Type a URL and press Enter to make a blue underlined link.</p> <p><b>Checklists</b></p><p>• Tap the box on the left to mark done. Enter at the end of an item adds the next; Enter on an empty item removes it.</p><p>• ⋮ → 'To note' / 'To checklist'</p> <p><b>Colors</b></p><p>• Pick one of 5 pastel colors inside the note. Home can sort by color.</p> <p><b>Pinned notification</b></p><p>• ⋮ → 📌 Pin keeps the note in the notification shade until you unpin it.</p> <p><b>Note info</b></p><p>• ⋮ → ⓘ Note info: created, modified, character count.</p> <p><b>Trash</b></p><p>• Deleted notes stay in Trash for 30 days and can be restored until then.</p>"],["Folders","<p><b>Create</b></p><p>• Top 📁 → ＋ New folder. Choose a name and one of 5 colors.</p> <p><b>Move notes</b></p><p>• Inside a note: ⋮ → 'Move' → pick a folder.</p><p>• Many at once: ⋮ → 'Move notes' → check → move.</p> <p><b>Folder screen</b></p><p>• Tap a folder to see only its notes. Tap the title to rename inline.</p><p>• ⋮ menu: Box size · Folder color · Rename · Move folder to trash</p> <p><b>Sort</b></p><p>• Folder list ⋮ → Sort by (color · name · recently created · most notes)</p> <p><b>Deleting a folder</b></p><p>• Trashing a folder does not delete its notes — they become 'no folder'.</p>"],["Vault (private notes)","<p><b>What it is</b></p><p>• A separate space locked by a password. Vault notes are <b>encrypted (AES-256) on this device</b>; nobody — not even the developer — can open them without the password.</p> <p><b>First setup</b></p><p>• Home ⋮ → Vault → set a password of 8+ characters (a phrase is best). <b>If you forget it, there is no recovery.</b></p> <p><b>Auto-lock</b></p><p>• Vault ⋮ or Settings: 1 · 5 · 15 · 30 minutes. After you leave the app and the time passes, the password is asked again.</p> <p><b>Moving notes</b></p><p>• Normal note ⋮ → 'Move' → Vault encrypts it into the Vault. The reverse also works.</p> <p><b>Not synced</b></p><p>• Vault notes never go to the server. To move them to another device, use a backup file (see 'Backup & restore').</p> <p><b>Change password</b></p><p>• Settings → Vault password. Existing notes are re-encrypted with the new one.</p>"],["Backup & restore (important)","<p><b>There are two kinds: automatic on-phone backup / manual backup you make yourself</b></p> <p><b>1. Automatic on-phone backup (nothing to do)</b></p> <p>• Whenever you change notes, folders or photo links, the app saves a snapshot by itself. At least 5 minutes apart, latest 12 kept.</p> <p>• <b>The Vault is included — but still encrypted.</b> It cannot be opened without the password.</p> <p>• <b>Location: this phone only (app storage).</b> It is NOT uploaded to Google Drive or any cloud. Uninstalling the app or clearing its data deletes it.</p> <p><b>2. Manual — 💾 Back up</b></p> <p>• Settings → 💾 Back up: saves to the on-phone list + writes a backup file (.json) to the <b>phone Downloads folder</b> (not Drive).</p> <p><b>3. Save to Google Drive — 📤 Share backup file</b></p> <p>• Settings → 📤 Share backup file: on a phone the <b>share sheet</b> opens. Choose <b>'Save to Drive'</b> (or email/messages) and the file really goes to Google Drive.</p> <p>• On PC a save-location dialog opens.</p> <p>• If sharing is not available, the file is saved to the <b>Downloads folder</b> instead and the app tells you so.</p> <p>• After every backup the app shows <b>file name · note count · whether the Vault is included · where it was actually saved</b>. Check it.</p> <p><b>4. What is inside a backup file</b></p> <p>• Normal notes, folders, photo links: plain (as-is)</p> <p>• Vault: <b>ciphertext only</b>. Opening the file never reveals Vault titles or contents.</p> <p>• If you use the Vault and it would be missing from a backup, a <b>warning</b> appears first. Unlock the Vault once and back up again.</p> <p><b>5. Restore — ♻️ Restore (on-phone list)</b></p> <p>• Settings → ♻️ Restore → pick by time, note count and the 🔐 mark.</p> <p>• <b>View / Restore</b> lists normal notes with <b>title and content preview</b>. Restore <b>only the checked ones</b> or all.</p> <p>• Restoring never deletes current notes: missing notes are added, newer backup content is applied.</p> <p><b>6. Import a file — 📥 (e.g. from Google Drive)</b></p> <p>• Settings → 📥 Import → pick the file → you are asked <b>'Import all' or 'Choose'</b>.</p> <p>• Choose: the same screen as in 5 — preview titles/contents and import only the checked notes.</p> <p>• Backup files from older versions import fine.</p> <p><b>7. Vault restore</b></p> <p>• If the backup contains 🔐 Vault, a separate 'Restore this vault snapshot' button appears. It <b>replaces the whole current Vault</b> with the backup's Vault (confirmation shown).</p> <p>• To open the restored Vault you need <b>the Vault password from when that backup was made</b>.</p> <p><b>Good habit</b></p><p>• Now and then use 📤 Share to put a file on Google Drive. Even if the phone is lost, that one file restores both normal notes and the Vault.</p>"],["Sync (PC ↔ phone)","<p><b>What syncs</b></p><p>• Sign in under Settings → Account and <b>normal notes and folders</b> sync between PC and phone.</p><p>• <b>Vault notes are never synced.</b> They stay encrypted on the device.</p><p>• Photos: only links and info sync, never the image files.</p> <p><b>Conflicts</b></p><p>• If the same note is edited on two devices at once, both versions are kept as a 'copy' — nothing is lost.</p> <p><b>Offline</b></p><p>• Notes are saved on the device first and uploaded when online.</p> <p><b>Problems</b></p><p>• Sync failures are reported once a day. Local notes are never deleted.</p>"],["Settings & fonts","<p><b>Text</b></p><p>• Settings → Note text controls: pick <b>size (10–25pt) · letter spacing · line spacing</b> from number lists. No sliders, so nothing changes by accident.</p><p>• Weight: Normal · Medium bold · Bold. Home, folders and the Vault use the same text settings.</p> <p><b>View</b></p><p>• Theme (auto · light · dark) · view (grid · list) · sort · box size (per row) · first screen (all · notes · folders)</p> <p><b>Language</b></p><p>• Korean, English and more. The app reopens after a change.</p> <p><b>Data</b></p><p>• 💾 Back up · ♻️ Restore · 📤 Share · 📥 Import → see 'Backup & restore'.</p><p>• 'Delete all' cannot be undone. Back up first.</p> <p><b>Saving settings</b></p><p>• Settings are saved automatically when you close the panel.</p>"]];
+const MANUAL_VER=1;
+function manualHash(str){let h=0;for(let i=0;i<str.length;i++){h=(h*31+str.charCodeAt(i))|0;}return String(h);}
+function makeManualNotes(){
+  try{
+    if((S.settings.manualVer|0)>=MANUAL_VER)return;
+    const ko=IS_KO, now=Date.now(), src=ko?MANUAL_KO:MANUAL_EN, keys=['start','write','folder','vault','backup','sync','settings'];
+    let f=S.folders.find(x=>x._manual&&!x.deleted);
+    if(!f){f={id:uid(),name:ko?'매뉴얼':'Manual',color:4,createdAt:now,_synced:true,deleted:false,_manual:true};S.folders.push(f);}
+    src.forEach(([title,content],i)=>{
+      const key=keys[i], h=manualHash(title+content);
+      const ex=S.notes.find(n=>n._manual===key&&!n.deleted);
+      if(ex){ if(ex._manualHash===h||ex.dirty||ex._manualHash===undefined)return;   /* 사용자가 고친 노트/이미 최신 → 그대로 */
+              ex.title=title;ex.content=content;ex.updatedAt=now-i;ex._manualHash=h;return; }
+      S.notes.push({id:uid(),folder:f.id,color:4,type:'note',title,content,items:[],pinned:false,createdAt:now-i,updatedAt:now-i,deleted:false,dirty:false,_synced:true,_tutorial:true,_manual:key,_manualHash:h});
+    });
+    S.settings.manualVer=MANUAL_VER; save();
+  }catch(_){}
+}
+makeManualNotes();
 purgeOldTrash();
 /* (v7.7.3) 첫 화면 설정 적용: 전체(기본) / 노트(폴더 없는 노트) / 폴더(폴더 화면 열기) */
 if(S.settings.startScreen==='notes'){ui.folder='';ui.nofolder=true;}
