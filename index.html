@@ -283,7 +283,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-xeoRU9FyQcbmFlWiYePFyOc58GzQO5wubSXnO2m7yfI='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-HDdKu6JRg3F8CPuu7wJiEyg9l3gL7BnDtiwHLJlxD/o='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
 <!-- (요구3) 전화기 화면에 딱 맞게 · 자동 확대(핀치 줌 포함) 완전 금지 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#f5f2ef">
@@ -1293,7 +1293,7 @@ input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numer
 #vGate .vgateErr{font-size:.72em;color:#c9302c;min-height:1.25em;margin:0 0 .55em;font-weight:700;word-break:keep-all}
 #vGate .vpass.err{border-color:#d9534f!important;background:#fff5f5;animation:vshake .3s}
 @keyframes vshake{0%,100%{transform:none}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
-#vGate .vpass.show{letter-spacing:.02em;font-size:.95em}
+#vGate .vpass.show{letter-spacing:0;font-size:.8em;padding-left:.4em;padding-right:1.9em}
 #vGate .vgateNote{font-size:.66em;color:#8a8e94;margin:.85em 0 0;word-break:keep-all}
 html[data-theme="dark"] #vGate .vgateCard{background:#1e2024;color:#f1f1f1}
 html[data-theme="dark"] #vGate .vgateIco{background:#2b3a30;color:#9cc3a6}
@@ -1303,15 +1303,15 @@ html[data-theme="dark"] #vGate .vgateEye{color:#ddd}
 html[data-theme="dark"] #vGate .vgateNote{color:#7f848b}
 @keyframes vpop{from{transform:scale(.94);opacity:0}to{transform:none;opacity:1}}
 #vGate .vgateTitle{font-size:1.15em;font-weight:800;color:inherit;margin:0 0 .25em;letter-spacing:-.01em}
-#vGate .vpass{display:block;width:100%;box-sizing:border-box;text-align:center;font-size:1.05em;
-  letter-spacing:.14em;padding:.45em 2.2em .45em .9em;border-radius:12px;margin:0;
-  background:#f3f4f6;border:2px solid #e3e5e9;color:#111;outline:none;min-height:2.2em;white-space:nowrap;overflow:hidden;
+#vGate .vpass{display:block;width:100%;box-sizing:border-box;text-align:center;font-size:.92em;
+  letter-spacing:.05em;padding:.34em 1.9em .34em .6em;border-radius:12px;margin:0;
+  background:#f3f4f6;border:2px solid #e3e5e9;color:#111;outline:none;min-height:2em;white-space:nowrap;overflow:hidden;
   word-break:break-all;caret-color:#111}   /* (v7.5.6 요청1) 입력창 같은 모양의 contenteditable */
 #vGate .vpass:empty::before{content:attr(data-ph);color:#9a9aa0;letter-spacing:0}
 #vGate .vpass:focus{border-color:#7f9c86;background:#fff;box-shadow:0 0 0 4px rgba(127,156,134,.18)}
 html[data-theme="dark"] #vGate .vpass:focus{background:#2a2d32}
 #vGate input[type=password]:focus{border-color:var(--accent);background:#fff}
-#vGate .btn.vunlock{width:100%;margin:0;display:block;padding:.8em;border-radius:14px;font-size:.92em;font-weight:800;background:#7f9c86!important;color:#fff!important;border:0;box-shadow:0 6px 18px rgba(127,156,134,.35)}
+#vGate .btn.vunlock{width:70%;margin:0 auto;display:block;padding:.72em;border-radius:14px;font-size:.92em;font-weight:800;background:#7f9c86!important;color:#fff!important;border:0;box-shadow:0 6px 18px rgba(127,156,134,.35)}
 #vGate .hidden{display:none!important}
 
 /* 토스트 */
@@ -1779,7 +1779,7 @@ html[data-theme="dark"] #folderOverlay:not(.vault-folder),html[data-theme="dark"
   <div class="vgateCard">   <!-- (v7.8.7 ③) 화면만 개선: 아이콘·제목·설명·표시/숨김·인라인 오류. 입력 방식/검증 로직은 그대로 -->
     <div class="vgateIco" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10.5" width="16" height="10" rx="2.5"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.5" r="1.3" fill="currentColor" stroke="none"/></svg></div>
     <div class="vgateTitle">Vault</div>
-    <div class="vgateSub" data-i18n="gate_sub">Your private notes are encrypted on this device.<br>Enter the password to unlock.</div>
+    <div class="vgateSub" data-i18n="gate_sub">Your private notes are encrypted on this device.</div>
     <div class="vgateField">
       <div class="vpass" id="vGatePass" role="password" contenteditable="plaintext-only" data-ph="Password" data-i18n-ph="gate_title" spellcheck="false" aria-label="Vault password"></div>   <!-- (v7.5.6 요청1) contenteditable 마스킹 입력 — 브라우저(구글) 저장된 비밀번호 자동완성 대상 아님 -->
       <button type="button" class="vgateEye" id="vGateEye" aria-label="Show password" aria-pressed="false"><svg class="eyeOn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><svg class="eyeOff" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 10.6a3 3 0 0 0 4.2 4.2"/><path d="M9.9 5.1A10.4 10.4 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4.1"/><path d="M6.6 6.6A17.4 17.4 0 0 0 2 12s3.5 7 10 7a9.7 9.7 0 0 0 4.4-1"/></svg></button>
@@ -1826,7 +1826,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='soonenote';
-const APP_VER='7.8.9';
+const APP_VER='7.9.0';
 /* ══════════ (v7.6.1) 기능 스위치 ══════════
    sync:false 로 바꾸면 동기화(Supabase)가 UI·네트워크·타이머 모두에서 비활성화된다.
    SYNC 객체와 계정 화면 코드는 남아 있되(프리미엄 대비) 어떤 경로도 실행되지 않는다.
@@ -1853,7 +1853,7 @@ const cnName=i=>((IS_KO?COLOR_NAMES[i]:COLOR_NAMES_EN[i])||'');
 const TEXT_COLORS=['#3a3430','#8f6259','#8a7358','#6f7460','#5d6b74','#6f6889','#a89f97'];
 const HI_COLORS  =['#fbefe3','#fbe7e8','#e7f4eb','#e6eff8','#efebf9','transparent'];   /* (v7.7.5) 새 팔레트 본문색 */
 /* (v7.0 요청4) T창의 글자색 3개. 노트 배경 색이 아니라 '고른 글자'에 들어가는 색이다. */
-const TP_COLORS=[{c:'#C62828',ko:'진한 빨강',en:'Deep red'}];   /* (v7.6.2) 파랑·초록 제거 */
+const TP_COLORS=[{c:'#C62828',ko:'진한 빨강',en:'Deep red'},{c:'#1565C0',ko:'파랑',en:'Blue'}];   /* (v7.9.0) 빨강 + 파랑. 같은 색을 다시 누르면 검정(색 지움) */
 
 const LS={notes:'sk.notes',folders:'sk.folders',settings:'sk.settings'};
 /* (요구10) 앱 언어 = 전화기 시스템 언어(한국어면 한국어, 그 외 영어). + 설정에서 수동 강제(영어/한국어).
@@ -1944,7 +1944,7 @@ const I18N={
   empty_folder:{en:'No notes in this folder'},empty_trash:{en:'Trash is empty (deleted notes are removed after 30 days)'},
   chip_all:{en:'All'},chip_notes:{en:'Notes'},chip_addfolder:{en:'+ Folder'},
   chip_backnormal:{en:'← Normal notes'},folder_mgr:{en:'Folders'},vault_folder_mgr:{en:'🔐 Vault folders'},
-  gate_title:{en:'Password'},gate_ok:{en:'Unlock'},gate_sub:{en:'Your private notes are encrypted on this device.<br>Enter the password to unlock.'},gate_note:{en:'If you forget the password, it cannot be recovered.'},gate_left:{en:'Wrong password · {n} attempts left'},
+  gate_title:{en:'Password'},gate_ok:{en:'Unlock'},gate_sub:{en:'Your private notes are encrypted on this device.'},gate_note:{en:'If you forget the password, it cannot be recovered.'},gate_left:{en:'Wrong password · {n} attempts left'},
   toast_saved:{en:'Saved'},toast_settings_saved:{en:'Settings saved'},def_color_saved:{en:'Default color saved'},toast_backup:{en:'Backup saved (normal + vault notes included)'},
   toast_import_ok:{en:'Import done'},toast_img_added:{en:'Image added'},toast_trash:{en:'Moved to trash'},
   toast_restored:{en:'Restored'},toast_vault_locked:{en:'Vault locked'},toast_folder_moved:{en:'Moved to folder'},
@@ -2090,7 +2090,7 @@ const I18N_KO={
   pin_title:'🔐 Vault 비밀번호',
   pin_remove:'삭제 (잠금 해제)',
   gate_title:'비밀번호',
-  gate_ok:'잠금 해제',gate_sub:'비밀 노트는 이 기기에서 암호화되어 있습니다.<br>비밀번호를 입력해 잠금을 해제하세요.',gate_note:'비밀번호를 잊으면 복구할 수 없습니다.',gate_left:'비밀번호가 틀렸습니다 · 남은 시도 {n}회',
+  gate_ok:'잠금 해제',gate_sub:'비밀 노트는 이 기기에서 암호화되어 있습니다.',gate_note:'비밀번호를 잊으면 복구할 수 없습니다.',gate_left:'비밀번호가 틀렸습니다 · 남은 시도 {n}회',
   bk_title:'♻️ 저장된 백업',
   bk_hint:'이 기기에 자동 저장된 백업 목록입니다. 하나를 눌러 복구하거나, 아래에서 파일을 불러올 수도 있습니다.',
   bk_from_file:'📂 파일에서 가져오기',
@@ -4529,6 +4529,12 @@ function tpUnmark(){
   });
 }
 function stripTpSelHtml(html){ const d=document.createElement('div'); d.innerHTML=html; d.querySelectorAll('[data-tpsel]').forEach(sp=>{sp.removeAttribute('data-tpsel'); if(sp.getAttribute('style'))return; const p=sp.parentNode; while(sp.firstChild)p.insertBefore(sp.firstChild,sp); sp.remove();}); return d.innerHTML; }
+/* (v7.9.0) 표시 span(고른 글자)에 이미 hex 색이 입혀져 있는지 */
+function tpSelHasColor(hex){
+  const sps=tpSelSpans(); if(!sps.length)return false;
+  const want=hex.toLowerCase(); const probe=document.createElement('span'); probe.style.color=hex; const rgb=probe.style.color;
+  return sps.every(sp=>{ const c=(sp.style.color||getComputedStyle(sp).color||'').toLowerCase(); return c===rgb||c===want; });
+}
 function tpSelectMarked(){ const sps=tpSelSpans(); if(!sps.length)return false; try{ const s=window.getSelection(); s.removeAllRanges(); const r=document.createRange(); r.setStartBefore(sps[0]); r.setEndAfter(sps[sps.length-1]); s.addRange(r); return true; }catch(_){ return false; } }
 function tpCollapseSel(){ const sps=tpSelSpans(); if(!sps.length)return; try{ const s=window.getSelection(); s.removeAllRanges(); const c=document.createRange(); c.setStartAfter(sps[sps.length-1]); c.collapse(true); s.addRange(c); }catch(_){} }
 function closeTypePop(){ const tp=$('#edTypePop'); if(tp)tp.classList.remove('show'); tpUnmark(); }
@@ -4628,14 +4634,10 @@ function buildTypePop(){
     const b=document.createElement('button');b.className='tpdot';b.style.background=t.c;
     b.title=L(t.ko,t.en);b.setAttribute('aria-label',L(t.ko,t.en));
     b.onpointerdown=e=>{e.preventDefault();tpSaveRange()};
-    b.onclick=e=>{e.preventDefault();e.stopPropagation();tpColorApply(t.c)};
+    /* (v7.9.0) 토글: 고른 글자가 이미 이 색이면 → 검정(색 지움), 아니면 → 이 색 */
+    b.onclick=e=>{e.preventDefault();e.stopPropagation(); if(tpSelHasColor(t.c))tpColorClear(); else tpColorApply(t.c);};
     r3.append(b);
   });
-  const cl=document.createElement('button');cl.className='tpdot clear';cl.textContent='⊘';
-  cl.title=L('글자색 지움','Clear text colour');
-  cl.onpointerdown=e=>{e.preventDefault();tpSaveRange()};
-  cl.onclick=e=>{e.preventDefault();e.stopPropagation();tpColorClear()};
-  r3.append(cl);
   p.append(r2);
   p.append(r3);
 }
@@ -4791,6 +4793,9 @@ $('#edTypeBtn').onclick=e=>{e.stopPropagation();
   requestAnimationFrame(()=>placeTypePop(tp));
 };
 $('#edTypePop').onclick=e=>e.stopPropagation();
+/* (v7.9.0) T창이 열려 있는 동안: 브라우저 선택을 만들지 않게(선택이 생기면 OS의 잘라내기/복사/붙여넣기 바가 뜬다) 즉시 접고, 길게누르기 메뉴도 막는다 */
+document.addEventListener('selectionchange',()=>{ const tp=$('#edTypePop'); if(!tp||!tp.classList.contains('show'))return; const s=window.getSelection(); if(s&&s.rangeCount&&!s.isCollapsed&&$('#edBody').contains(s.anchorNode)){ try{ s.collapseToEnd(); }catch(_){} } });
+$('#edBody').addEventListener('contextmenu',e=>{ const tp=$('#edTypePop'); if(tp&&tp.classList.contains('show'))e.preventDefault(); });
 
 /* ── (요구8) 특정 단어 선택 → 볼드 등 서식 툴바 ── */
 const selBar=$('#selBar');
