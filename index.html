@@ -283,7 +283,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-R01Moo+itZwQ/Quq3g0LWJgr8XGlYn2tjboZ9Ff/s1o='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-KUYFydqTw6ysejFQQ1UxG6bdQRbzkOxzRY/A7QWbkYI='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
 <!-- (요구3) 전화기 화면에 딱 맞게 · 자동 확대(핀치 줌 포함) 완전 금지 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#f5f2ef">
@@ -1348,8 +1348,8 @@ html[data-theme="dark"] #vGate .vpass:focus{background:#2a2d32}
 #fhFolderGrid.view-grid-l{grid-template-columns:repeat(var(--folder-hub-cols,2),minmax(0,1fr))}
 #folderDetailGrid{grid-template-columns:repeat(var(--folder-note-cols,2),minmax(0,1fr))}
 #fdViewMenu{right:4.15em}.vault-main-more{position:fixed;z-index:105;top:3.05em;right:.55em}
-.vault-unlocked,#vaultUnlockedBar{background:#2f5d3a;color:#fff;border-bottom:1px solid #244a2e;font-size:.86em;font-weight:900;letter-spacing:.04em;padding:.42em .7em;justify-content:center;text-align:center}   /* (v7.9.3) 짙은 녹색 + 중앙 */
-.vault-unlocked{margin:-.18em 0 .5em;border-radius:.55em;display:flex;align-items:center}.vault-unlocked svg{flex:none;margin-right:.4em}.vault-unlocked.hidden,#vaultUnlockedBar.hidden{display:none!important}#vaultUnlockedBar{display:flex;align-items:center}#vaultUnlockedBar b{font-weight:900}
+.vault-unlocked,#vaultUnlockedBar{background:#1f4e8c;color:#fff;border-bottom:1px solid #173d6e;   /* (v7.9.7) 파란색 */font-size:.86em;font-weight:900;letter-spacing:.04em;padding:.42em .7em;justify-content:center;text-align:center}   /* (v7.9.3) 짙은 녹색 + 중앙 */
+.vault-unlocked{margin:calc(-.45em / .86) calc(-1*var(--fsx,.72em) / .86) .5em;   /* em 값은 띠의 .86em 기준이므로 .86으로 나눠 상단바와 같은 px */border-radius:0;display:flex;align-items:center;font-weight:900}   /* (v7.9.7) 상단 바에 딱 붙고 좌우 끝까지 */.vault-unlocked svg{flex:none;margin-right:.4em}.vault-unlocked.hidden,#vaultUnlockedBar.hidden{display:none!important}#vaultUnlockedBar{display:flex;align-items:center}#vaultUnlockedBar b{font-weight:900}
 #folderNav.vault{padding:.07em .32em;padding-bottom:calc(.09em + env(safe-area-inset-bottom))}
 #folderNav.vault .folderbar{padding:.10em .04em .02em}
 /* v7.2 Vault strip was about 41px tall; this keeps usable ~20px controls (roughly half scale). */
@@ -1849,7 +1849,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='soonenote';
-const APP_VER='7.9.6';
+const APP_VER='7.9.7';
 /* ══════════ (v7.6.1) 기능 스위치 ══════════
    sync:false 로 바꾸면 동기화(Supabase)가 UI·네트워크·타이머 모두에서 비활성화된다.
    SYNC 객체와 계정 화면 코드는 남아 있되(프리미엄 대비) 어떤 경로도 실행되지 않는다.
@@ -6893,20 +6893,21 @@ function makeManualNotes(){
     let f=S.folders.find(x=>isMF(x)&&S.notes.some(n=>n._manual&&!n.deleted&&n.folder===x.id))||S.folders.find(x=>x._manual&&!x.deleted)||S.folders.find(isMF);
     const mnotes=S.notes.filter(n=>n._manual&&!n.deleted);
     const upToDate=(S.settings.manualVer|0)>=MANUAL_VER;
-    if(upToDate&&!mnotes.length)return;   /* 사용자가 매뉴얼 폴더째 지운 상태 → 다시 만들지 않음 */
     if(!f){f={id:uid(),name:ko?'매뉴얼':'Manual',color:4,createdAt:now,_synced:true,deleted:false,_manual:true};S.folders.push(f);}
     if(!f._manual)f._manual=true;
     let fixed=0;mnotes.forEach(n=>{const ok=n.folder&&S.folders.some(x=>x.id===n.folder&&!x.deleted);if(!ok){n.folder=f.id;delete n._prevFolder;fixed++}});
     /* 비어 버린 여분의 매뉴얼 폴더는 휴지통으로(사용자 노트가 들어 있으면 그대로 둠) */
     S.folders.forEach(x=>{if(x!==f&&isMF(x)&&!S.notes.some(n=>n.folder===x.id&&!n.deleted)){x.deleted=true;x.deletedAt=now;x._syncDelete=true;fixed++}});
-    if(upToDate){if(fixed||dup)save();return}
+    /* (v7.9.7) 없는(지워진) 매뉴얼 노트는 매번 매뉴얼 폴더 안에 다시 만든다 — 업데이트 후 항상 7개가 폴더 안에 있도록 */
+    let made=0;
     src.forEach(([title,content],i)=>{
       const key=keys[i], h=manualHash(title+content);
       const ex=S.notes.find(n=>n._manual===key&&!n.deleted);
       if(ex){ if(ex._manualHash===h||ex.dirty||ex._manualHash===undefined)return;   /* 사용자가 고친 노트/이미 최신 → 그대로 */
               ex.title=title;ex.content=content;ex.updatedAt=now-i;ex._manualHash=h;return; }
-      S.notes.push({id:uid(),folder:f.id,color:4,type:'note',title,content,items:[],pinned:false,createdAt:now-i,updatedAt:now-i,deleted:false,dirty:false,_synced:true,_tutorial:true,_manual:key,_manualHash:h});
+      S.notes.push({id:uid(),folder:f.id,color:4,type:'note',title,content,items:[],pinned:false,createdAt:now-i,updatedAt:now-i,deleted:false,dirty:false,_synced:true,_tutorial:true,_manual:key,_manualHash:h});made++;
     });
+    if(upToDate){if(fixed||dup||made)save();return}
     S.settings.manualVer=MANUAL_VER; save();
   }catch(_){}
 }
