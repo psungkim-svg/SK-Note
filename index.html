@@ -283,7 +283,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-KUYFydqTw6ysejFQQ1UxG6bdQRbzkOxzRY/A7QWbkYI='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-uSaMtOMpooPvhdjMUaT8jyEikqUp5oy20i47Rbqwbhc='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
 <!-- (요구3) 전화기 화면에 딱 맞게 · 자동 확대(핀치 줌 포함) 완전 금지 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#f5f2ef">
@@ -1348,7 +1348,7 @@ html[data-theme="dark"] #vGate .vpass:focus{background:#2a2d32}
 #fhFolderGrid.view-grid-l{grid-template-columns:repeat(var(--folder-hub-cols,2),minmax(0,1fr))}
 #folderDetailGrid{grid-template-columns:repeat(var(--folder-note-cols,2),minmax(0,1fr))}
 #fdViewMenu{right:4.15em}.vault-main-more{position:fixed;z-index:105;top:3.05em;right:.55em}
-.vault-unlocked,#vaultUnlockedBar{background:#1f4e8c;color:#fff;border-bottom:1px solid #173d6e;   /* (v7.9.7) 파란색 */font-size:.86em;font-weight:900;letter-spacing:.04em;padding:.42em .7em;justify-content:center;text-align:center}   /* (v7.9.3) 짙은 녹색 + 중앙 */
+.vault-unlocked,#vaultUnlockedBar{background:#0000ff;color:#fff;border-bottom:1px solid #0000cc;   /* (v7.9.7) 파란색 */font-size:.86em;font-weight:900;letter-spacing:.04em;padding:.42em .7em;justify-content:center;text-align:center}   /* (v7.9.3) 짙은 녹색 + 중앙 */
 .vault-unlocked{margin:calc(-.45em / .86) calc(-1*var(--fsx,.72em) / .86) .5em;   /* em 값은 띠의 .86em 기준이므로 .86으로 나눠 상단바와 같은 px */border-radius:0;display:flex;align-items:center;font-weight:900}   /* (v7.9.7) 상단 바에 딱 붙고 좌우 끝까지 */.vault-unlocked svg{flex:none;margin-right:.4em}.vault-unlocked.hidden,#vaultUnlockedBar.hidden{display:none!important}#vaultUnlockedBar{display:flex;align-items:center}#vaultUnlockedBar b{font-weight:900}
 #folderNav.vault{padding:.07em .32em;padding-bottom:calc(.09em + env(safe-area-inset-bottom))}
 #folderNav.vault .folderbar{padding:.10em .04em .02em}
@@ -1849,7 +1849,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='soonenote';
-const APP_VER='7.9.7';
+const APP_VER='7.9.8';
 /* ══════════ (v7.6.1) 기능 스위치 ══════════
    sync:false 로 바꾸면 동기화(Supabase)가 UI·네트워크·타이머 모두에서 비활성화된다.
    SYNC 객체와 계정 화면 코드는 남아 있되(프리미엄 대비) 어떤 경로도 실행되지 않는다.
