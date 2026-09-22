@@ -283,7 +283,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-4mv+nA15x+cQGIjgrJVliKreKoyi0HKIL4moDyeRXkw='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-QsZlHnbqnmssj3RDAU5UWHgksbTwfjD2AA37o2k7fN0='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
 <!-- (요구3) 전화기 화면에 딱 맞게 · 자동 확대(핀치 줌 포함) 완전 금지 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#f5f2ef">
@@ -1411,6 +1411,17 @@ html[data-theme="dark"] #folderOverlay:not(.vault-folder),html[data-theme="dark"
 #folderOverlay.vault-folder #fhBottomBar{background:#dca6a6}
 #fhBottomBar .chip{display:flex;align-items:center;gap:.35em;font-weight:800;font-size:calc(var(--ui) * .81);padding:.18em .7em;min-height:0;line-height:1.25}
 #fhBottomBar .chip .vfold{flex:none;width:26px;height:26px;margin:-3px 0}
+
+/* (v7.10.0) 하단 바 높이 115%: 일반 35.4px→40.7px, Vault 59.5px→68.5px 가 되도록 위·아래 여백만 늘린다(칩·＋ 크기는 그대로) */
+#folderNav{padding-top:calc(.1em + .117em);padding-bottom:calc(.16em + .117em + env(safe-area-inset-bottom))}
+#folderNav.vault{padding-top:calc(.10em + .2em);padding-bottom:calc(.12em + .2em + env(safe-area-inset-bottom))}
+/* (v7.10.0) T(서식) 창: 화면 아래 하단 바 자리에 가로로 붙는 한 줄 바(B U ● ●, 중앙 정렬). 키보드가 뜨면 --tpkb 만큼 위로 */
+#edTypePop{left:0!important;right:0!important;top:auto!important;bottom:var(--tpkb,0px);width:auto;border-radius:.8em .8em 0 0;padding:.35em .6em calc(.35em + env(safe-area-inset-bottom));transform:translateY(8px);box-shadow:0 -6px 20px rgba(0,0,0,.22);display:flex;justify-content:center;align-items:center;gap:1.1em}
+#edTypePop.show{transform:none}
+#edTypePop #tpHandle{display:none}
+#edTypePop .tprow{margin:0;gap:.8em;flex-wrap:nowrap;justify-content:center}
+#edTypePop .tprow.tp1 .tpbiu{flex:none;min-width:2.6em;height:2.3em;font-size:.9em}
+#edTypePop .tprow.tpcolors{padding:0;gap:.8em}#edTypePop .tpdot{width:1.9em;height:1.9em}
 </style>
 </head>
 <body>
@@ -1850,7 +1861,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='soonenote';
-const APP_VER='7.9.9';
+const APP_VER='7.10.0';
 /* ══════════ (v7.6.1) 기능 스위치 ══════════
    sync:false 로 바꾸면 동기화(Supabase)가 UI·네트워크·타이머 모두에서 비활성화된다.
    SYNC 객체와 계정 화면 코드는 남아 있되(프리미엄 대비) 어떤 경로도 실행되지 않는다.
@@ -4815,8 +4826,11 @@ $('#edTypeBtn').onclick=e=>{e.stopPropagation();
   tpSaveRange();buildTypePop();updateTpVals();renderTpPal();tpMark();   /* (v7.7.6) 선택 표시 유지 + OS 선택 바 숨김 */
   $('#edColorPop').classList.remove('show');$('#edMenu').classList.remove('show');
   tp.classList.add('show');histPush();
-  requestAnimationFrame(()=>placeTypePop(tp));
+  tpFollowKeyboard();   /* (v7.10.0) 아래 고정 바 — 위치 계산 대신 키보드 높이만 반영 */
 };
+/* (v7.10.0) 키보드가 올라오면 visualViewport 가 줄어든 만큼 T 바를 위로 올린다 (WebView/Chrome 공통) */
+function tpFollowKeyboard(){const vv=window.visualViewport;const kb=vv?Math.max(0,innerHeight-vv.height-vv.offsetTop):0;document.documentElement.style.setProperty('--tpkb',kb+'px')}
+if(window.visualViewport){visualViewport.addEventListener('resize',tpFollowKeyboard);visualViewport.addEventListener('scroll',tpFollowKeyboard)}
 $('#edTypePop').onclick=e=>e.stopPropagation();
 /* (v7.9.0) T창이 열려 있는 동안: 브라우저 선택을 만들지 않게(선택이 생기면 OS의 잘라내기/복사/붙여넣기 바가 뜬다) 즉시 접고, 길게누르기 메뉴도 막는다 */
 document.addEventListener('selectionchange',()=>{ const tp=$('#edTypePop'); if(!tp||!tp.classList.contains('show'))return; const s=window.getSelection(); if(s&&s.rangeCount&&!s.isCollapsed&&$('#edBody').contains(s.anchorNode)){ try{ s.collapseToEnd(); }catch(_){} } });
