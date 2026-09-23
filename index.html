@@ -283,7 +283,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-Q/MGV6miHABFVzS38ym8Z5RLBcMEXYmfrPBXkXh+Qts='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-U3Inj2h8jeW+AXjdMg+JHLP+gmsZxzLXdKEvwiWYp7E='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
 <!-- (요구3) 전화기 화면에 딱 맞게 · 자동 확대(핀치 줌 포함) 완전 금지 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#f5f2ef">
@@ -1284,7 +1284,7 @@ input#acUrl,input#acKey{letter-spacing:normal;font-stretch:normal}
 .stat{font-size:.65em;color:var(--sub);min-height:1em}
 
 /* (요구12) 비밀번호 입력칸: 자간 넓게(자릿수 확인) */
-input[type=password]{letter-spacing:.55em;font-stretch:normal;font-variant-numeric:tabular-nums}
+input[type=password]{letter-spacing:.18em;   /* (v7.10.4) 점 간격 축소(.55→.18) */font-stretch:normal;font-variant-numeric:tabular-nums}
 #vGate input[type=password],#dlgInput{text-align:center}
 
 /* ── (요구2) Vault 암호 입력창 — 아주 심플한 하얀 박스 ──
@@ -1422,6 +1422,14 @@ html[data-theme="dark"] #folderOverlay:not(.vault-folder),html[data-theme="dark"
 #edTypePop .tprow{margin:0;gap:.8em;flex-wrap:nowrap;justify-content:center}
 #edTypePop .tprow.tp1 .tpbiu{flex:none;min-width:2.6em;height:2.3em;font-size:.9em}
 #edTypePop .tprow.tpcolors{padding:0;gap:.8em}#edTypePop .tpdot{width:1.9em;height:1.9em}
+
+/* (v7.10.4) 비밀번호 입력창 눈 아이콘 — 모든 input[type=password] 에 자동 부착 */
+.pwwrap{position:relative;display:block;width:100%}
+.pwwrap>input{width:100%;box-sizing:border-box;padding-right:2.4em!important}
+.pwwrap>.pweye{position:absolute;right:.35em;top:50%;transform:translateY(-50%);width:1.9em;height:1.9em;border:none;background:none;padding:0;display:flex;align-items:center;justify-content:center;color:#666;cursor:pointer}
+.pwwrap>.pweye svg{width:1.25em;height:1.25em}
+.pwwrap>.pweye[aria-pressed="true"]{color:#1f4e8c}
+#dlgInput.hidden+.pweye{display:none}
 </style>
 </head>
 <body>
@@ -1636,7 +1644,7 @@ html[data-theme="dark"] #folderOverlay:not(.vault-folder),html[data-theme="dark"
     <div class="setsec">
       <h4 data-i18n="sec_screen">Display</h4>
       <div class="setrow"><label data-i18n="language">Language</label>
-        <span class="stat" id="stLangInfo" data-i18n="lang_auto">Auto (follow system)</span>   <!-- (v7.8.8) 언어 선택 제거: 시스템 언어 자동 -->
+        <select id="stLang"><option value="auto">System language</option><option value="en">English</option><option value="es">Español</option><option value="ko">한국어</option><option value="ja">日本語</option><option value="zh">中文（简体）</option></select>   <!-- (v7.10.4) 언어 선택 6가지 -->
       </div>
       <div class="setrow"><label data-i18n="theme">Theme</label>
         <select id="stTheme"><option value="auto" data-i18n="auto">Auto</option><option value="light" data-i18n="light">Light</option><option value="dark" data-i18n="dark">Dark</option></select>
@@ -1844,7 +1852,7 @@ html[data-theme="dark"] #folderOverlay:not(.vault-folder),html[data-theme="dark"
   <div class="sheet" style="max-width:360px">
     <div id="dlgMsg" style="font-size:.8em;line-height:1.5;margin:.3em .2em .7em;white-space:pre-line"></div>
     <input type="password" id="dlgInput" class="hidden" maxlength="128" autocomplete="new-password" name="sk-dlg-pass"
-      style="width:100%;padding:.5em;border-radius:.5em;background:var(--chip);border:1px solid var(--line);color:var(--text);outline:none;font-size:.85em;margin-bottom:.6em">
+      style="width:100%;padding:.5em;border-radius:.5em;background:#fff;border:1px solid var(--line);color:#111;outline:none;font-size:.85em;margin-bottom:.6em">
     <div class="btnrow" style="justify-content:flex-end;margin-top:0">
       <button class="btn" id="dlgNo" data-i18n="dlg_no">Cancel</button>
       <button class="btn primary" id="dlgOk" data-i18n="dlg_ok">OK</button>
@@ -1861,7 +1869,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='SoonNote';
-const APP_VER='7.10.2';
+const APP_VER='7.10.4';
 /* ══════════ (v7.6.1) 기능 스위치 ══════════
    sync:false 로 바꾸면 동기화(Supabase)가 UI·네트워크·타이머 모두에서 비활성화된다.
    SYNC 객체와 계정 화면 코드는 남아 있되(프리미엄 대비) 어떤 경로도 실행되지 않는다.
@@ -1913,8 +1921,9 @@ function detectSysLang(){
 let LANG=DEFAULT_LANG;      /* (v6.2) 설정을 읽기 전 기본값도 영어 */
 let IS_KO=(LANG==='ko');                 /* 기존 코드 호환용 */
 function computeLang(){
-  /* (v7.8.8) 언어 = 항상 시스템 언어. 예전 S.settings.lang 값은 지우지 않되 더 이상 읽지 않는다. */
-  LANG=detectSysLang();
+  /* (v7.10.4) 언어 = 설정값(en/es/ko/ja/zh) 우선, 'auto'(기본)면 시스템 언어. 5개 언어 밖의 시스템 언어는 영어. */
+  const pref=(typeof S!=='undefined'&&S.settings&&S.settings.lang)||'auto';
+  LANG=SUPPORTED.includes(pref)?pref:detectSysLang();
   IS_KO=(LANG==='ko');
   const d=document.documentElement;
   if(d)d.lang=(LANG==='zh'?'zh-CN':(LANG==='en'?'en-US':LANG));
@@ -5859,7 +5868,7 @@ function openSettings(){
   const sc=curSettings();
   $('#stTheme').value=sc.theme;$('#stView').value=sc.view;
   /* (v7.7.3) 첫 화면: 전체 / 노트 / 폴더 */
-  $('#stStartLbl').textContent=L('첫 화면','Start screen');const so=$('#stStart').options;so[0].text=L('전체','All');so[1].text=L('노트','Notes');so[2].text=L('폴더','Folders');$('#stStart').value=['all','notes','folders'].includes(S.settings.startScreen)?S.settings.startScreen:'notes';
+  $('#stStartLbl').textContent=L('첫 화면','Start screen');const so=$('#stStart').options;so[0].text=L('전체','All');so[1].text=L('노트','Notes');so[2].text=L('폴더','Folders');$('#stStart').value=['all','notes','folders'].includes(S.settings.startScreen)?S.settings.startScreen:'notes';{const sl=$('#stLang');if(sl){sl.value=SUPPORTED.includes(S.settings.lang)?S.settings.lang:'auto';sl.options[0].text=L('시스템 언어','System language',{es:'Idioma del sistema',ja:'システム言語',zh:'系统语言'});}}   /* (v7.10.4) */
   $('#stSort').value=sc.sort;$('#stBox').value=boxCols();   /* (v7.8.3) 공통 */
   updateFontStepUI();   /* (요청7) 글자크기 스테퍼 + 샘플 */
   $('#stFontWeight').value=typoSettings().fontWeight||'n';   /* (v7.8.2) 글자 설정은 공통(S.settings) */
@@ -5901,6 +5910,7 @@ function applySettingsFromUI(){
   S.settings.box=$('#stBox').value; S.settings.folderNoteBox=S.settings.box; if(ui.vault)save();   /* (v7.8.3) 공통 저장 */
   sc.rule=$('#stRule').value;                          // (요청3) 줄 없음 / 줄쳐진 노트
   S.settings.startScreen=$('#stStart').value||'notes';   /* (v7.7.3) 첫 화면(일반 설정에만 저장) */
+  {const nl=$('#stLang')?$('#stLang').value:'auto';const prev=S.settings.lang||'auto';S.settings.lang=nl;if(nl!==prev){save();location.reload();return}}   /* (v7.10.4) 언어 변경 → 저장 후 다시 시작(모든 문구·매뉴얼 새 언어로) */
   if(ui.vault){sc.vaultAutoLock=$('#stVaultAuto').value;VLT.persistSettings();VLT.armAutoLock();} else save();
   applyPrefs();render();applyViewBtn();updateFontStepUI();
 }
@@ -6053,8 +6063,17 @@ async function applyBackup(d, onlyIds){
     if(sn.color>=NCOLORS||sn.color<0)sn.color=((sn.color%NCOLORS)+NCOLORS)%NCOLORS;
     delete sn.fontWeight;   /* (v7.5.2 요청4) 노트별 굵기 오버라이드 복원 차단 — 전역 설정이 모든 노트에 동일 적용 */
     const local=S.notes.find(n=>n.id===sn.id);
-    if(!local){S.notes.push(Object.assign({},sn,{dirty:true}));added++}
-    else if((sn.updatedAt||0)>local.updatedAt){Object.assign(local,sn,{dirty:true});updated++}
+    if(!local){S.notes.push(Object.assign({},sn,{dirty:true}));added++;return}
+    /* (v7.10.3 백업 복구 수정) 예전 규칙은 '기기 노트가 더 최근이면 손대지 않음' → 같은 폰에서 망친 노트를 백업으로 되돌리기·휴지통 노트 살리기가 전부 0·0 이었다.
+       ① 골라서 복구(onlyIds): 사용자가 고른 노트는 무조건 백업 내용으로 되돌린다. 지금 내용이 다르면 '[복구 전]' 사본을 남겨 아무것도 잃지 않는다.
+       ② 전체 복구: 기존 규칙 유지 + 기기에서 휴지통(deleted)인데 백업에는 살아 있는 노트는 살린다. */
+    const differs=(local.title||'')!==(sn.title||'')||(local.content||'')!==(sn.content||'')||JSON.stringify(local.items||[])!==JSON.stringify(sn.items||[]);
+    if(onlyIds){
+      if(differs&&!local.deleted){S.notes.push(Object.assign({},local,{id:uid(),title:(local.title||L('제목 없음','Untitled'))+L(' [복구 전]',' [before restore]'),dirty:true,pinned:false,createdAt:Date.now(),updatedAt:Date.now()}));}
+      Object.assign(local,sn,{deleted:false,dirty:true,updatedAt:Date.now()});updated++;return;
+    }
+    if((sn.updatedAt||0)>local.updatedAt){Object.assign(local,sn,{dirty:true});updated++}
+    else if(local.deleted&&!sn.deleted){Object.assign(local,sn,{deleted:false,dirty:true,updatedAt:Date.now()});updated++}
   });
   if(!onlyIds)(d.folders||[]).forEach(sf=>{const lf=S.folders.find(f=>f.id===sf.id);
     if(lf){lf.name=sf.name;lf.deleted=!!sf.deleted;lf.deletedAt=sf.deletedAt||0;if(sf._manual)lf._manual=true;}else S.folders.push({id:sf.id,name:sf.name,createdAt:sf.createdAt,deleted:!!sf.deleted,deletedAt:sf.deletedAt||0,_synced:false,_manual:!!sf._manual})});
@@ -6253,8 +6272,9 @@ async function doApply(d, ids){
     const vhint=(!ids&&validVaultSnapshot(d.vault))
       ? L(' · 🔐 Vault는 별도 확인 버튼으로 복구됩니다',' · Vault is restored separately via its confirm button')
       : '';
+    const none=(!r.added&&!r.updated)?L(' (모든 노트가 이미 백업과 같거나 더 최신입니다)',' (all notes already match or are newer)'):'';   /* (v7.10.3) 0·0 을 고장으로 오해하지 않게 */
     toast(L(`복구 완료: 추가 ${r.added} · 갱신 ${r.updated}${r.vadded?` · 보관 ${r.vadded}`:''}${r.vskip?' · 🔐 Vault는 잠겨서 건드리지 않음':''}`,
-            `Restored: added ${r.added}, updated ${r.updated}${r.vadded?` · vault ${r.vadded}`:''}${r.vskip?' · vault skipped (locked)':''}`)+vhint);
+            `Restored: added ${r.added}, updated ${r.updated}${r.vadded?` · vault ${r.vadded}`:''}${r.vskip?' · vault skipped (locked)':''}`)+none+vhint,6000);
   }catch(e){ toast(L('올바른 백업이 아닙니다','Not a valid backup')); }
 }
 
@@ -6875,6 +6895,15 @@ document.addEventListener('visibilitychange',()=>{ if(!document.hidden) applyChe
 /* ═══════════════ 시작 ═══════════════ */
 load();
 VLT.load();
+
+/* (v7.10.4) 모든 비밀번호 입력창 오른쪽에 눈(표시/숨김) 버튼 — Vault 잠금 화면(자체 눈 있음) 제외 */
+(function(){const EYE='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+  document.querySelectorAll('input[type=password]').forEach(inp=>{if(inp.closest('#vGate')||inp.closest('.pwwrap'))return;const w=document.createElement('span');w.className='pwwrap';inp.parentNode.insertBefore(w,inp);w.appendChild(inp);
+    const b=document.createElement('button');b.type='button';b.className='pweye';b.setAttribute('aria-label','Show password');b.setAttribute('aria-pressed','false');b.innerHTML=EYE;b.addEventListener('mousedown',e=>e.preventDefault());
+    b.onclick=e=>{e.stopPropagation();const show=inp.type==='password';inp.type=show?'text':'password';b.setAttribute('aria-pressed',String(show));inp.focus()};w.appendChild(b);
+    /* 창이 닫혔다 다시 열릴 때는 항상 숨김 상태로 */
+    new MutationObserver(()=>{if(inp.classList.contains('hidden')||!inp.offsetParent){inp.type='password';b.setAttribute('aria-pressed','false')}}).observe(inp,{attributes:true,attributeFilter:['class','style']});
+  });})();
 computeLang();                       /* (v6) 설정의 언어(자동/영어/한국어)를 반영한 뒤 번역 적용 */
 applyI18n();
 /* (v7.6.1) 데이터 크기 표시 — '데이터 최소화' 원칙을 실사용 중 확인하기 위한 2줄. 저장공간 관리 기능이 아니다. */
@@ -6943,8 +6972,8 @@ function makeManualNotes(){
     src.forEach(([title,content],i)=>{
       const key=keys[i], h=manualHash(title+content);
       const ex=S.notes.find(n=>n._manual===key&&!n.deleted);
-      if(ex){ if(ex._manualHash===h||ex.dirty||ex._manualHash===undefined)return;   /* 사용자가 고친 노트/이미 최신 → 그대로 */
-              ex.title=title;ex.content=content;ex.updatedAt=now-i;ex._manualHash=h;return; }
+      if(ex){ if(ex._manualHash===h||ex.dirty)return;   /* (v7.10.4) 사용자가 고친 노트·이미 이 언어의 최신 → 그대로. 언어가 바뀌면 지문이 달라져 새 언어로 갱신 */
+              ex.title=title;ex.content=content;ex.updatedAt=now-i;ex._manualHash=h;made++;return; }
       S.notes.push({id:uid(),folder:f.id,color:4,type:'note',title,content,items:[],pinned:false,createdAt:now-i,updatedAt:now-i,deleted:false,dirty:false,_synced:true,_tutorial:true,_manual:key,_manualHash:h});made++;
     });
     if(upToDate){if(fixed||dup||made)save();return}
