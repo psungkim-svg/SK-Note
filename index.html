@@ -283,7 +283,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-U3Inj2h8jeW+AXjdMg+JHLP+gmsZxzLXdKEvwiWYp7E='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-JHSZpQ5lflxmDFrstq1RTHuunFObK7w/HB57Jb5hbH0='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
 <!-- (요구3) 전화기 화면에 딱 맞게 · 자동 확대(핀치 줌 포함) 완전 금지 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#f5f2ef">
@@ -1869,7 +1869,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='SoonNote';
-const APP_VER='7.10.4';
+const APP_VER='7.10.6';
 /* ══════════ (v7.6.1) 기능 스위치 ══════════
    sync:false 로 바꾸면 동기화(Supabase)가 UI·네트워크·타이머 모두에서 비활성화된다.
    SYNC 객체와 계정 화면 코드는 남아 있되(프리미엄 대비) 어떤 경로도 실행되지 않는다.
@@ -3302,6 +3302,8 @@ function visibleNotes(){
   });
   return arr;
 }
+/* (v7.10.6) 폴더 화면(허브/상세/휴지통)이 열려 있으면 그 자리에서 다시 그린다 — 동기화 수신·설정 변경 직후 사용 */
+function refreshFolderPage(){try{if(!$('#folderOverlay').classList.contains('show')||!folderHub)return;const pg=folderHub.page;if(pg==='hub')renderFolderHub();else if(pg==='detail')renderFolderDetail();else if(pg==='trash')renderFolderTrash();}catch(_){}}
 function render(){
   applyPrefs();
   const dark=isDark(); const PAL=dark?COLORS_D:COLORS, HEAD=dark?HEADS_D:HEADS_L;
@@ -5458,7 +5460,7 @@ const SYNC={
            다음 push 가 이를 '다른 기기의 수정'으로 오판해 [사본]을 만들었다(같은 노트 4개 현상).
            → 실제로 보낸 행(rows[i])의 지문을 기록하고, 그 사이 또 바뀐 노트는 dirty 를 남겨 다음 push 로 이어 보낸다. */
         dirty.forEach((n,i)=>{const sent=this.fp(this.fromRow(rows[i]));n._srvSeen=sent;n._srvUp=rows[i].updated_at;if(this.fp(n)===sent)n.dirty=false;else this.pending=true;if(rows[i].updated_at>(this._srvMax||0))this._srvMax=rows[i].updated_at;});
-        if(copies.length&&!$('#edOverlay').classList.contains('show'))render();
+        if(copies.length&&!$('#edOverlay').classList.contains('show')){render();refreshFolderPage();}
       }
       if(folderDeleteIds.length){
         const {error}=await c.from('folders').delete().eq('user_id',this.uid).in('id',folderDeleteIds);
@@ -5519,7 +5521,7 @@ const SYNC={
       if(Date.now()-(S.settings.lastPurge||0)>864e5){ S.settings.lastPurge=Date.now(); c.from('notes').delete().eq('user_id',this.uid).eq('deleted',true).lt('updated_at',cutoff).then(()=>{},()=>{}); }   /* (v7.7.7) 30일 지난 휴지통 정리는 하루 1회만 */
       S.settings.lastPull=maxUp;S.settings.lastPullUid=this.uid;   /* (v7.7.1) 서버에서 받은 updated_at 최대값 / (v7.7.7) 계정별 커서 */
       S.settings.lastSync=Date.now();save();scheduleReminders();
-      if(!$('#edOverlay').classList.contains('show'))render();
+      if(!$('#edOverlay').classList.contains('show')){render();refreshFolderPage();}
       setStatus('ok');
     }catch(e){ setStatus('err',L('불러오기 실패: ','Load failed: ')+syncHint(e.message||e)) }
     this.busy=false;
@@ -5530,20 +5532,20 @@ const SYNC={
     this.channel=c.channel('sk-realtime-'+this.uid)
       .on('postgres_changes',{event:'*',schema:'public',table:'notes',filter:flt},p=>{
         if(p.eventType==='DELETE'){ const id=p.old&&p.old.id; S.notes=S.notes.filter(n=>n.id!==id);save();
-          if(!$('#edOverlay').classList.contains('show'))render(); return }
+          if(!$('#edOverlay').classList.contains('show')){render();refreshFolderPage();} return }
         const r=p.new;if(!r)return;
         const sn=this.fromRow(r);
         this.applyServer(sn);   /* (v7.7.1) */
         if(sn.updatedAt>(S.settings.lastPull||0)){S.settings.lastPull=sn.updatedAt;S.settings.lastPullUid=this.uid;}
         if(sn.updatedAt>(this._srvMax||0))this._srvMax=sn.updatedAt;
         save();
-        if(!$('#edOverlay').classList.contains('show'))render();
+        if(!$('#edOverlay').classList.contains('show')){render();refreshFolderPage();}
       })
       .on('postgres_changes',{event:'*',schema:'public',table:'folders',filter:flt},p=>{
         if(p.eventType==='DELETE'){const id=p.old&&p.old.id;const kept=S.folders.find(f=>f.id===id&&f.deleted);if(kept){kept._synced=true;kept._syncDelete=false;}else S.folders=S.folders.filter(f=>f.id!==id)}
         else if(p.new&&!S.folders.find(f=>f.id===p.new.id))S.folders.push({id:p.new.id,name:p.new.name,createdAt:p.new.created_at,_synced:true});
         save();
-        if(!$('#edOverlay').classList.contains('show'))render();
+        if(!$('#edOverlay').classList.contains('show')){render();refreshFolderPage();}
       })
       .subscribe(status=>{
         /* (v7.7.8) Realtime 상태 추적: 살아 있으면 주기 polling 없음. 끊겼다 다시 붙으면 그 사이 놓친 것을 pullAll 1회로 보정 */
@@ -5913,12 +5915,15 @@ function applySettingsFromUI(){
   {const nl=$('#stLang')?$('#stLang').value:'auto';const prev=S.settings.lang||'auto';S.settings.lang=nl;if(nl!==prev){save();location.reload();return}}   /* (v7.10.4) 언어 변경 → 저장 후 다시 시작(모든 문구·매뉴얼 새 언어로) */
   if(ui.vault){sc.vaultAutoLock=$('#stVaultAuto').value;VLT.persistSettings();VLT.armAutoLock();} else save();
   applyPrefs();render();applyViewBtn();updateFontStepUI();
+  refreshFolderPage();   /* (v7.10.5/6) 열려 있는 폴더 화면도 그 자리에서 갱신 */
 }
 $('#btnSettings').onclick=openSettings;
 $('#stAccountBtn').onclick=()=>{ovCloseUi($('#setOverlay'));openAccount()};
 /* (v6) 언어 변경 → 즉시 저장 후 새로고침해 영어/한국어를 재적용 */
 /* 미리보기: 선택만 해도 즉시 반영(피드백) */
 ['#stTheme','#stView','#stSort','#stFontWeight','#stBox','#stRule'].forEach(sel=>$(sel).addEventListener('change',applySettingsFromUI));
+/* (v7.10.6) 언어는 고르는 즉시 저장 → 다시 시작(설정창을 닫을 때까지 기다리지 않는다) */
+{const sl=$('#stLang');if(sl)sl.addEventListener('change',()=>{const v=sl.value||'auto';if(v!==(S.settings.lang||'auto')){S.settings.lang=v;save();location.reload();}});}
 /* (요청7) 글자크기 스테퍼: − / ＋ 1pt씩, 10~25, 미리보기 샘플 동시 갱신 */
 function updateFontStepUI(){
   const sc=typoSettings();   /* (v7.8.2) 공통 글자 설정 */
@@ -6016,8 +6021,8 @@ function vaultSnapshotForBackup(){
 }
 function buildBackup(){
   return {app:'sk-note',v:5,exportedAt:new Date().toISOString(),
-    notes:S.notes,
-    folders:S.folders.map(f=>({id:f.id,name:f.name,createdAt:f.createdAt,deleted:!!f.deleted,deletedAt:f.deletedAt||0,_manual:!!f._manual})),
+    notes:S.notes.filter(n=>!n.deleted),   /* (v7.10.5) 휴지통 노트는 백업에 넣지 않는다 — 휴지통 = 없는 것 */
+    folders:S.folders.filter(f=>!f.deleted).map(f=>({id:f.id,name:f.name,createdAt:f.createdAt,deleted:false,deletedAt:0,_manual:!!f._manual})),
     photolinks:PL.all(),   /* (v7.6.0) 사진 참조 메타(작음) — 사진 자체는 없음 */
     vault:vaultSnapshotForBackup()};
 }
@@ -6059,7 +6064,7 @@ async function applyBackup(d, onlyIds){
   let added=0,updated=0,vadded=0,vskip=false;
   const want=id=>!onlyIds||onlyIds.includes(id);
   d.notes.forEach(sn=>{
-    if(!want(sn.id))return;
+    if(!want(sn.id)||sn.deleted)return;   /* (v7.10.5) 예전 백업 속 휴지통 노트도 없는 것으로 */
     if(sn.color>=NCOLORS||sn.color<0)sn.color=((sn.color%NCOLORS)+NCOLORS)%NCOLORS;
     delete sn.fontWeight;   /* (v7.5.2 요청4) 노트별 굵기 오버라이드 복원 차단 — 전역 설정이 모든 노트에 동일 적용 */
     const local=S.notes.find(n=>n.id===sn.id);
@@ -6196,7 +6201,7 @@ function openBkList(){
   bks.forEach((b,i)=>{
     const row=document.createElement('div');row.className='setrow';
     const nm=document.createElement('span');
-    const nCnt=(b.data.notes||[]).length, hasVault=validVaultSnapshot(b.data.vault);
+    const nCnt=(b.data.notes||[]).filter(n=>!n.deleted).length, hasVault=validVaultSnapshot(b.data.vault);
     nm.innerHTML=`<b>${fmtTime(b.at)}</b><br><span class="stat">${L('노트','notes')} ${nCnt}${hasVault?' · 🔐 encrypted':''}</span>`;
     const btn=document.createElement('button');btn.className='btn primary';
     btn.textContent=L('보기 / 복구','View / Restore');
@@ -6213,7 +6218,7 @@ function renderBkDetail(){
   const arr=localBackups(); const ext=bkDetail===-2&&bkExternal;   /* (v7.8.6) -2 = 파일에서 가져온 백업 */
   if(!ext&&(bkDetail<0||!arr[bkDetail])){openBkList();return;}
   const b=ext?bkExternal:arr[bkDetail], d=b.data;
-  const norm=(d.notes||[]).map(n=>({id:n.id,title:n.title||'',type:n.type,preview:n.type==='check'?(n.items||[]).slice(0,3).map(i=>i.text).join(' · '):plain(n.content).slice(0,90)}));
+  const norm=(d.notes||[]).filter(n=>!n.deleted).map(n=>({id:n.id,title:n.title||'',type:n.type,preview:n.type==='check'?(n.items||[]).slice(0,3).map(i=>i.text).join(' · '):plain(n.content).slice(0,90)}));
   /* Encrypted v5 vault data is deliberately not expanded into title/body previews. */
   const all=[...norm];
   const vaultSnap=validVaultSnapshot(d.vault);
@@ -6229,7 +6234,8 @@ function renderBkDetail(){
   ttl.textContent=(ext?L('📥 파일: ','📥 File: ')+(b.name||''):fmtTime(b.at))+' · '+L(`노트 ${all.length}`,'notes '+all.length);
   top.append(back,ttl,sall,clr);list.append(top);
   const hint=document.createElement('div');hint.className='hint';hint.style.marginBottom='.4em';
-  hint.innerHTML=L('복구할 노트를 체크한 뒤 아래 버튼을 누르세요. 체크 안 한 노트·기존 내용은 그대로 둡니다.','Check the notes to restore, then use the buttons below. Unchecked notes and current content are kept as-is.');
+  hint.innerHTML=L('<b>선택한 것만 복구</b>: 체크한 노트를 <b>이 백업 당시 내용으로 되돌립니다</b>(예: 오늘 잘못 고친 노트 → 어제 백업 내용). 지금 내용이 다르면 “[복구 전]” 사본으로 남겨 두므로 아무것도 사라지지 않습니다. 체크 안 한 노트는 그대로입니다.<br><b>모두 복구</b>: 지금 없는 노트를 추가하고, 백업이 더 새로운 노트만 바꿉니다. 지금 있는 노트는 지우지 않습니다.',
+    '<b>Restore selected</b>: checked notes are <b>put back to how they were in this backup</b> (e.g. a note you broke today → yesterday’s version). If the current content differs it is kept as a “[before restore]” copy, so nothing is lost. Unchecked notes stay as they are.<br><b>Restore all</b>: adds notes you no longer have and updates only notes where the backup is newer. Current notes are never deleted.');
   list.append(hint);
   if(vaultSnap){const vb=document.createElement('div');vb.className='setsec';
     const vt=document.createElement('div');vt.className='hint';vt.textContent=L('🔐 암호화된 Vault 스냅샷이 포함되어 있습니다. 제목과 본문은 여기서 표시하지 않습니다.','🔐 This backup includes an encrypted vault snapshot. Titles and contents are never shown here.');
@@ -6262,8 +6268,8 @@ function renderBkDetail(){
 }
 async function doApply(d, ids){
   const msg=ids
-    ? L('선택한 노트를 이 백업 내용으로 복구할까요?\n(기존 노트를 덮지 않고, 백업이 더 새로우면 갱신)','Restore the selected notes from this backup?\n(It won’t erase current notes; newer backup content is applied)')
-    : L('이 백업 전체로 복구할까요?\n(없는 노트가 추가되고, 백업이 더 새로우면 갱신됩니다)','Restore this whole backup?\n(Missing notes are added; newer backup content is applied)');
+    ? L(`선택한 노트 ${ids.length}개를 이 백업 당시 내용으로 되돌릴까요?\n• 지금 내용이 다르면 “[복구 전]” 사본으로 남깁니다.\n• 선택 안 한 노트는 그대로입니다.`,`Put ${ids.length} selected note(s) back to this backup’s version?\n• If the current content differs, it is kept as a “[before restore]” copy.\n• Unchecked notes are not touched.`)
+    : L('이 백업 전체로 복구할까요?\n• 지금 없는 노트는 추가됩니다.\n• 이미 있는 노트는 백업이 더 새로울 때만 바뀝니다.\n• 지금 있는 노트는 지워지지 않습니다.\n(오늘 고친 노트를 어제 내용으로 되돌리려면 “선택한 것만 복구”를 쓰세요)','Restore this whole backup?\n• Notes you no longer have are added.\n• Existing notes change only if the backup is newer.\n• Current notes are never deleted.\n(To put a note you changed today back to yesterday’s version, use “Restore selected”)');
   if(!await dlg(msg,{okText:L('복구','Restore')}))return;
   try{
     const r=await applyBackup(d,ids);
