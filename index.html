@@ -283,7 +283,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-AW1QM0lAHl0Wv93kxyKz8ZWhosF3zEZwztdVikUO5g8='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-Q/MGV6miHABFVzS38ym8Z5RLBcMEXYmfrPBXkXh+Qts='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
 <!-- (요구3) 전화기 화면에 딱 맞게 · 자동 확대(핀치 줌 포함) 완전 금지 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#f5f2ef">
@@ -1861,12 +1861,15 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='SoonNote';
-const APP_VER='7.10.1';
+const APP_VER='7.10.2';
 /* ══════════ (v7.6.1) 기능 스위치 ══════════
    sync:false 로 바꾸면 동기화(Supabase)가 UI·네트워크·타이머 모두에서 비활성화된다.
    SYNC 객체와 계정 화면 코드는 남아 있되(프리미엄 대비) 어떤 경로도 실행되지 않는다.
    sync:false 로 배포할 때는 vendor/supabase.min.js 와 <script src> 도 함께 빼도 된다(없어도 오류 없음). */
 const FEATURES={sync:true};
+/* (v7.10.2) 웹 배포 전용 초대 코드 — 로그인/가입 전에 한 번 묻고 기기에 기억. Google Play 판에서는 이 줄을 ''로 바꾸면(또는 삭제) 코드 없이 통과 */
+const SYNC_INVITE='snote2026';
+async function inviteOk(){if(!SYNC_INVITE||localStorage.getItem('sk.invite')===SYNC_INVITE)return true;const v=await dlg(L('동기화 초대 코드를 입력하세요','Enter the sync invite code'),{input:true,password:true,okText:L('확인','OK')});if(v===null)return false;if(v!==SYNC_INVITE){toast(L('초대 코드가 맞지 않습니다','Invite code is not valid'));return false}localStorage.setItem('sk.invite',v);return true}
 const SSTORE=(()=>{try{const t='__cn__';sessionStorage.setItem(t,'1');sessionStorage.removeItem(t);return sessionStorage}
   catch(e){const m={};return{getItem:k=>(k in m?m[k]:null),setItem:(k,v)=>{m[k]=String(v)},removeItem:k=>{delete m[k]}}}})();
 
@@ -5752,6 +5755,7 @@ $('#acTest').onclick=async()=>{
   const w=$('#acLibWarn'); if(w&&SYNC.libOk()) w.style.display='none';
 };
 $('#acLogin').onclick=async()=>{
+  if(!await inviteOk())return;   /* (v7.10.2) */
   if(!SYNC.libOk()){ $('#acAuthStat').textContent=L('준비 중…','Preparing…'); await ensureSyncLib(); checkSyncLib(); }
   const c=SYNC.makeClient();
   if(!c){$('#acAuthStat').textContent=L('먼저 서버 연결을 저장하세요','Save a server URL and key first');return}
@@ -5800,6 +5804,7 @@ async function doPasswordRecovery(){
   else{toast(L('✅ 비밀번호가 변경되었습니다. 이제 로그인됩니다.','✅ Password changed. You are now signed in.'));}
 }
 $('#acSignup').onclick=async()=>{
+  if(!await inviteOk())return;   /* (v7.10.2) */
   const c=SYNC.makeClient();
   if(!c){$('#acAuthStat').textContent=L('먼저 서버 연결을 저장하세요','Save a server URL and key first');return}
   const email=$('#acEmail').value.trim(),pass=$('#acPass').value;
