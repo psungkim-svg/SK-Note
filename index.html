@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
 ═══════════════════════════════════════════════════════════════
-  soonenote  —  V7.7.0
+  SoonNote  —  V7.7.0
   (V6.0 → ... → V6.6 → V6.7 → V6.7.1)
 
   V7.7.0 changes  (2026-09)
@@ -283,11 +283,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-QsZlHnbqnmssj3RDAU5UWHgksbTwfjD2AA37o2k7fN0='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-AW1QM0lAHl0Wv93kxyKz8ZWhosF3zEZwztdVikUO5g8='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
 <!-- (요구3) 전화기 화면에 딱 맞게 · 자동 확대(핀치 줌 포함) 완전 금지 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#f5f2ef">
-<title>soonenote</title>
+<title>SoonNote</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -297,7 +297,7 @@
 <script src="vendor/supabase.min.js" integrity="sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o" crossorigin="anonymous" defer></script>
 <style>
 :root{
-  /* ══ (v6.1) soonenote 고정 팔레트 — muted pastel / soft luxury ══
+  /* ══ (v6.1) SoonNote 고정 팔레트 — muted pastel / soft luxury ══
      Ivory #E1DAD3 · Nude #E4C9B6 · Dusty Rose #D7A49A · Sage #B8BBA3
      Baby Blue #A4B1BA · Lavender #C9C3DD · White #FFFFFF            */
   --ivory:#E1DAD3; --nude:#E4C9B6; --rose:#D7A49A; --sage:#B8BBA3;
@@ -1381,7 +1381,7 @@ html[data-theme="dark"] #folderOverlay:not(.vault-folder),html[data-theme="dark"
 .fh-home-btn:active{background:linear-gradient(145deg,#f5d9bd,#dbead9)!important}
 .fh-home-svg{display:block;width:1.34em;height:1.34em;filter:drop-shadow(0 1px 0 rgba(99,76,45,.12))}.fh-home-svg .home-roof{fill:#df9a86}.fh-home-svg .home-wall{fill:#f6d487}.fh-home-svg .home-door{fill:#86ad8c}.fh-home-svg .home-sun{fill:#e8b95c}
 .fh-folder .fi{color:#d9a246}.fh-folder-svg .folder-tab{fill:#f9dc8f;stroke:#d9a246;stroke-width:1.15}.fh-folder-svg .folder-body{fill:#efbd58;stroke:#d9a246;stroke-width:1.15}.fh-folder-svg .folder-line{fill:none;stroke:#fff0bf;stroke-width:1.05}
-#folderOverlay .sheet{position:relative}#fhFab{position:absolute;right:.7em;bottom:max(1.27em,env(safe-area-inset-bottom));   /* (v7.9.9) 첫 화면 ＋와 같은 위치 */z-index:12;width:1.7em;height:1.7em;padding:0;display:flex;align-items:center;justify-content:center;border-radius:50%;border:none;background:var(--accent);color:#4a332e;font-size:1.6em;font-weight:700;line-height:1;box-shadow:0 4px 12px rgba(90,75,65,.28);transform:translate(2mm,0) scale(.8);transition:transform .15s}#fhFab:active{transform:translate(2mm,1mm) scale(.72)}
+#folderOverlay .sheet{position:relative}#fhFab{position:absolute;right:.7em;bottom:max(.35em,env(safe-area-inset-bottom));   /* (v7.10.1) 더 아래로 (폴더 화면 전체) */z-index:12;width:1.7em;height:1.7em;padding:0;display:flex;align-items:center;justify-content:center;border-radius:50%;border:none;background:var(--accent);color:#4a332e;font-size:1.6em;font-weight:700;line-height:1;box-shadow:0 4px 12px rgba(90,75,65,.28);transform:translate(2mm,0) scale(.8);transition:transform .15s}#fhFab:active{transform:translate(2mm,1mm) scale(.72)}
 /* (v7.6.6) 폴더 제목: 처음부터 노트 제목 박스처럼 흰 바탕·검은 글씨(톡 치면 그 자리에서 편집) */
 #fdTitle{cursor:pointer;background:#fff;border:1px solid var(--line);border-radius:.5em;padding:.3em .6em;font-size:1em;font-weight:800;color:#212121!important;margin-right:.3em}
 #fdTitle:focus{outline:none;border-color:var(--accent2)}
@@ -1557,7 +1557,7 @@ html[data-theme="dark"] #folderOverlay:not(.vault-folder),html[data-theme="dark"
       <label for="remindTime" data-i18n="rm_time">Time to remind</label>
       <input type="datetime-local" id="remindTime">
     </div>
-    <div class="hint" data-i18n="rm_hint">⚠ The reminder only fires while soonenote is open on screen. Android may stop timers when the app is closed or the screen is off, so a closed-app reminder is NOT guaranteed. Server push is planned for a future version.</div>
+    <div class="hint" data-i18n="rm_hint">⚠ The reminder only fires while SoonNote is open on screen. Android may stop timers when the app is closed or the screen is off, so a closed-app reminder is NOT guaranteed. Server push is planned for a future version.</div>
     <div class="btnrow">
       <button class="btn primary" id="remindSave" data-i18n="save">Save</button>
       <button class="btn danger" id="remindClear" data-i18n="rm_clear">Clear reminder</button>
@@ -1733,7 +1733,7 @@ html[data-theme="dark"] #folderOverlay:not(.vault-folder),html[data-theme="dark"
         <div class="setrow"><span data-i18n="data_all">All app data</span><span class="stat" id="stSizeAll">–</span></div>
       </div>
       <div class="appver">
-        <div id="stAppName" style="font-size:1.05em;letter-spacing:.02em">soonenote</div>
+        <div id="stAppName" style="font-size:1.05em;letter-spacing:.02em">SoonNote</div>
         <div id="stVersion">v6.1</div>
       </div>
     </div>
@@ -1860,8 +1860,8 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
 /* ══════════ (v6.1) 버전은 여기 한 곳에서만 관리 ══════════
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
-const APP_NAME='soonenote';
-const APP_VER='7.10.0';
+const APP_NAME='SoonNote';
+const APP_VER='7.10.1';
 /* ══════════ (v7.6.1) 기능 스위치 ══════════
    sync:false 로 바꾸면 동기화(Supabase)가 UI·네트워크·타이머 모두에서 비활성화된다.
    SYNC 객체와 계정 화면 코드는 남아 있되(프리미엄 대비) 어떤 경로도 실행되지 않는다.
@@ -1872,7 +1872,7 @@ const SSTORE=(()=>{try{const t='__cn__';sessionStorage.setItem(t,'1');sessionSto
 
 /* ═══════════════ 파스텔 5색 (우선순위 순) + 제목줄 진한색 (요구16) ═══════════════ */
 /* (요청3) 노란색(index1)만 유지, 나머지 4색은 더 연하게 / 제목바는 바탕과 차이 적게(약하게) */
-/* ══ (v6.1) soonenote 고정 팔레트 — 7색 muted pastel ══
+/* ══ (v6.1) SoonNote 고정 팔레트 — 7색 muted pastel ══
    본문(COLORS)  = 기준색을 화이트에 72% 희석 → 거의 화이트에 가까운 파스텔
    제목(HEADS_L) = 기준색 그대로 또는 10%만 밝게                              */
 const PALETTE_BASE=['#efa9ae','#f0c79a','#a9d7b9','#a6c7e6','#c6b6e8'];   /* (v7.7.5) 파스텔 5색: 핑크·피치·민트·스카이블루·라벤더 — 앱 전체 통일 */   /* (v7.5.5 요청4) 5색 */
@@ -1955,7 +1955,7 @@ const I18N={
   bk_clear_q:{en:'Clear the saved backup list on this device?\n(Your notes themselves are not deleted)'},
   bk_cleared:{en:'Backup list cleared'},bk_bad:{en:'Not a valid backup file'},
   data_hint:{en:'⚠ Notes are stored on this phone, in this browser, at this address. If you open a different address or clear browser data, notes may not show. Tap “Backup (save to phone)” once in a while or enable Sync. Even if the app is reinstalled or deleted, the backup file lets you Import everything back.'},
-  app_name:{en:'soonenote'},
+  app_name:{en:'SoonNote'},
   settings_title:{en:'⚙️ Full settings'},save2:{en:'Save'},
   ac_title:{en:'☁️ Account · Sync'},ac_server:{en:'Server connection (Supabase)'},
   ac_url:{en:'Project URL'},ac_key:{en:'Public key (anon or sb_publishable)'},
@@ -1968,7 +1968,7 @@ const I18N={
   ac_rls_hint:{en:'🔒 <b>Important.</b> If Row Level Security is not enabled in Supabase, anyone holding the public key in this app can read and delete every user\'s notes. Run the SQL from the button above once in the Supabase SQL editor.'},
   ac_hint:{en:'⚠️ Sign in with the <b>same email</b> on both devices (PC and phone) to share notes. Different emails won’t sync.'},
   rm_title:{en:'⏰ Reminder'},rm_time:{en:'Time to remind'},
-  rm_hint:{en:'⚠ The reminder only fires while soonenote is open on screen. Android may stop timers when the app is closed or the screen is off, so a closed-app reminder is NOT guaranteed. Server push is planned for a future version.'},
+  rm_hint:{en:'⚠ The reminder only fires while SoonNote is open on screen. Android may stop timers when the app is closed or the screen is off, so a closed-app reminder is NOT guaranteed. Server push is planned for a future version.'},
   rm_clear:{en:'Clear reminder'},
   folder_ph:{en:'New folder name'},add2:{en:'Add'},
   pin_title:{en:'🔐 Vault password'},pin_new_ph:{en:'New password (8+ characters)'},
@@ -2038,7 +2038,7 @@ const I18N_KO={
   add_item:'+ 항목 추가',
   rm_title:'⏰ 알림 설정',
   rm_time:'알릴 시각',
-  rm_hint:'⚠ 알림은 <b>soonenote가 화면에 켜져 있을 때만</b> 울립니다. 안드로이드는 앱을 닫거나 화면이 꺼지면 타이머를 중지시키므로, 앱을 완전히 닫은 상태의 예약 알림은 <b>보장되지 않습니다</b>. (서버 푸시 알림은 다음 버전에서 예정)',
+  rm_hint:'⚠ 알림은 <b>SoonNote가 화면에 켜져 있을 때만</b> 울립니다. 안드로이드는 앱을 닫거나 화면이 꺼지면 타이머를 중지시키므로, 앱을 완전히 닫은 상태의 예약 알림은 <b>보장되지 않습니다</b>. (서버 푸시 알림은 다음 버전에서 예정)',
   save:'저장',
   rm_clear:'알림 해제',
   ac_title:'☁️ 계정 · 동기화',
@@ -2195,7 +2195,7 @@ const I18N_KO={
   lang_ko:'한국어',
   bk_empty:'저장된 백업이 없습니다. 먼저 "백업하기"를 눌러 주세요.',
   bk_restore_q:'이 백업으로 복구할까요?\n(빠진 내용만 채우며, 지금 노트를 지우지 않습니다)',
-  app_name:'soonenote',
+  app_name:'SoonNote',
   save2:'저장',
   pin_set_btn:'설정 / 변경',
   toast_import_ok:'가져오기 완료',
@@ -2299,7 +2299,7 @@ const I18N_JA={
   btn_wipe:'すべて削除',btn_emptytrash:'ゴミ箱を空にする',
   bk_title:'♻️ 保存済みバックアップ',bk_empty:'バックアップがありません。まず「バックアップ」を押してください。',
   bk_from_file:'📂 ファイルから読み込む',bk_clear:'バックアップ一覧を消去',
-  app_name:'soonenote',settings_title:'⚙️ 全画面設定',save2:'保存',
+  app_name:'SoonNote',settings_title:'⚙️ 全画面設定',save2:'保存',
   ac_title:'☁️ アカウント・同期',ac_server:'サーバー接続 (Supabase)',
   ac_url:'プロジェクト URL',ac_key:'公開キー (anon または sb_publishable)',
   ac_save:'保存・接続',ac_test:'接続テスト',ac_login:'ログイン（メール）',
@@ -2338,7 +2338,7 @@ const I18N_JA={
   ac_rls:'🔒 セキュリティ(RLS)設定のSQLを表示',
   ac_rls_hint:'🔒 <b>重要。</b> Supabaseで行レベルセキュリティを有効にしないと、このアプリに含まれる公開キーだけで誰でも全ユーザーのノートを読み書き・削除できます。上のボタンのSQLをSupabaseのSQLエディタで一度実行してください。',
   ac_hint:'⚠️ 2台の端末（PCとスマホ）で<b>同じメールアドレス</b>でログインするとノートが共有されます。違うメールでは同期されません。',
-  rm_hint:'⚠ 通知は soonenote が画面に表示されている間だけ鳴ります。Androidはアプリを閉じたり画面が消えるとタイマーを停止するため、アプリを閉じた状態での通知は保証されません。サーバープッシュ通知は今後のバージョンで対応予定です。',
+  rm_hint:'⚠ 通知は SoonNote が画面に表示されている間だけ鳴ります。Androidはアプリを閉じたり画面が消えるとタイマーを停止するため、アプリを閉じた状態での通知は保証されません。サーバープッシュ通知は今後のバージョンで対応予定です。',
   pin_change_btn:'変更 / リセット',
   def_color_saved:'既定の色を保存しました',
   toast_backup:'バックアップしました（通常＋保管ノートを含む）',
@@ -2449,7 +2449,7 @@ const I18N_ZH={
   btn_wipe:'全部删除',btn_emptytrash:'清空回收站',
   bk_title:'♻️ 已保存的备份',bk_empty:'还没有备份。请先点击"备份"。',
   bk_from_file:'📂 从文件载入',bk_clear:'清除备份列表',
-  app_name:'soonenote',settings_title:'⚙️ 全屏设置',save2:'保存',
+  app_name:'SoonNote',settings_title:'⚙️ 全屏设置',save2:'保存',
   ac_title:'☁️ 账户 · 同步',ac_server:'服务器连接 (Supabase)',
   ac_url:'项目 URL',ac_key:'公开密钥 (anon 或 sb_publishable)',
   ac_save:'保存 · 连接',ac_test:'测试连接',ac_login:'登录（邮箱）',
@@ -2488,7 +2488,7 @@ const I18N_ZH={
   ac_rls:'🔒 查看安全(RLS)设置 SQL',
   ac_rls_hint:'🔒 <b>重要。</b> 如果没有在 Supabase 中启用行级安全，任何人只要拿到本应用内的公开密钥，就能读取和删除所有用户的笔记。请在 Supabase SQL 编辑器中执行一次上方按钮里的 SQL。',
   ac_hint:'⚠️ 请在两台设备（电脑和手机）上使用<b>同一个邮箱</b>登录，笔记才会共享。邮箱不同则不会同步。',
-  rm_hint:'⚠ 提醒只在 soonenote 显示在屏幕上时才会响。安卓在应用关闭或熄屏后可能会停止计时器，因此关闭应用后的提醒无法保证。服务器推送通知将在后续版本中提供。',
+  rm_hint:'⚠ 提醒只在 SoonNote 显示在屏幕上时才会响。安卓在应用关闭或熄屏后可能会停止计时器，因此关闭应用后的提醒无法保证。服务器推送通知将在后续版本中提供。',
   pin_change_btn:'更改 / 重置',
   def_color_saved:'已保存默认颜色',
   toast_backup:'已备份（包含普通笔记和保险箱笔记）',
@@ -2599,7 +2599,7 @@ const I18N_ES={
   btn_wipe:'Eliminar todo',btn_emptytrash:'Vaciar papelera',
   bk_title:'♻️ Copias guardadas',bk_empty:'Aún no hay copias. Pulsa "Copia de seguridad" primero.',
   bk_from_file:'📂 Cargar desde archivo',bk_clear:'Borrar lista de copias',
-  app_name:'soonenote',settings_title:'⚙️ Ajustes generales',save2:'Guardar',
+  app_name:'SoonNote',settings_title:'⚙️ Ajustes generales',save2:'Guardar',
   ac_title:'☁️ Cuenta · Sincronización',ac_server:'Conexión al servidor (Supabase)',
   ac_url:'URL del proyecto',ac_key:'Clave pública (anon o sb_publishable)',
   ac_save:'Guardar · Conectar',ac_test:'Probar conexión',ac_login:'Iniciar sesión (correo)',
@@ -2638,7 +2638,7 @@ const I18N_ES={
   ac_rls:'🔒 Ver el SQL de seguridad (RLS)',
   ac_rls_hint:'🔒 <b>Importante.</b> Si no activas Row Level Security en Supabase, cualquiera con la clave pública de esta app puede leer y borrar las notas de todos los usuarios. Ejecuta una vez el SQL del botón de arriba en el editor SQL de Supabase.',
   ac_hint:'⚠️ Inicia sesión con el <b>mismo correo</b> en ambos dispositivos (PC y teléfono) para compartir notas. Con correos distintos no se sincroniza.',
-  rm_hint:'⚠ El recordatorio solo suena mientras soonenote está abierto en pantalla. Android puede detener los temporizadores cuando la app está cerrada o la pantalla apagada, así que NO se garantiza con la app cerrada. Las notificaciones push del servidor llegarán en una versión futura.',
+  rm_hint:'⚠ El recordatorio solo suena mientras SoonNote está abierto en pantalla. Android puede detener los temporizadores cuando la app está cerrada o la pantalla apagada, así que NO se garantiza con la app cerrada. Las notificaciones push del servidor llegarán en una versión futura.',
   pin_change_btn:'Cambiar / Restablecer',
   def_color_saved:'Color predeterminado guardado',
   toast_backup:'Copia guardada (incluye notas normales y de la caja fuerte)',
@@ -5441,7 +5441,11 @@ const SYNC={
         const rows=dirty.map(n=>this.toRow(n));
         const {error}=await c.from('notes').upsert(rows);
         if(error)throw error;
-        dirty.forEach((n,i)=>{n.dirty=false;n._srvSeen=this.fp(n);n._srvUp=rows[i].updated_at;if(rows[i].updated_at>(this._srvMax||0))this._srvMax=rows[i].updated_at;});
+        /* (v7.10.1 버그수정) 업로드가 오가는 사이(느린 망·음성 입력 중)에 노트가 더 바뀌었을 수 있다.
+           예전엔 '지금 로컬 내용'의 지문을 _srvSeen 으로 기록해 서버에 실제 올라간 내용과 어긋났고,
+           다음 push 가 이를 '다른 기기의 수정'으로 오판해 [사본]을 만들었다(같은 노트 4개 현상).
+           → 실제로 보낸 행(rows[i])의 지문을 기록하고, 그 사이 또 바뀐 노트는 dirty 를 남겨 다음 push 로 이어 보낸다. */
+        dirty.forEach((n,i)=>{const sent=this.fp(this.fromRow(rows[i]));n._srvSeen=sent;n._srvUp=rows[i].updated_at;if(this.fp(n)===sent)n.dirty=false;else this.pending=true;if(rows[i].updated_at>(this._srvMax||0))this._srvMax=rows[i].updated_at;});
         if(copies.length&&!$('#edOverlay').classList.contains('show'))render();
       }
       if(folderDeleteIds.length){
@@ -5696,7 +5700,7 @@ $('#acSave').onclick=async()=>{
   else toast(L('URL과 키를 확인하세요','Check the URL and key'));
 };
 /* (v6.1) RLS 설정 SQL — 초보자가 복사해서 Supabase SQL 편집기에 붙여넣기만 하면 된다 */
-const RLS_SQL=`-- soonenote security setup
+const RLS_SQL=`-- SoonNote security setup
 -- Run this ONCE in Supabase -> SQL Editor -> New query -> Run
 -- Without this, anyone who has the public key inside this app
 -- can read and delete EVERY user's notes.
@@ -6267,7 +6271,7 @@ $('#stExportEn').onclick=async()=>{
   try{
     if(window.showSaveFilePicker){
       const handle=await window.showSaveFilePicker({suggestedName:name,
-        types:[{description:'soonenote backup',accept:{'application/json':['.json']}}]});
+        types:[{description:'SoonNote backup',accept:{'application/json':['.json']}}]});
       const w=await handle.createWritable();await w.write(json);await w.close();
       if(!saveLocalBackup(payload))toast(L('⚠ 파일은 선택한 위치에 저장했지만, 기기 내 사본은 저장 공간 부족으로 보관하지 못했습니다.','⚠ File saved to the chosen location, but the on-device copy could not be kept (storage full).'));
       backupWhere(payload,'picker');   /* (v7.8.5 B) */
@@ -6916,14 +6920,17 @@ function makeManualNotes(){
     const ko=IS_KO, now=Date.now(), src=ko?MANUAL_KO:MANUAL_EN, keys=['start','write','folder','vault','backup','sync','settings'];
     /* (v7.9.4) 복구 등으로 같은 매뉴얼이 2벌 생겼을 때: 손대지 않은(dirty 아님) 쪽만 제거 — 사용자가 고친 노트는 절대 지우지 않음 */
     let dup=0;keys.forEach(k=>{const ds=S.notes.filter(n=>n._manual===k&&!n.deleted);if(ds.length<2)return;const keep=ds.find(n=>n.dirty)||ds[0];ds.forEach(n=>{if(n!==keep&&!n.dirty){S.notes.splice(S.notes.indexOf(n),1);dup++}})});
-    const isMF=x=>!x.deleted&&(x._manual||x.name==='매뉴얼'||x.name==='Manual');
+    const MF_NAMES=['매뉴얼','Manual','マニュアル','手册'];const mfName=ko?'매뉴얼':(LANG==='ja'?'マニュアル':LANG==='zh'?'手册':'Manual');
+    const isMF=x=>!x.deleted&&(x._manual||MF_NAMES.includes(x.name));
     /* 매뉴얼 노트가 실제로 들어 있는 폴더를 우선 사용(복구 후 빈 새 폴더와 겹칠 때 중복 방지) */
     let f=S.folders.find(x=>isMF(x)&&S.notes.some(n=>n._manual&&!n.deleted&&n.folder===x.id))||S.folders.find(x=>x._manual&&!x.deleted)||S.folders.find(isMF);
+    let fixed=0;
     const mnotes=S.notes.filter(n=>n._manual&&!n.deleted);
     const upToDate=(S.settings.manualVer|0)>=MANUAL_VER;
-    if(!f){f={id:uid(),name:ko?'매뉴얼':'Manual',color:4,createdAt:now,_synced:true,deleted:false,_manual:true};S.folders.push(f);}
+    if(!f){f={id:uid(),name:mfName,color:4,createdAt:now,_synced:true,deleted:false,_manual:true};S.folders.push(f);}
     if(!f._manual)f._manual=true;
-    let fixed=0;mnotes.forEach(n=>{const ok=n.folder&&S.folders.some(x=>x.id===n.folder&&!x.deleted);if(!ok){n.folder=f.id;delete n._prevFolder;fixed++}});
+    if(f.name!==mfName&&MF_NAMES.includes(f.name)){f.name=mfName;fixed=(fixed|0)+1}   /* (v7.10.1) 시스템 언어 바뀌면 폴더 이름도 따라감(사용자가 바꾼 이름은 그대로) */
+    mnotes.forEach(n=>{const ok=n.folder&&S.folders.some(x=>x.id===n.folder&&!x.deleted);if(!ok){n.folder=f.id;delete n._prevFolder;fixed++}});
     /* 비어 버린 여분의 매뉴얼 폴더는 휴지통으로(사용자 노트가 들어 있으면 그대로 둠) */
     S.folders.forEach(x=>{if(x!==f&&isMF(x)&&!S.notes.some(n=>n.folder===x.id&&!n.deleted)){x.deleted=true;x.deletedAt=now;x._syncDelete=true;fixed++}});
     /* (v7.9.7) 없는(지워진) 매뉴얼 노트는 매번 매뉴얼 폴더 안에 다시 만든다 — 업데이트 후 항상 7개가 폴더 안에 있도록 */
