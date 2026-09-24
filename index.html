@@ -283,7 +283,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-l8DdMxuTs6AZ2J9k2rvtJILQokS8eJ35Lh9Z6KWSAZc='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-gTirdE62Y30vjuB2cT7VmxXge5oluEFzaMZEfb2W9tA='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
 <!-- (요구3) 전화기 화면에 딱 맞게 · 자동 확대(핀치 줌 포함) 완전 금지 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#f5f2ef">
@@ -1349,8 +1349,8 @@ html[data-theme="dark"] #vGate .vpass:focus{background:#2a2d32}
 #fhFolderGrid.view-grid-l{grid-template-columns:repeat(var(--folder-hub-cols,2),minmax(0,1fr))}
 #folderDetailGrid{grid-template-columns:repeat(var(--folder-note-cols,2),minmax(0,1fr))}
 #fdViewMenu{right:4.15em}.vault-main-more{position:fixed;z-index:105;top:3.05em;right:.55em}
-.vault-unlocked,#vaultUnlockedBar{background:#0000ff;color:#fff;border-bottom:1px solid #0000cc;   /* (v7.9.7) 파란색 */font-size:.86em;font-weight:900;letter-spacing:.04em;padding:.42em .7em;justify-content:center;text-align:center}   /* (v7.9.3) 짙은 녹색 + 중앙 */
-.vault-unlocked{margin:calc(-.45em / .86) calc(-1*var(--fsx,.72em) / .86) .5em;   /* em 값은 띠의 .86em 기준이므로 .86으로 나눠 상단바와 같은 px */border-radius:0;display:flex;align-items:center;font-weight:900}   /* (v7.9.7) 상단 바에 딱 붙고 좌우 끝까지 */.vault-unlocked svg{flex:none;margin-right:.4em}.vault-unlocked.hidden,#vaultUnlockedBar.hidden{display:none!important}#vaultUnlockedBar{display:flex;align-items:center}#vaultUnlockedBar b{font-weight:900}
+.vault-unlocked,#vaultUnlockedBar{background:#0000ff;color:#fff;border-bottom:1px solid #0000cc;   /* (v7.9.7) 파란색 */font-size:.86em;font-weight:900;letter-spacing:-.01em;padding:.42em .7em;justify-content:center;text-align:center}   /* (v7.9.3) 중앙 / (v7.11.1) 자간 .04em→-.01em */
+.vault-unlocked{margin:calc(-.45em / .86) calc(-1*var(--fsx,.72em) / .86) .5em;   /* em 값은 띠의 .86em 기준이므로 .86으로 나눠 상단바와 같은 px */border-radius:0;display:flex;align-items:center;font-weight:900}   /* (v7.9.7) 상단 바에 딱 붙고 좌우 끝까지 */.vault-unlocked svg,#vaultUnlockedBar svg{flex:none;margin-right:.45em;background:#dbe7ff;border-radius:50%;padding:.2em;box-sizing:content-box}   /* (v7.11.1) 자물쇠를 아주 연한 파란 원 안에 */.vault-unlocked.hidden,#vaultUnlockedBar.hidden{display:none!important}#vaultUnlockedBar{display:flex;align-items:center}#vaultUnlockedBar b{font-weight:900}
 #folderNav.vault{padding:.07em .32em;padding-bottom:calc(.09em + env(safe-area-inset-bottom))}
 #folderNav.vault .folderbar{padding:.10em .04em .02em}
 /* v7.2 Vault strip was about 41px tall; this keeps usable ~20px controls (roughly half scale). */
@@ -1881,7 +1881,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='SoonNote';
-const APP_VER='7.11.0';
+const APP_VER='7.11.1';
 /* ══════════ (v7.6.1) 기능 스위치 ══════════
    sync:false 로 바꾸면 동기화(Supabase)가 UI·네트워크·타이머 모두에서 비활성화된다.
    SYNC 객체와 계정 화면 코드는 남아 있되(프리미엄 대비) 어떤 경로도 실행되지 않는다.
@@ -1898,9 +1898,9 @@ const SSTORE=(()=>{try{const t='__cn__';sessionStorage.setItem(t,'1');sessionSto
 /* ══ (v6.1) SoonNote 고정 팔레트 — 7색 muted pastel ══
    본문(COLORS)  = 기준색을 화이트에 72% 희석 → 거의 화이트에 가까운 파스텔
    제목(HEADS_L) = 기준색 그대로 또는 10%만 밝게                              */
-const PALETTE_BASE=['#f2b8bd','#f0c79a','#a9d7b9','#a6c7e6','#c6b6e8'];   /* (v7.7.5) 파스텔 5색: 핑크·피치·민트·스카이블루·라벤더 — 앱 전체 통일 */   /* (v7.5.5 요청4) 5색 */
-const COLORS  =['#fbebed','#fbefe3','#e7f4eb','#e6eff8','#efebf9'];   /* (v7.7.5) 본문 = 기준색 72% 희석 */   /* (v7.5.5 요청4) 5색 — 아이보리·화이트 제거 */
-const HEADS_L =['#f2b8bd','#f0c79a','#a9d7b9','#a6c7e6','#c6b6e8'];   /* (v7.7.5) 제목줄 = 기준색 그대로 */
+const PALETTE_BASE=['#ffb5bc', '#ffcd95', '#9befb8', '#97cdff', '#c5a9ff'];   /* (v7.11.1) 맑은 파스텔 B */   /* (v7.7.5) 파스텔 5색: 핑크·피치·민트·스카이블루·라벤더 — 앱 전체 통일 */   /* (v7.5.5 요청4) 5색 */
+const COLORS  =['#ffeaec', '#fff1e1', '#e3fbeb', '#e2f1ff', '#efe7ff'];   /* (v7.7.5) 본문 = 기준색 72% 희석 */   /* (v7.5.5 요청4) 5색 — 아이보리·화이트 제거 */
+const HEADS_L =['#ffb5bc', '#ffcd95', '#9befb8', '#97cdff', '#c5a9ff'];   /* (v7.7.5) 제목줄 = 기준색 그대로 */
 const COLORS_D=['#483334','#483c2e','#334038','#323c45','#3b3746'];
 const HEADS_D =['#835d60','#846d55','#5d7666','#5b6d7e','#6d6480'];
 const NCOLORS=COLORS.length;                       /* (v7.5.5 요청4) 5 — 7색 중 아이보리·화이트 제거 */
@@ -1909,7 +1909,7 @@ const COLOR_NAMES_EN=['Pink','Peach','Mint','Sky Blue','Lavender'];
 const cnName=i=>((IS_KO?COLOR_NAMES[i]:COLOR_NAMES_EN[i])||'');
 /* 글자색·형광펜도 같은 톤으로 (원색 제거) */
 const TEXT_COLORS=['#3a3430','#8f6259','#8a7358','#6f7460','#5d6b74','#6f6889','#a89f97'];
-const HI_COLORS  =['#fbefe3','#fbebed','#e7f4eb','#e6eff8','#efebf9','transparent'];   /* (v7.7.5) 새 팔레트 본문색 */
+const HI_COLORS  =['#fff1e1','#ffeaec','#e3fbeb','#e2f1ff','#efe7ff','transparent'];   /* (v7.7.5) 새 팔레트 본문색 */
 /* (v7.0 요청4) T창의 글자색 3개. 노트 배경 색이 아니라 '고른 글자'에 들어가는 색이다. */
 const TP_COLORS=[{c:'#C62828',ko:'진한 빨강',en:'Deep red'},{c:'#1565C0',ko:'파랑',en:'Blue'}];   /* (v7.9.0) 빨강 + 파랑. 같은 색을 다시 누르면 검정(색 지움) */
 
