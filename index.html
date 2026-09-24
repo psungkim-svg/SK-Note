@@ -283,7 +283,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-HFpCjME9ftUdqoMlHaw0mk/w2edl4jrX1yPuMCwV++Q='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-f1QM5ndfi7T1GmD8HKGBe2HSImN7HNF4BxU0rWRCGJQ='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
 <!-- (요구3) 전화기 화면에 딱 맞게 · 자동 확대(핀치 줌 포함) 완전 금지 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#f5f2ef">
@@ -1436,7 +1436,7 @@ html[data-cols="1"]{--cardfs:1.6} html[data-cols="2"]{--cardfs:1.3} html[data-co
 #grid:not(.list):not(.titles) .note .body,#folderDetailGrid.folder-note-grid .note .body{font-size:calc(12pt*var(--cardfs,1))}
 /* (v7.10.8) 제목만 보기(☰): 진한 제목바만 남기고 아래 연한 부분 제거, 바 사이에는 선 하나, 제목 150% */
 #grid.list,#folderDetailGrid.folder-note-list{gap:0}
-#grid.list .note,#folderDetailGrid.folder-note-list .note{background:transparent;border:0;border-bottom:1px solid var(--line);border-radius:0}
+#grid.list .note,#folderDetailGrid.folder-note-list .note{background:transparent;border:0;border-bottom:3px solid var(--line);border-radius:0}   /* (v7.10.9) 선 3px */
 #grid.list .tinner,#folderDetailGrid.folder-note-list .tinner{display:none}
 #grid.list .note .thead,#folderDetailGrid.folder-note-list .note .thead{padding:.3em .6em}
 #grid.list .note .ttl,#folderDetailGrid.folder-note-list .note .ttl{font-size:1.2em}
@@ -1665,6 +1665,12 @@ html[data-cols="1"]{--cardfs:1.6} html[data-cols="2"]{--cardfs:1.3} html[data-co
       <div class="setrow"><label data-i18n="default_view">Default view</label>
         <select id="stView"><option value="grid" data-i18n="grid">Grid</option><option value="list" data-i18n="list">List</option><option value="titles" data-i18n="titles">Titles only</option></select>
       </div>
+      <div class="setrow"><label data-i18n="note_shape">Note shape</label>
+        <select id="stRule">
+          <option value="none" data-i18n="shape_none">Plain</option>
+          <option value="line" data-i18n="shape_line">Lined paper</option>
+        </select>
+      </div>
       <div class="setrow"><label data-i18n="sort_by">Sort order</label>
         <select id="stSort">
           <option value="color" data-i18n="sort_color">By color</option>
@@ -1674,7 +1680,9 @@ html[data-cols="1"]{--cardfs:1.6} html[data-cols="2"]{--cardfs:1.3} html[data-co
           <option value="manual" data-i18n="sort_manual">Manual order</option>
         </select>
       </div>
-      <!-- (v7.10.8) 노트박스 크기·노트 모양·기본 색 → 정렬 기준 바로 아래 -->
+      <div class="setrow"><label data-i18n="default_color">Default note color</label>
+        <div class="dfcolors" id="stDefColor"></div>
+      </div>
       <div class="setrow"><label data-i18n="box_size">Box size (columns)</label>
         <select id="stBox">
           <option value="1" data-i18n="box1">1 column</option>
@@ -1683,18 +1691,10 @@ html[data-cols="1"]{--cardfs:1.6} html[data-cols="2"]{--cardfs:1.3} html[data-co
           <option value="4" data-i18n="box4">4 columns</option>
         </select>
       </div>
-      <div class="setrow"><label data-i18n="note_shape">Note shape</label>
-        <select id="stRule">
-          <option value="none" data-i18n="shape_none">Plain</option>
-          <option value="line" data-i18n="shape_line">Lined paper</option>
-        </select>
-      </div>
-      <div class="setrow"><label data-i18n="default_color">Default note color</label>
-        <div class="dfcolors" id="stDefColor"></div>
-      </div>
-      <!-- (v6.7) 글자 샘플 → 노트 글자 조절(크기·자간·줄간격) → 굵기 순서 -->
-      <div class="fontsample" id="stFontSample" data-i18n="font_preview">Sample Abc 123 — preview</div>
-      <div class="subhead" data-i18n="font_ctrl">Note text controls</div>
+    </div>
+
+    <div class="setsec" id="secFont">   <!-- (v7.10.9) 노트 글자 박스 -->
+      <h4 data-i18n="font_ctrl">Note text controls</h4>
       <!-- (v7.8.6) 슬라이더 → 숫자 선택(select). 스치거나 흔들려도 값이 바뀌지 않는다. 저장키(font/fontLs/fontLh)는 그대로. -->
       <div class="setrow"><label data-i18n="fc_size">Size</label>
         <select id="stFontSel" data-i18n-title="fc_size" title="Size"></select></div>
@@ -1710,14 +1710,7 @@ html[data-cols="1"]{--cardfs:1.6} html[data-cols="2"]{--cardfs:1.3} html[data-co
           <option value="x" data-i18n="fw_x">Bold</option>
         </select>
       </div>
-    </div>
-
-    <div class="setsec" id="secSync">
-      <h4 data-i18n="sec_sync">Sync</h4>
-      <div class="setrow"><span data-i18n="sync_status">Status</span><span class="stat" id="stSyncState" data-i18n="sync_notset">Not set</span></div>
-      <div class="btnrow" style="margin-top:0">
-        <button class="btn primary" id="stAccountBtn" data-i18n="sync_btn">☁️ Account · Sync</button>
-      </div>
+      <div class="fontsample" id="stFontSample" data-i18n="font_preview">Sample Abc 123 — preview</div>
     </div>
 
     <div class="setsec">
@@ -1726,6 +1719,14 @@ html[data-cols="1"]{--cardfs:1.6} html[data-cols="2"]{--cardfs:1.3} html[data-co
       <div class="setrow"><label data-i18n="vault_open">🔐 Vault</label><button class="btn" id="stVaultBtn" data-i18n="open">Open</button></div>
       <div class="setrow"><label data-i18n="vault_pin">Vault password</label><button class="btn" id="stPinBtn" data-i18n="pin_set">Set / Change</button></div>
       <div class="setrow hidden" id="stVaultAutoRow"><label data-i18n="vault_unlock_time">Auto-lock after</label><select id="stVaultAuto"><option value="1">1 minute</option><option value="5">5 minutes</option><option value="15">15 minutes</option><option value="30">30 minutes</option></select></div>
+    </div>
+
+    <div class="setsec" id="secSync">
+      <h4 data-i18n="sec_sync">Sync</h4>
+      <div class="setrow"><span data-i18n="sync_status">Status</span><span class="stat" id="stSyncState" data-i18n="sync_notset">Not set</span></div>
+      <div class="btnrow" style="margin-top:0">
+        <button class="btn primary" id="stAccountBtn" data-i18n="sync_btn">☁️ Account · Sync</button>
+      </div>
     </div>
 
     <div class="setsec">
@@ -1880,7 +1881,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='SoonNote';
-const APP_VER='7.10.8';
+const APP_VER='7.10.9';
 /* ══════════ (v7.6.1) 기능 스위치 ══════════
    sync:false 로 바꾸면 동기화(Supabase)가 UI·네트워크·타이머 모두에서 비활성화된다.
    SYNC 객체와 계정 화면 코드는 남아 있되(프리미엄 대비) 어떤 경로도 실행되지 않는다.

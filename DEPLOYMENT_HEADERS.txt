@@ -3,7 +3,7 @@
 # index.html has a baseline CSP meta. Send this stronger HTTP header too,
 # because browsers ignore frame-ancestors when it comes from a meta element.
 
-Content-Security-Policy: default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-HFpCjME9ftUdqoMlHaw0mk/w2edl4jrX1yPuMCwV++Q='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests
+Content-Security-Policy: default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-f1QM5ndfi7T1GmD8HKGBe2HSImN7HNF4BxU0rWRCGJQ='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests
 X-Content-Type-Options: nosniff
 Referrer-Policy: no-referrer
 Permissions-Policy: camera=(self), microphone=(), geolocation=(), payment=(), usb=()
