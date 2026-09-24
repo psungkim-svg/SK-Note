@@ -1,5 +1,11 @@
-SoonNote v7.10.6
-- 언어 선택 즉시 적용(앱 재시작)
-- 동기화로 받은 노트가 폴더 화면에도 즉시 반영
-(v7.10.5 백업 휴지통 무시·복구 설명, v7.10.4 내용 포함)
-배포: 폴더 안 내용물을 루트에 업로드, 헤더는 DEPLOYMENT_HEADERS.txt(CSP 해시 변경).
+soonenote v7.9.0 — 배포에 필요한 파일만 담았습니다.
+
+index.html            앱 본체 (전부 이 한 파일에 들어 있음)
+sw.js                 서비스 워커 (오프라인·빠른 시작)
+manifest.webmanifest  PWA 설치 정보 (이름·아이콘·색)
+icons/                앱 아이콘 3개
+vendor/supabase.min.js  동기화용 라이브러리 (동기화 안 쓰면 없어도 됨)
+DEPLOYMENT_HEADERS.txt  호스팅에 넣을 보안 헤더(CSP) 값 — 배포 시 참고
+SHA256SUMS.txt        파일 무결성 확인용 (선택)
+
+이 폴더를 그대로 웹 호스팅(또는 Capacitor www/)에 올리면 됩니다.
