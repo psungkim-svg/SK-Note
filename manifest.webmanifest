@@ -1,6 +1,6 @@
 {
-  "name": "soonenote",
-  "short_name": "soonenote",
+  "name": "SoonNote",
+  "short_name": "SoonNote",
   "description": "A pastel notepad with folders and an encrypted private vault.",
   "id": "/",
   "start_url": "./",
