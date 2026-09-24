@@ -283,7 +283,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-f1QM5ndfi7T1GmD8HKGBe2HSImN7HNF4BxU0rWRCGJQ='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-l8DdMxuTs6AZ2J9k2rvtJILQokS8eJ35Lh9Z6KWSAZc='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
 <!-- (요구3) 전화기 화면에 딱 맞게 · 자동 확대(핀치 줌 포함) 완전 금지 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#f5f2ef">
@@ -706,7 +706,7 @@ main{order:1;flex:1;padding:0;max-width:1000px;width:100%;margin:0 auto;overflow
 #grid.titles .tinner{display:block;padding:.22em .6em .3em}   /* (요청7) 제목만 보기에서도 내용 첫 부분을 함께 보여줌 */
 #grid.titles .note .body{font-size:11pt;-webkit-line-clamp:1;line-height:1.35;flex:none}
 #grid.titles .note .prog{display:none}
-#grid.titles .ttl{font-size:.8em;font-weight:800}   /* (요청4) 제목 굵기 이전값(800)으로 복원 */
+#grid.titles .ttl{font-size:.8em;font-weight:700}   /* (요청4) 제목 굵기 이전값(800)으로 복원 */
 #grid.list{display:flex;flex-direction:column;gap:1mm}
 #grid.list .note{aspect-ratio:auto}                 /* 목록에서도 정사각형 해제 */
 /* (v7.8.9) 목록(☰) = 진짜 제목만: 본문·진행바 숨김 */
@@ -727,7 +727,7 @@ main{order:1;flex:1;padding:0;max-width:1000px;width:100%;margin:0 auto;overflow
   background:var(--tc,var(--chip));   /* (요구16) 제목줄 진한 2톤 */
   padding:.14em .5em;display:flex;align-items:center;gap:.3em;min-height:0
 }
-.note .ttl{font-weight:800;font-size:.8em;line-height:1.25;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+.note .ttl{font-weight:700;font-size:.8em;   /* (v7.11.0) 800→700 조금만 얇게 */line-height:1.25;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   /* (v6.9 2) same face + same tracking as the reference sample - no condensed UI font for notes */
   font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans CJK KR","SamsungOne","Malgun Gothic",sans-serif;font-stretch:100%;letter-spacing:normal}
 .note .badges{font-size:.6em;display:flex;gap:.25em;flex:none}
@@ -1881,7 +1881,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='SoonNote';
-const APP_VER='7.10.9';
+const APP_VER='7.11.0';
 /* ══════════ (v7.6.1) 기능 스위치 ══════════
    sync:false 로 바꾸면 동기화(Supabase)가 UI·네트워크·타이머 모두에서 비활성화된다.
    SYNC 객체와 계정 화면 코드는 남아 있되(프리미엄 대비) 어떤 경로도 실행되지 않는다.
@@ -1898,9 +1898,9 @@ const SSTORE=(()=>{try{const t='__cn__';sessionStorage.setItem(t,'1');sessionSto
 /* ══ (v6.1) SoonNote 고정 팔레트 — 7색 muted pastel ══
    본문(COLORS)  = 기준색을 화이트에 72% 희석 → 거의 화이트에 가까운 파스텔
    제목(HEADS_L) = 기준색 그대로 또는 10%만 밝게                              */
-const PALETTE_BASE=['#efa9ae','#f0c79a','#a9d7b9','#a6c7e6','#c6b6e8'];   /* (v7.7.5) 파스텔 5색: 핑크·피치·민트·스카이블루·라벤더 — 앱 전체 통일 */   /* (v7.5.5 요청4) 5색 */
-const COLORS  =['#fbe7e8','#fbefe3','#e7f4eb','#e6eff8','#efebf9'];   /* (v7.7.5) 본문 = 기준색 72% 희석 */   /* (v7.5.5 요청4) 5색 — 아이보리·화이트 제거 */
-const HEADS_L =['#efa9ae','#f0c79a','#a9d7b9','#a6c7e6','#c6b6e8'];   /* (v7.7.5) 제목줄 = 기준색 그대로 */
+const PALETTE_BASE=['#f2b8bd','#f0c79a','#a9d7b9','#a6c7e6','#c6b6e8'];   /* (v7.7.5) 파스텔 5색: 핑크·피치·민트·스카이블루·라벤더 — 앱 전체 통일 */   /* (v7.5.5 요청4) 5색 */
+const COLORS  =['#fbebed','#fbefe3','#e7f4eb','#e6eff8','#efebf9'];   /* (v7.7.5) 본문 = 기준색 72% 희석 */   /* (v7.5.5 요청4) 5색 — 아이보리·화이트 제거 */
+const HEADS_L =['#f2b8bd','#f0c79a','#a9d7b9','#a6c7e6','#c6b6e8'];   /* (v7.7.5) 제목줄 = 기준색 그대로 */
 const COLORS_D=['#483334','#483c2e','#334038','#323c45','#3b3746'];
 const HEADS_D =['#835d60','#846d55','#5d7666','#5b6d7e','#6d6480'];
 const NCOLORS=COLORS.length;                       /* (v7.5.5 요청4) 5 — 7색 중 아이보리·화이트 제거 */
@@ -1909,7 +1909,7 @@ const COLOR_NAMES_EN=['Pink','Peach','Mint','Sky Blue','Lavender'];
 const cnName=i=>((IS_KO?COLOR_NAMES[i]:COLOR_NAMES_EN[i])||'');
 /* 글자색·형광펜도 같은 톤으로 (원색 제거) */
 const TEXT_COLORS=['#3a3430','#8f6259','#8a7358','#6f7460','#5d6b74','#6f6889','#a89f97'];
-const HI_COLORS  =['#fbefe3','#fbe7e8','#e7f4eb','#e6eff8','#efebf9','transparent'];   /* (v7.7.5) 새 팔레트 본문색 */
+const HI_COLORS  =['#fbefe3','#fbebed','#e7f4eb','#e6eff8','#efebf9','transparent'];   /* (v7.7.5) 새 팔레트 본문색 */
 /* (v7.0 요청4) T창의 글자색 3개. 노트 배경 색이 아니라 '고른 글자'에 들어가는 색이다. */
 const TP_COLORS=[{c:'#C62828',ko:'진한 빨강',en:'Deep red'},{c:'#1565C0',ko:'파랑',en:'Blue'}];   /* (v7.9.0) 빨강 + 파랑. 같은 색을 다시 누르면 검정(색 지움) */
 
@@ -2826,7 +2826,7 @@ function setBoxCols(v){ v=String(v); if(!['1','2','3','4'].includes(v))return; S
 
 /* (요청7/요청1) 글자 크기: 'pt 숫자(10~25)' 하나로 통일 — 노트별 크기 기능은 폐지, 크기는 설정에서만.
    모든 크기는 --note 인라인으로만 적용되어 UI(17pt)와 완전 분리됨 */
-function ptClamp(v){ v=parseInt(v)||12; return Math.max(10,Math.min(25,v)); }
+function ptClamp(v){ v=parseInt(v)||12; return Math.max(10,Math.min(30,v)); }   /* (v7.11.0) 최대 30pt */
 /* (v6.7) 자간 -0.5~2.0px · 줄간격 1.0~2.0 — 잘못된 값이 들어와도 안전하게 */
 function lsClamp(v){ v=parseFloat(v); if(!isFinite(v))v=0; v=Math.max(-1,Math.min(1,Math.round(v*10)/10));   /* (v7.8.9) 자간 범위 -1.0~1.0 */ if(Math.abs(v)<0.15)v=0; return v; }   /* (v7.8.2) 자간 0 반고정: ±0.1은 0으로 붙인다 */
 function noteLhClamp(v){ v=parseFloat(v); if(!isFinite(v))v=1.25; return Math.max(1,Math.min(2,Math.round(v*20)/20)); }
@@ -5966,7 +5966,7 @@ function fcReadSliders(){
 /* (v7.8.6) 숫자 선택 목록 채우기: 크기 10~25pt / 자간 -0.5~2.0(0.1) / 줄간격 1.00~2.00(0.05) */
 (function fillTypoSelects(){
   const fill=(id,vals,fmt)=>{const el=$(id);if(!el)return;el.innerHTML='';vals.forEach(v=>{const o=document.createElement('option');o.value=String(v);o.textContent=fmt(v);el.append(o);});};
-  fill('#stFontSel',Array.from({length:16},(_,i)=>10+i),v=>v+'pt');
+  fill('#stFontSel',Array.from({length:21},(_,i)=>10+i),v=>v+'pt');   /* (v7.11.0) 10~30pt */
   fill('#stLsSel',Array.from({length:21},(_,i)=>Number((-1+i*0.1).toFixed(1))).map(v=>Object.is(v,-0)?0:v),v=>v.toFixed(1));   /* (v7.8.9) -1.0~1.0 */
   fill('#stLhSel',Array.from({length:21},(_,i)=>Number((1+i*0.05).toFixed(2))),v=>lhText(v));
 })();
