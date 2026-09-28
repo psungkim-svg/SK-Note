@@ -283,7 +283,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-83kEYYOoquo3Pu6aZLwxQNc6AZul48FDcb+44jwmiZ0='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-Rb1qCYU9jdRyInDD8tBFyXiNY7ttFg2bCeYo9Wh1dZM='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
 <!-- (요구3) 전화기 화면에 딱 맞게 · 자동 확대(핀치 줌 포함) 완전 금지 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#f5f2ef">
@@ -1751,6 +1751,7 @@ html[data-cols="1"]{--cardfs:1.6} html[data-cols="2"]{--cardfs:1.3} html[data-co
         <h4 data-i18n="sec_data">Data size</h4>
         <div class="setrow"><span data-i18n="data_notes">Notes data</span><span class="stat" id="stSizeNotes">–</span></div>
         <div class="setrow"><span data-i18n="data_all">All app data</span><span class="stat" id="stSizeAll">–</span></div>
+        <div class="setrow"><span data-i18n="boot_ms">Start-up time (to first screen)</span><span class="stat" id="stBootMs">–</span></div>
       </div>
       <div class="appver">
         <div id="stAppName" style="font-size:1.05em;letter-spacing:.02em">SoonNote</div>
@@ -1881,7 +1882,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='SoonNote';
-const APP_VER='7.11.3';
+const APP_VER='7.11.4';
 /* ══════════ (v7.6.1) 기능 스위치 ══════════
    sync:false 로 바꾸면 동기화(Supabase)가 UI·네트워크·타이머 모두에서 비활성화된다.
    SYNC 객체와 계정 화면 코드는 남아 있되(프리미엄 대비) 어떤 경로도 실행되지 않는다.
@@ -2014,7 +2015,7 @@ const I18N={
   dlg_pin_set_done:{en:'Password set. Please enter it again.'},dlg_pin_enter:{en:'Enter the password'},
   dlg_pin_wrong:{en:'Wrong password'},
   vault_title:{en:'🔐 Vault'},
-  sec_data:{en:'Data size'},data_notes:{en:'Notes data'},data_all:{en:'All app data'},
+  sec_data:{en:'Data size'},data_notes:{en:'Notes data'},data_all:{en:'All app data'},boot_ms:{en:'Start-up time (to first screen)',es:'Tiempo de inicio',ja:'起動時間（初期画面まで）',zh:'启动时间（到首屏）'},
   link_open:{en:'Open website'},link_copy:{en:'Copy link'},link_share:{en:'Share'},link_cancel:{en:'Cancel'},
   /* ── v6 추가 키 (영문/한국어 동적 문구) ── */
   sync_ok:{en:'Synced'},sync_syncing:{en:'Syncing…'},sync_err:{en:'Error'},sync_unset:{en:'Not set'},sync_nolog:{en:'Not signed in'},
@@ -2054,7 +2055,7 @@ const I18N_KO={
   add:'추가',
   note:'메모',
   checklist:'체크리스트',
-  sec_data:'데이터 크기',data_notes:'노트 데이터',data_all:'전체 앱 데이터',
+  sec_data:'데이터 크기',data_notes:'노트 데이터',data_all:'전체 앱 데이터',boot_ms:'시작 시간 (첫 화면까지)',
   link_open:'웹사이트 열기',
   link_copy:'주소 복사하기',
   link_share:'공유하기',
@@ -6947,6 +6948,7 @@ function updateDataSize(){
     const notes=sz(STORE.getItem(LS.notes))+sz(STORE.getItem(LS.folders))+sz(STORE.getItem('sk.vault'))+sz(STORE.getItem(PL.LSKEY));
     let all=0; for(let i=0;i<STORE.length;i++){const k=STORE.key(i); all+=sz(k)+sz(STORE.getItem(k));}
     const a=$('#stSizeNotes'),b=$('#stSizeAll'); if(a)a.textContent=fmtBytes(notes); if(b)b.textContent=fmtBytes(all);
+    const c=$('#stBootMs'); if(c&&typeof BOOT_MS!=='undefined')c.textContent=BOOT_MS+' ms';   /* (v7.11.4) */
   }catch(_){}
 }
 /* (v6.1) 버전 표기 일원화: APP_VER 하나가 배지·설정창을 모두 채운다 */
@@ -7013,18 +7015,18 @@ function makeManualNotes(){
     S.settings.manualVer=MANUAL_VER; save();
   }catch(_){}
 }
-makeManualNotes();
-purgeOldTrash();
+/* (v7.11.4) 시작 순서: 첫 화면을 먼저 그리고(스플래시가 이때 사라짐), 매뉴얼 검사·휴지통 정리·알림·옛 백업 정리는 그 직후 0ms 뒤에 */
 /* (v7.7.3) 첫 화면 설정 적용: 전체(기본) / 노트(폴더 없는 노트) / 폴더(폴더 화면 열기) */
 if(S.settings.startScreen!=='all'){ui.folder='';ui.nofolder=true;}   /* (v7.9.3) 기본 첫 화면 = 노트 ('전체'를 직접 고른 경우만 예외) */
 render();
+const BOOT_MS=Math.round(performance.now());   /* (v7.11.4) 앱 시작 → 첫 화면까지(ms). 설정 › 데이터 크기에 표시 */
 VLT.init();
 if(S.settings.startScreen==='folders'){setTimeout(()=>{try{openFolderMgr()}catch(_){}},0);}
-const _scrubbedLegacyVaultBackups=scrubLegacyVaultBackups();
-if(_scrubbedLegacyVaultBackups)toast(L('보안을 위해 이전 백업의 평문 Vault 부분을 제거했습니다. 일반 노트 백업은 남았습니다.','For security, plaintext vault parts were removed from old local backups. Normal-note backups were kept.'));
+setTimeout(()=>{try{const before=S.notes.length;makeManualNotes();purgeOldTrash();render();}catch(_){}
+  try{if(scrubLegacyVaultBackups())toast(L('보안을 위해 이전 백업의 평문 Vault 부분을 제거했습니다. 일반 노트 백업은 남았습니다.','For security, plaintext vault parts were removed from old local backups. Normal-note backups were kept.'));
+  }catch(_){} try{scheduleReminders();}catch(_){} },0);
 applyViewBtn();
 setStatus('','');
-scheduleReminders();
 /* (v6.3) 저장된 로그인 정보를 복원한다 → 앱을 껐다 켜도 다시 로그인할 필요 없음.
    supabase 스크립트가 defer 로 늦게 로드되므로 load 이후에 시도한다. */
 function bootRestoreSession(){
