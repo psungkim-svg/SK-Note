@@ -283,7 +283,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-noA3RkfJGS5iGfx33Gq1wTS+3pcX69HgEy1ZRDjroYw='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-83kEYYOoquo3Pu6aZLwxQNc6AZul48FDcb+44jwmiZ0='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
 <!-- (요구3) 전화기 화면에 딱 맞게 · 자동 확대(핀치 줌 포함) 완전 금지 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#f5f2ef">
@@ -706,7 +706,7 @@ main{order:1;flex:1;padding:0;max-width:1000px;width:100%;margin:0 auto;overflow
 #grid.titles .tinner{display:block;padding:.22em .6em .3em}   /* (요청7) 제목만 보기에서도 내용 첫 부분을 함께 보여줌 */
 #grid.titles .note .body{font-size:11pt;-webkit-line-clamp:1;line-height:1.35;flex:none}
 #grid.titles .note .prog{display:none}
-#grid.titles .ttl{font-size:.8em;font-weight:700}   /* (요청4) 제목 굵기 이전값(800)으로 복원 */
+#grid.titles .ttl{font-size:.8em;font-weight:600}   /* (요청4) 제목 굵기 이전값(800)으로 복원 */
 #grid.list{display:flex;flex-direction:column;gap:1mm}
 #grid.list .note{aspect-ratio:auto}                 /* 목록에서도 정사각형 해제 */
 /* (v7.8.9) 목록(☰) = 진짜 제목만: 본문·진행바 숨김 */
@@ -727,7 +727,7 @@ main{order:1;flex:1;padding:0;max-width:1000px;width:100%;margin:0 auto;overflow
   background:var(--tc,var(--chip));   /* (요구16) 제목줄 진한 2톤 */
   padding:.14em .5em;display:flex;align-items:center;gap:.3em;min-height:0
 }
-.note .ttl{font-weight:700;font-size:.8em;   /* (v7.11.0) 800→700 조금만 얇게 */line-height:1.25;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+.note .ttl{font-weight:600;font-size:.8em;   /* (v7.11.3) 제목 600 */line-height:1.25;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   /* (v6.9 2) same face + same tracking as the reference sample - no condensed UI font for notes */
   font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans CJK KR","SamsungOne","Malgun Gothic",sans-serif;font-stretch:100%;letter-spacing:normal}
 .note .badges{font-size:.6em;display:flex;gap:.25em;flex:none}
@@ -816,7 +816,7 @@ html[data-theme="dark"] mark{background:#8a6f62;color:#fff}
 .overlay .sheet{max-width:min(640px,calc(100vw - 1.6em))}
 .overlay.show .sheet{transform:translateY(0)}
 @media(min-width:640px){.sheet{border-radius:18px}}
-.sheet h3{margin:.2em 0 .7em;font-size:.85em;display:flex;align-items:center;justify-content:space-between;gap:.4em}
+.sheet h3{margin:.2em 0 .7em;font-size:.85em;font-weight:600;display:flex;align-items:center;justify-content:space-between;gap:.4em}
 /* ══════════ v7.3 폴더 허브 — 전체 화면 / 폴더 → 노트 ══════════
    폴더 허브는 목록·검색·생성·휴지통·다중선택을 한 화면 계층으로 정리하고,
    폴더 상세는 첫 노트 화면과 같은 카드 보기(Grid/List/Simple list)를 쓴다. */
@@ -851,7 +851,7 @@ html[data-theme="dark"] mark{background:#8a6f62;color:#fff}
   color:var(--text);background:var(--card);border:1px solid var(--line);border-radius:.82em;font:inherit;text-align:center;box-shadow:var(--shadow)}
 .fh-folder:active{transform:scale(.98)}
 .fh-folder .fi{font-size:2.25em;line-height:1;filter:drop-shadow(0 1px 0 rgba(0,0,0,.08))}
-.fh-folder .fn{max-width:100%;font-size:.77em;font-weight:800;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fh-folder .fn{max-width:100%;font-size:.77em;font-weight:600;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* (v7.6.6) 노트 개수 = 카드 맨 아래 1/4을 차지하는 갈색 블록(폴더 이름 아래 ~ 카드 바닥, 좌우 끝까지) */
 .fh-folder{overflow:hidden;padding-bottom:25%!important;justify-content:center;
   /* (v7.6.7) 카드 윗부분: 백색 → 연한 브라운, 폴더 아이콘 위 여백 축소 */
@@ -881,7 +881,7 @@ html[data-theme="dark"] .fh-folder{background:var(--fcbg,#3a302d);border-color:#
 #fhFolderGrid.view-grid-s .fh-folder .fc{margin-left:calc(-.25em / .66)!important;margin-right:calc(-.25em / .66)!important}
 #fhFolderGrid.view-grid-s .fh-folder{min-height:5.95em;padding:.48em .25em;border-radius:.65em}
 #fhFolderGrid.view-grid-s .fh-folder .fi{font-size:1.8em}
-#fhFolderGrid.view-grid-s .fh-folder .fn{font-size:.74em;font-weight:800}   /* (v7.9.5) 이름: 보통체, 이전 개수 크기 */
+#fhFolderGrid.view-grid-s .fh-folder .fn{font-size:.74em;font-weight:600}   /* (v7.9.5) 이름: 보통체, 이전 개수 크기 */
 #fhFolderGrid.view-grid-s .fh-folder .fc{font-size:.66em;font-weight:800}   /* (v7.9.5) '노트 개수:N': 보통체, 이전 이름 크기 */
 #fhFolderGrid.view-grid-l .fh-folder{flex-direction:row;justify-content:flex-start;min-height:4.35em;padding:.55em .72em;text-align:left}
 #fhFolderGrid.view-grid-l .fh-folder .fi{font-size:1.8em}.fh-folder .fc{margin-top:auto}
@@ -916,7 +916,7 @@ html[data-theme="dark"] .fh-folder{background:var(--fcbg,#3a302d);border-color:#
 #fhSelectList.move-targets .fh-trash-row:not(.fh-mv-tile) .fh-trash-copy{flex-direction:row;align-items:baseline;gap:.6em}   /* (v7.9.5) 폴더 목록: 개수를 이름 오른쪽에 */
 #fhSelectList.move-targets .fh-trash-row:not(.fh-mv-tile) .fh-trash-title{flex:0 1 auto}
 #fhSelectList.move-targets .fh-trash-row:not(.fh-mv-tile) .fh-trash-meta{font-size:.74em;font-weight:700;flex:none}   /* (v7.9.4) 버튼 행: 기본(13.33px)의 150% — 아이콘·제목·개수·높이 함께 확대 */
-.fh-note-copy,.fh-trash-copy{flex:1;min-width:0;display:flex;flex-direction:column;gap:.1em}.fh-note-title,.fh-trash-title{font-size:.79em;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.fh-note-meta,.fh-trash-meta{font-size:.6em;color:var(--sub);font-weight:650;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fh-note-copy,.fh-trash-copy{flex:1;min-width:0;display:flex;flex-direction:column;gap:.1em}.fh-note-title,.fh-trash-title{font-size:.79em;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.fh-note-meta,.fh-trash-meta{font-size:.6em;color:var(--sub);font-weight:650;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .fh-trash-row .btn{font-size:.63em;padding:.4em .5em;min-height:2.15em;white-space:nowrap}
 #folderDetailGrid{display:grid;grid-template-columns:repeat(var(--cols,2),minmax(0,1fr));gap:1mm;align-content:start}
 #folderDetailGrid.folder-note-list{display:flex;flex-direction:column;gap:1mm}#folderDetailGrid.folder-note-titles{display:flex;flex-direction:column;gap:1mm}
@@ -960,7 +960,7 @@ html[data-theme="dark"] .fh-folder{background:var(--fcbg,#3a302d);border-color:#
 }
 #edTitle{
   flex:1;min-width:0;background:#fff;border:1px solid var(--line);outline:none;
-  font-size:1em;font-weight:800;color:#212121;padding:.35em .6em;border-radius:.5em;margin-right:.3em  /* (요청2) 흰색 박스에 제목 입력 */
+  font-size:1em;font-weight:600;color:#212121;padding:.35em .6em;border-radius:.5em;margin-right:.3em  /* (요청2) 흰색 박스에 제목 입력 / (v7.11.3) 600 */
 }
 #edTitle::placeholder{color:var(--sub);font-weight:600}
 .edtool{
@@ -1383,10 +1383,10 @@ html[data-theme="dark"] #folderOverlay:not(.vault-folder),html[data-theme="dark"
 .fh-folder .fi{color:#d9a246}.fh-folder-svg .folder-tab{fill:#f9dc8f;stroke:#d9a246;stroke-width:1.15}.fh-folder-svg .folder-body{fill:#efbd58;stroke:#d9a246;stroke-width:1.15}.fh-folder-svg .folder-line{fill:none;stroke:#fff0bf;stroke-width:1.05}
 #folderOverlay .sheet{position:relative}#fhFab{position:absolute;right:.7em;bottom:max(.35em,env(safe-area-inset-bottom));   /* (v7.10.1) 더 아래로 (폴더 화면 전체) */z-index:12;width:1.7em;height:1.7em;padding:0;display:flex;align-items:center;justify-content:center;border-radius:50%;border:none;background:var(--accent);color:#4a332e;font-size:1.6em;font-weight:700;line-height:1;box-shadow:0 4px 12px rgba(90,75,65,.28);transform:translate(2mm,0) scale(.8);transition:transform .15s}#fhFab:active{transform:translate(2mm,1mm) scale(.72)}
 /* (v7.6.6) 폴더 제목: 처음부터 노트 제목 박스처럼 흰 바탕·검은 글씨(톡 치면 그 자리에서 편집) */
-#fdTitle{cursor:pointer;background:#fff;border:1px solid var(--line);border-radius:.5em;padding:.3em .6em;font-size:1em;font-weight:800;color:#212121!important;margin-right:.3em}
+#fdTitle{cursor:pointer;background:#fff;border:1px solid var(--line);border-radius:.5em;padding:.3em .6em;font-size:1em;font-weight:600;color:#212121!important;margin-right:.3em}
 #fdTitle:focus{outline:none;border-color:var(--accent2)}
 #fdTitle.fd-editing{padding:0;border:0;background:transparent}
-#fdTitle .fd-rename{width:100%;box-sizing:border-box;background:#fff;border:1px solid var(--line);border-radius:.5em;font:inherit;font-weight:800;color:#212121;padding:.3em .6em;outline:none}   /* (v7.6.5) 노트 제목 박스와 동일: 흰 바탕·검은 글씨 */   /* (v7.5.3 요청3) 인라인 이름 변경 박스 */
+#fdTitle .fd-rename{width:100%;box-sizing:border-box;background:#fff;border:1px solid var(--line);border-radius:.5em;font:inherit;font-weight:600;color:#212121;padding:.3em .6em;outline:none}   /* (v7.6.5) 노트 제목 박스와 동일: 흰 바탕·검은 글씨 */   /* (v7.5.3 요청3) 인라인 이름 변경 박스 */
 #edTypePop{width:128px;padding:0 .4em .3em}   /* (v7.6.2) 간소화: B U · 빨강 ⊘ */#tpHandle{margin:0 -.49em .28em;padding:.36em .48em .30em;gap:.28em}#tpHandle .bar{width:1.45em}#tpHandle .txt{font-size:.53em}.tprow{margin:.20em 0;gap:.30em}#edTypePop .tprow.tp1{gap:.30em}#edTypePop .tprow.tp1 .tpbiu{height:2.05em}.tprow.tpcolors{justify-content:center;gap:.55em;padding:.04em 0 .08em}#edTypePop .tpdot{width:1.62em;height:1.62em}
 /* v7.4 decision: Vault bar is 125% of the v7.3 compact bar, not a return to its old oversized version. */
 #folderNav.vault{padding:.09em .40em;padding-bottom:calc(.11em + env(safe-area-inset-bottom))}#folderNav.vault .folderbar{padding:.125em .05em .03em}#folderNav.vault .chip{font-size:.75em;min-height:1.84em;padding:.16em .34em}#folderNav.vault #fab{width:1.80em;height:1.80em;font-size:1.55em;margin-bottom:.38em;transform:translate(2mm,2mm) scale(.70)}#folderNav.vault #fab:active{transform:translate(2mm,2mm) scale(.64)}
@@ -1881,7 +1881,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='SoonNote';
-const APP_VER='7.11.2';
+const APP_VER='7.11.3';
 /* ══════════ (v7.6.1) 기능 스위치 ══════════
    sync:false 로 바꾸면 동기화(Supabase)가 UI·네트워크·타이머 모두에서 비활성화된다.
    SYNC 객체와 계정 화면 코드는 남아 있되(프리미엄 대비) 어떤 경로도 실행되지 않는다.
@@ -6275,7 +6275,7 @@ function renderBkDetail(){
     cb.onchange=()=>{ if(cb.checked)bkSel.add(x.id); else bkSel.delete(x.id); };
     const txt=document.createElement('span');txt.style.flex='1';txt.style.minWidth='0';
     const ttl2=(x.title||L('제목 없음','No title'));
-    txt.innerHTML=`<span style="font-weight:700">${x.vault?'🔐 ':''}${esc(ttl2)}</span>${x.preview?`<div class="stat">${esc(x.preview)}</div>`:''}`;
+    txt.innerHTML=`<span style="font-weight:600">${x.vault?'🔐 ':''}${esc(ttl2)}</span>${x.preview?`<div class="stat">${esc(x.preview)}</div>`:''}`;
     row.append(cb,txt);list.append(row);
   });
   const act=document.createElement('div');act.className='btnrow';act.style.marginTop='.6em';
