@@ -283,7 +283,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-G3Ar8D+4Ze41Au8lnROV8o+tWsTnzJSxm/NjmJUKIrs='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-9nJLEYViFWRmnHUVjj09/YmoB8nuKwfI8UAc731TKPE='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
 <!-- (요구3) 전화기 화면에 딱 맞게 · 자동 확대(핀치 줌 포함) 완전 금지 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#f5f2ef">
@@ -820,7 +820,7 @@ html[data-theme="dark"] mark{background:#8a6f62;color:#fff}
 /* ══════════ v7.3 폴더 허브 — 전체 화면 / 폴더 → 노트 ══════════
    폴더 허브는 목록·검색·생성·휴지통·다중선택을 한 화면 계층으로 정리하고,
    폴더 상세는 첫 노트 화면과 같은 카드 보기(Grid/List/Simple list)를 쓴다. */
-#folderOverlay{align-items:stretch;background:var(--bg)}
+#folderOverlay{align-items:stretch;background:var(--bg);z-index:48}   /* (v7.11.6) 폴더 화면 위에서 연 설정·백업 창이 가려지지 않게 (다른 .overlay는 50) */
 #folderOverlay .sheet{width:100%;max-width:100%;height:100%;max-height:100%;border-radius:0;
   display:flex;flex-direction:column;overflow:hidden;transform:none;
   --fsx:.72em;padding:0 var(--fsx) calc(.72em + env(safe-area-inset-bottom))}   /* (v7.6.3) 위 여백 0: 상단바가 위를 채움 */
@@ -1772,7 +1772,7 @@ html[data-cols="1"]{--cardfs:1.6} html[data-cols="2"]{--cardfs:1.3} html[data-co
           <button class="iconbtn" id="fhSearchBtn" title="Search" aria-label="Search"><svg class="fh-svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="5.5"/><path d="m15.1 15.1 4.3 4.3"/></svg></button>
           <button class="iconbtn textico" id="fhAddBtn" title="Add folder" aria-label="Add folder">＋</button>
           <button class="iconbtn" id="fhTrashBtn" title="Trash" aria-label="Trash"><svg class="fh-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13M10 11v5M14 11v5"/></svg></button>
-          <button class="iconbtn textico" id="fhMoreBtn" title="More" aria-label="More">⋮</button>
+          <button class="iconbtn" id="fhSetBtn" data-i18n-title="Settings" title="Settings" aria-label="Settings">⚙️</button><button class="iconbtn textico" id="fhMoreBtn" title="More" aria-label="More">⋮</button>
         </div>
         <div class="vault-unlocked hidden" id="fhVaultStatus"><svg viewBox="0 0 24 24" width="1.6em" height="1.6em" aria-hidden="true"><rect x="3.5" y="10.5" width="14" height="10.5" rx="2.2" fill="#f4b942" stroke="#6b4a12" stroke-width="1.4"/><path d="M14.5 10.5V7.2a4.3 4.3 0 0 1 8.6 0v1.1" fill="none" stroke="#6b4a12" stroke-width="2" stroke-linecap="round"/><circle cx="10.5" cy="15.2" r="1.5" fill="#6b4a12"/><rect x="9.8" y="15.6" width="1.4" height="3" rx=".6" fill="#6b4a12"/></svg><b>Vault Unlocked</b></div>
         <div class="fh-tools hidden" id="fhSearchRow"><input type="search" id="fhSearch" placeholder="Search folders or notes" autocomplete="off"><button class="iconbtn" id="fhSearchClose" title="Close search">✕</button></div>
@@ -1789,7 +1789,7 @@ html[data-cols="1"]{--cardfs:1.6} html[data-cols="2"]{--cardfs:1.3} html[data-co
           <button class="iconbtn textico" id="fdAddBtn" title="Add note" aria-label="Add note">＋</button>
           <button class="iconbtn" id="fdViewBtn" title="View" aria-label="View">▦</button>
           <button class="iconbtn" id="fdTrashBtn" title="Trash" aria-label="Trash"><svg class="fh-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13M10 11v5M14 11v5"/></svg></button>
-          <button class="iconbtn textico" id="fdMoreBtn" title="More" aria-label="More">⋮</button>
+          <button class="iconbtn" id="fdSetBtn" data-i18n-title="Settings" title="Settings" aria-label="Settings">⚙️</button><button class="iconbtn textico" id="fdMoreBtn" title="More" aria-label="More">⋮</button>
         </div>
         <div class="vault-unlocked hidden" id="fdVaultStatus"><svg viewBox="0 0 24 24" width="1.6em" height="1.6em" aria-hidden="true"><rect x="3.5" y="10.5" width="14" height="10.5" rx="2.2" fill="#f4b942" stroke="#6b4a12" stroke-width="1.4"/><path d="M14.5 10.5V7.2a4.3 4.3 0 0 1 8.6 0v1.1" fill="none" stroke="#6b4a12" stroke-width="2" stroke-linecap="round"/><circle cx="10.5" cy="15.2" r="1.5" fill="#6b4a12"/><rect x="9.8" y="15.6" width="1.4" height="3" rx=".6" fill="#6b4a12"/></svg><b>Vault Unlocked</b></div>
         <div class="fh-tools hidden" id="fdSearchRow"><input type="search" id="fdSearch" placeholder="Search this folder" autocomplete="off"><button class="iconbtn" id="fdSearchClose" title="Close search">✕</button></div>
@@ -1882,7 +1882,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='SoonNote';
-const APP_VER='7.11.5';
+const APP_VER='7.11.6';
 /* ══════════ (v7.6.1) 기능 스위치 ══════════
    sync:false 로 바꾸면 동기화(Supabase)가 UI·네트워크·타이머 모두에서 비활성화된다.
    SYNC 객체와 계정 화면 코드는 남아 있되(프리미엄 대비) 어떤 경로도 실행되지 않는다.
@@ -3373,7 +3373,7 @@ function render(){
     vault.onclick=()=>VLT.open();const vpin=document.createElement('div');vpin.className='pinrow vaultpin';vpin.append(vault);bar.append(vpin);   /* (v7.9.9) 🔐 은 맨 오른쪽(＋ 버튼 바로 아래) */
   }
   $('#btnTrash').classList.toggle('on',ui.trash);
-  $('#btnSettings').classList.toggle('hidden',ui.vault);
+  $('#btnSettings').classList.remove('hidden');   /* (v7.11.6) Vault 첫 화면에서도 ⚙️ 표시 */
   $('#btnVaultMore').classList.toggle('hidden',!ui.vault);
   $('#vaultUnlockedBar').classList.toggle('hidden',!ui.vault);
   if(!ui.vault)closeVaultMainMore();
@@ -5931,6 +5931,7 @@ function applySettingsFromUI(){
   refreshFolderPage();   /* (v7.10.5/6) 열려 있는 폴더 화면도 그 자리에서 갱신 */
 }
 $('#btnSettings').onclick=openSettings;
+$('#fhSetBtn').onclick=openSettings;$('#fdSetBtn').onclick=openSettings;   /* (v7.11.6) 폴더 화면·폴더 상세 상단 ⚙️ */
 $('#stAccountBtn').onclick=()=>{ovCloseUi($('#setOverlay'));openAccount()};
 /* (v6) 언어 변경 → 즉시 저장 후 새로고침해 영어/한국어를 재적용 */
 /* 미리보기: 선택만 해도 즉시 반영(피드백) */
@@ -6154,7 +6155,7 @@ function autoSnapshot(force){
     const sig=snapSig();
     const last=STORE.getItem('sk.snapSig');
     const t=Date.now(), lastT=parseInt(STORE.getItem('sk.snapLast')||'0',10)||0;
-    if(!force && sig===last)return;                 // 내용이 안 바뀌었으면 생략
+    if(sig===last)return;                           // 내용이 안 바뀌었으면 생략 (v7.11.6: 강제 호출도 동일 — 앱 전환마다 같은 내용의 백업이 쌓이던 문제)
     if(t-lastT < 5*60*1000 && !force)return;        // 최소 5분 간격 (쓰기 폭주 방지)
     saveLocalBackup(buildBackup());
     STORE.setItem('sk.snapSig',sig); STORE.setItem('sk.snapLast',String(t));
@@ -6209,7 +6210,7 @@ $('#stImport').onclick=()=>{openBkList()};
 $('#bkClose').onclick=()=>ovCloseUi($('#bkOverlay'));
 $('#bkClear').onclick=async()=>{
   if(!await dlg(tr('Clear the saved backup list on this device?\n(Your notes themselves are not deleted)','bk_clear_q'),{okText:L('비우기','Empty')}))return;
-  STORE.removeItem('sk.backups');openBkList();toast(tr('Backup list cleared','bk_cleared'));
+  STORE.removeItem('sk.backups');STORE.removeItem('sk.snapSig');openBkList();   /* (v7.11.6) 목록 비우면 다음 저장 때 백업 다시 생성 */toast(tr('Backup list cleared','bk_cleared'));
 };
 $('#bkImportFile').onclick=()=>$('#importFile').click();
 /* (v7.10.7) 백업 목록용 '오늘 · / 어제 · / N일 전 · ' */
