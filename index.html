@@ -283,7 +283,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-Rb1qCYU9jdRyInDD8tBFyXiNY7ttFg2bCeYo9Wh1dZM='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-G3Ar8D+4Ze41Au8lnROV8o+tWsTnzJSxm/NjmJUKIrs='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
 <!-- (요구3) 전화기 화면에 딱 맞게 · 자동 확대(핀치 줌 포함) 완전 금지 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#f5f2ef">
@@ -1882,7 +1882,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='SoonNote';
-const APP_VER='7.11.4';
+const APP_VER='7.11.5';
 /* ══════════ (v7.6.1) 기능 스위치 ══════════
    sync:false 로 바꾸면 동기화(Supabase)가 UI·네트워크·타이머 모두에서 비활성화된다.
    SYNC 객체와 계정 화면 코드는 남아 있되(프리미엄 대비) 어떤 경로도 실행되지 않는다.
@@ -7036,6 +7036,11 @@ function bootRestoreSession(){
 if(document.readyState==='complete') setTimeout(bootRestoreSession,0);
 else addEventListener('load',()=>setTimeout(bootRestoreSession,0));
 histPush();
+/* (v7.11.5) 주소 이전 안내 — 옛 주소(vercel)에서 열었을 때만, 화면 위에 고정 띠 하나. 새 주소가 영구 주소. */
+const HOME_URL='https://soonnote.pages.dev';
+if(location.hostname==='sk-colornote.vercel.app'){try{const b=document.createElement('div');b.id='moveBar';b.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:99998;background:#fff3cd;color:#5a4300;border-top:2px solid #e0b000;padding:.5em .8em;font-size:.72em;line-height:1.35;text-align:center';
+  b.innerHTML=L('📢 SoonNote가 새 주소로 이사했습니다: <b>soonnote.pages.dev</b><br>설정 → 📤 백업 파일 내보내기 → 새 주소에서 📥 가져오기. 이 주소는 곧 닫힙니다.','📢 SoonNote moved to a new address: <b>soonnote.pages.dev</b><br>Settings → 📤 Share backup file → 📥 Import at the new address. This address will close soon.')+' <a href="'+HOME_URL+'" style="color:#1565C0;font-weight:700">'+L('새 주소 열기','Open new address')+'</a>';
+  document.body.appendChild(b);}catch(_){}}
 /* (v6) 자동 백업 확정: 탭을 닫거나 화면이 숨겨질 때 바로 스냅샷 저장 */
 function resetToFirstNotesScreen(hardLock=false){
   try{if(hardLock&&ui.vault&&VLT&&VLT.key)VLT.leave();}catch(_){}
