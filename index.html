@@ -283,7 +283,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-9nJLEYViFWRmnHUVjj09/YmoB8nuKwfI8UAc731TKPE='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-bnuKacRone8fccT+04Kck0DJNe+OxeNUmylN56El/dc='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
 <!-- (요구3) 전화기 화면에 딱 맞게 · 자동 확대(핀치 줌 포함) 완전 금지 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#f5f2ef">
@@ -1882,7 +1882,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='SoonNote';
-const APP_VER='7.11.6';
+const APP_VER='7.11.7';
 /* ══════════ (v7.6.1) 기능 스위치 ══════════
    sync:false 로 바꾸면 동기화(Supabase)가 UI·네트워크·타이머 모두에서 비활성화된다.
    SYNC 객체와 계정 화면 코드는 남아 있되(프리미엄 대비) 어떤 경로도 실행되지 않는다.
@@ -3998,7 +3998,7 @@ function closeEditor(fromBack){
     else S.notes=S.notes.filter(x=>x.id!==n.id);
     persistActive();
   }
-  ui.editingId=null;
+  ui.editingId=null; try{STORE.removeItem('sk.lastEd')}catch(_){}   /* (v7.11.7) 직접 닫은 노트는 복귀 대상 아님 */
   // fromBack: popstate가 이미 OVS.pop() + history 이동을 처리 → 화면만 숨김
   if(fromBack) $('#edOverlay').classList.remove('show');
   else ovCloseUi($('#edOverlay'));
@@ -7023,6 +7023,9 @@ render();
 const BOOT_MS=Math.round(performance.now());   /* (v7.11.4) 앱 시작 → 첫 화면까지(ms). 설정 › 데이터 크기에 표시 */
 VLT.init();
 if(S.settings.startScreen==='folders'){setTimeout(()=>{try{openFolderMgr()}catch(_){}},0);}
+/* (v7.11.7) 앱이 완전히 꺼졌다 켜진 경우: 10분 안이면 떠날 때 열려 있던 일반 노트를 다시 연다 */
+setTimeout(()=>{try{const le=JSON.parse(STORE.getItem('sk.lastEd')||'null');STORE.removeItem('sk.lastEd');
+  if(le&&le.id&&Date.now()-(le.at||0)<10*60*1000&&!ui.editingId){const n=S.notes.find(x=>x.id===le.id&&!x.deleted);if(n)openEditor(n.id);}}catch(_){}},0);
 setTimeout(()=>{try{const before=S.notes.length;makeManualNotes();purgeOldTrash();render();}catch(_){}
   try{if(scrubLegacyVaultBackups())toast(L('보안을 위해 이전 백업의 평문 Vault 부분을 제거했습니다. 일반 노트 백업은 남았습니다.','For security, plaintext vault parts were removed from old local backups. Normal-note backups were kept.'));
   }catch(_){} try{scheduleReminders();}catch(_){} },0);
@@ -7058,20 +7061,29 @@ function resetToFirstNotesScreen(hardLock=false){
   const q=$('#search');if(q)q.value='';render();applyViewBtn();
   if(!ui.vault&&S.settings.startScreen==='folders'){setTimeout(()=>{try{openFolderMgr()}catch(_){}},0);}
 }
-addEventListener('pageshow',e=>{if(e.persisted){if(ui.pickingPhoto&&Date.now()<ui.pickingPhoto)return;   /* (v7.6.1 BUG-002) */try{if(VLT&&VLT.key&&VLT._autoUntil&&Date.now()>VLT._autoUntil)VLT.leave();}catch(_){} resetToFirstNotesScreen();}});
+/* (v7.11.7) 10분 안에 돌아오면 보던 화면 유지. 떠난 시각을 기록하고, 복귀 때 10분 미만이면 첫 화면 초기화를 건너뛴다.
+   Vault 자동 잠금이 만료됐으면 10분 안이라도 지금처럼 잠그고 첫 화면. 프로세스가 죽었다 다시 켜진 경우를 위해
+   열려 있던 일반 노트 id를 sk.lastEd 에 남긴다(Vault 노트 제외). */
+const RESUME_MS=10*60*1000; let _hidAt=0;
+function noteLeave(){ _hidAt=Date.now(); try{ if(ui.editingId&&!ui.vault)STORE.setItem('sk.lastEd',JSON.stringify({id:ui.editingId,at:_hidAt})); else STORE.removeItem('sk.lastEd'); }catch(_){} }
+function onResume(){
+  let expired=false; try{ if(VLT&&VLT.key&&VLT._autoUntil&&Date.now()>VLT._autoUntil){VLT.leave();expired=true;} }catch(_){}
+  if(!expired && _hidAt && Date.now()-_hidAt<RESUME_MS){ _hidAt=0; return; }   /* 10분 미만 → 화면 그대로 */
+  _hidAt=0; resetToFirstNotesScreen(false);
+}
+addEventListener('pageshow',e=>{if(e.persisted){if(ui.pickingPhoto&&Date.now()<ui.pickingPhoto)return;   /* (v7.6.1 BUG-002) */onResume();}});
 /* v7.5.2 — pagehide는 더 이상 Vault key를 지우지 않는다.
    app 백그라운딩(PWA 홈 화면 전환, 브라우저 탭 전환)은 "닫힘"이 아닌 일시 중지에 해당하며,
    자동 잠금 deadline(_autoUntil)이 유일한 잠금 기준이다. foreground 복귀 시 pageshow/visibilitychange
    deadline 점검과 VLT.open() 진입 점검이 만료된 세션을 잠금한다. key는 프로세스 종료 시에만 소멸. */
-addEventListener('pagehide',()=>{ try{if(ui.editingId){clearTimeout(edSaveTimer);flushEd(true);}}catch(_){} try{autoSnapshot(true);}catch(e){} });   /* (v7.6.1 BUG-001) 편집 중 내용 먼저 저장 */
+addEventListener('pagehide',()=>{ try{if(ui.editingId){clearTimeout(edSaveTimer);flushEd(true);}}catch(_){} try{autoSnapshot(true);}catch(e){} noteLeave(); });   /* (v7.6.1 BUG-001) 편집 중 내용 먼저 저장 */
 document.addEventListener('visibilitychange',()=>{
-  if(document.hidden){try{if(ui.editingId){clearTimeout(edSaveTimer);flushEd(true);}}catch(_){} try{autoSnapshot(true);}catch(_){}}   /* (v7.6.1 BUG-001) 앱 전환 시 편집 중 내용 먼저 저장 */
+  if(document.hidden){try{if(ui.editingId){clearTimeout(edSaveTimer);flushEd(true);}}catch(_){} try{autoSnapshot(true);}catch(_){} noteLeave();}   /* (v7.6.1 BUG-001) 앱 전환 시 편집 중 내용 먼저 저장 */
   else if(document.readyState==='complete'){
     if(ui.pickingPhoto&&Date.now()<ui.pickingPhoto){return;}   /* (v7.6.1 BUG-002) 사진 선택기 왕복 중에는 첫 화면 초기화를 보류 */
     /* (v7.5.1) 백그라운드 동결로 auto-lock timer가 실제 만료를 넘겨 쌓인 경우,
        foreground 복귀 즉시 deadline을 점검해 잠금(예: 화면 오프 중 1분 설정). */
-    try{if(VLT&&VLT.key&&VLT._autoUntil&&Date.now()>VLT._autoUntil)VLT.leave();}catch(_){}
-    resetToFirstNotesScreen(false);
+    onResume();   /* (v7.11.7) 10분 미만이면 화면 유지, 아니면 첫 화면 */
     try{setTimeout(syncPinnedNotifications,500);}catch(_){}   /* (v7.5.8 요청4) 빠진 고정 알림 재게시 */
   }
 });

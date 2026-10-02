@@ -6,11 +6,11 @@
   Strict-Transport-Security: max-age=31536000; includeSubDomains
 
 /
-  Content-Security-Policy: default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-9nJLEYViFWRmnHUVjj09/YmoB8nuKwfI8UAc731TKPE='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-bnuKacRone8fccT+04Kck0DJNe+OxeNUmylN56El/dc='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests
   Cache-Control: no-cache
 
 /index.html
-  Content-Security-Policy: default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-9nJLEYViFWRmnHUVjj09/YmoB8nuKwfI8UAc731TKPE='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-bnuKacRone8fccT+04Kck0DJNe+OxeNUmylN56El/dc='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests
   Cache-Control: no-cache
 
 /sw.js
