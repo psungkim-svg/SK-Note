@@ -283,7 +283,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-9hNPUECIVXULEuUeMS9ZZvApTZ3z/seYYNPBHcjO3mo='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-dx/bTaDPa8/kqLvQkMrASToUGddErm5dmxuiB5xVfk8='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
 <!-- (요구3) 전화기 화면에 딱 맞게 · 자동 확대(핀치 줌 포함) 완전 금지 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#f5f2ef">
@@ -1739,6 +1739,9 @@ html[data-cols="1"]{--cardfs:1.6} html[data-cols="2"]{--cardfs:1.3} html[data-co
         <button class="btn" id="stExportEn" data-i18n="btn_export_en">📤 Share backup file (to Google Drive, email…)</button>
         <button class="btn" id="stImportEn" data-i18n="btn_import_en">📥 Import Notes (from a file)</button>
       </div>
+      <!-- (v7.11.9) 고정 알림 상태 + 다시 띄우기 -->
+      <div class="btnrow"><button class="btn" id="stPinSync">📌</button></div>
+      <div class="hint" id="stPinStatus" style="margin-top:.2em"></div>
       <div class="btnrow">
         <button class="btn danger" id="stWipe" data-i18n="btn_wipe">Delete all</button>
       </div>
@@ -1882,7 +1885,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='SoonNote';
-const APP_VER='7.11.8';
+const APP_VER='7.11.9';
 /* ══════════ (v7.6.1) 기능 스위치 ══════════
    sync:false 로 바꾸면 동기화(Supabase)가 UI·네트워크·타이머 모두에서 비활성화된다.
    SYNC 객체와 계정 화면 코드는 남아 있되(프리미엄 대비) 어떤 경로도 실행되지 않는다.
@@ -3835,6 +3838,37 @@ async function syncPinnedNotifications(){
     for(const [id,{n,vault}] of want){
       const {title,opt}=pinnedNotifOptions(n,vault,true);try{await reg.showNotification(title,opt);}catch(_){}}
   }catch(_){}finally{_pinSyncBusy=false;}
+}
+/* (v7.11.9) 설정 › 고정 알림 상태 표시 + '다시 띄우기' — 폰에서 어디가 막혔는지(권한/서비스워커/재게시) 바로 보이게 */
+async function pinNotifStatus(){
+  const out={perm:('Notification' in window)?Notification.permission:'none',sw:'none',shown:-1,pinned:S.notes.filter(n=>n.pinned&&!n.deleted).length,standalone:!!(matchMedia('(display-mode: standalone)').matches||navigator.standalone)};
+  try{const reg=navigator.serviceWorker&&await navigator.serviceWorker.getRegistration();
+    if(reg){out.sw=reg.active?'active':(reg.installing?'installing':(reg.waiting?'waiting':'none'));
+      if(reg.getNotifications)out.shown=(await reg.getNotifications()).filter(x=>String(x.tag||'').startsWith('sk-pinned-')).length;}
+  }catch(e){out.err=String(e&&e.message||e)}
+  return out;
+}
+async function refreshPinStatus(){
+  const el=$('#stPinStatus'),b=$('#stPinSync');if(!el||!b)return;
+  b.textContent=L('📌 고정 알림 다시 띄우기','📌 Re-show pinned notifications');
+  const st=await pinNotifStatus();
+  const permTxt={granted:L('허용됨','allowed'),denied:L('차단됨','blocked'),default:L('아직 안 물어봄','not asked yet'),none:L('지원 안 함','unsupported')}[st.perm]||st.perm;
+  el.textContent=L('고정 노트 ','Pinned notes ')+st.pinned+' · '+L('알림 권한: ','Permission: ')+permTxt+' · '+L('서비스워커: ','Service worker: ')+st.sw+' · '+L('표시 중: ','Showing: ')+(st.shown<0?'?':st.shown)+(st.standalone?L(' · 설치 앱',' · installed app'):L(' · 브라우저',' · browser'))+(st.err?' · '+st.err:'');
+  if(st.perm==='denied')el.textContent+=L('\n→ 폰 설정 › 앱 › SoonNote(또는 Chrome) › 알림 을 켜 주세요.','\n→ Turn on notifications: phone Settings › Apps › SoonNote (or Chrome) › Notifications.');
+}
+async function pinSyncNow(){
+  try{
+    if(('Notification' in window)&&Notification.permission==='default'){try{await Notification.requestPermission();}catch(_){}}
+    const before=await pinNotifStatus();
+    if(before.perm!=='granted'){toast(L('알림 권한이 없습니다. 폰 설정 › 앱 › SoonNote › 알림 을 켜 주세요.','Notifications are not allowed. Phone Settings › Apps › SoonNote › Notifications.'),6000);await refreshPinStatus();return;}
+    const reg=navigator.serviceWorker&&await navigator.serviceWorker.getRegistration();
+    if(!reg||!reg.showNotification){toast(L('서비스워커가 없어 알림을 띄울 수 없습니다. 앱을 완전히 닫았다 다시 열어 주세요.','No service worker. Close the app fully and reopen.'),6000);await refreshPinStatus();return;}
+    let ok=0,fail='';
+    for(const n of S.notes.filter(x=>x.pinned&&!x.deleted)){const {title,opt}=pinnedNotifOptions(n,false,true);try{await reg.showNotification(title,opt);ok++;}catch(e){fail=String(e&&e.message||e);}}
+    const after=await pinNotifStatus();
+    toast(L('다시 띄움 ','Re-shown ')+ok+L('개 · 표시 중 ',' · showing ')+(after.shown<0?'?':after.shown)+(fail?' · '+L('오류: ','error: ')+fail:''),6000);
+    await refreshPinStatus();
+  }catch(e){toast(L('실패: ','Failed: ')+String(e&&e.message||e),6000);}
 }
 async function showPinnedNotification(n){
   if(!('Notification' in window)){toast(L('이 브라우저는 시스템 알림을 지원하지 않습니다. 상단 고정은 앱 안에서만 유지됩니다.','This browser does not support system notifications. The note remains pinned in the app.'));return false;}
@@ -5895,6 +5929,7 @@ function openSettings(){
   if(ui.vault)$('#stVaultAuto').value=VLT.autoLockValue();
   buildDefColor();
   updateDataSize();   /* (v7.6.1) */
+  try{refreshPinStatus();}catch(_){}   /* (v7.11.9) 고정 알림 상태 */
   ovOpen($('#setOverlay'));
 }
 /* (요구5) 기본 노트 컬러 — 새 노트의 색을 고정한다(0~4). 설정은 일반/보관 각각 적용 */
@@ -5933,6 +5968,7 @@ function applySettingsFromUI(){
   refreshFolderPage();   /* (v7.10.5/6) 열려 있는 폴더 화면도 그 자리에서 갱신 */
 }
 $('#btnSettings').onclick=openSettings;
+$('#stPinSync').onclick=pinSyncNow;   /* (v7.11.9) */
 $('#fhSetBtn').onclick=openSettings;$('#fdSetBtn').onclick=openSettings;   /* (v7.11.6) 폴더 화면·폴더 상세 상단 ⚙️ */
 $('#stAccountBtn').onclick=()=>{ovCloseUi($('#setOverlay'));openAccount()};
 /* (v6) 언어 변경 → 즉시 저장 후 새로고침해 영어/한국어를 재적용 */
