@@ -283,7 +283,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-NHcSntLZXcBcTAcIyOzg/X1L4EXmReS0VDten6ck+jE='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-LDU3jefV8PAAea48kdbcSeHG6rEwUypXXqcMOciqccg='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
 <!-- (요구3) 전화기 화면에 딱 맞게 · 자동 확대(핀치 줌 포함) 완전 금지 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#f5f2ef">
@@ -1058,7 +1058,7 @@ html[data-theme="dark"] #edColorBtn{border-color:#f2eeea;box-shadow:0 0 0 1px rg
   outline:none;color:var(--text);background:transparent;border:none
 }
 #edBody:empty:before{content:attr(data-ph);color:var(--sub)}
-#edBody b,#edBody strong{font-weight:800}
+#edBody b,#edBody strong{font-weight:900}   /* (v7.11.11) 800→900 */
 /* (v6.1 요청3) 본문 속 인터넷 주소 = 파란색 + 밑줄. 탭하면 열기/복사 메뉴 */
 #edBody a,#edBody a.nlink{color:#3f6ea8;text-decoration:underline;text-underline-offset:2px;
   word-break:break-all;cursor:pointer;-webkit-tap-highlight-color:rgba(63,110,168,.18)}
@@ -1230,6 +1230,9 @@ html[data-theme="dark"] input[type=range]::-moz-range-thumb{border-color:#221f1e
   padding:0;margin-left:.26em;flex:none;cursor:pointer;display:inline-flex;align-items:center;
   justify-content:center;font-size:.8em;line-height:1;color:var(--sub);background:transparent}
 #edTypePop .tpdot:active{transform:scale(.88)}
+#edTypePop .tpbox{width:1.9em;height:1.9em;border-radius:.3em;border:2px solid var(--line);background:#fff200;padding:0;flex:none}   /* (v7.11.11) 하이라이트 박스 버튼 */
+#edTypePop .tpbox.on{border-color:#4a332e;box-shadow:0 0 0 2px #4a332e inset}
+#edBody span[style*="background-color"]{border-radius:.2em;padding:0 .08em}
 #edTypePop .tpdot.clear{font-size:.92em}
 
 /* 에디터 케밥(세로 점3개) 메뉴 */
@@ -1885,7 +1888,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='SoonNote';
-const APP_VER='7.11.10';
+const APP_VER='7.11.11';
 /* ══════════ (v7.6.1) 기능 스위치 ══════════
    sync:false 로 바꾸면 동기화(Supabase)가 UI·네트워크·타이머 모두에서 비활성화된다.
    SYNC 객체와 계정 화면 코드는 남아 있되(프리미엄 대비) 어떤 경로도 실행되지 않는다.
@@ -1915,7 +1918,7 @@ const cnName=i=>((IS_KO?COLOR_NAMES[i]:COLOR_NAMES_EN[i])||'');
 const TEXT_COLORS=['#3a3430','#8f6259','#8a7358','#6f7460','#5d6b74','#6f6889','#a89f97'];
 const HI_COLORS  =['#fdf6ea','#ffeaec','#e3fbeb','#e0f5ff','#f3e8ff','transparent'];   /* (v7.7.5) 새 팔레트 본문색 */
 /* (v7.0 요청4) T창의 글자색 3개. 노트 배경 색이 아니라 '고른 글자'에 들어가는 색이다. */
-const TP_COLORS=[{c:'#C62828',ko:'진한 빨강',en:'Deep red'},{c:'#1565C0',ko:'파랑',en:'Blue'}];   /* (v7.9.0) 빨강 + 파랑. 같은 색을 다시 누르면 검정(색 지움) */
+const TP_COLORS=[{c:'#FF2D55',ko:'선명한 빨강',en:'Vivid red'},{c:'#0A84FF',ko:'선명한 파랑',en:'Vivid blue'}];   /* (v7.11.11) 더 눈에 띄는 색 */   /* (v7.9.0) 빨강 + 파랑. 같은 색을 다시 누르면 검정(색 지움) */
 
 const LS={notes:'sk.notes',folders:'sk.folders',settings:'sk.settings'};
 /* (요구10) 앱 언어 = 전화기 시스템 언어(한국어면 한국어, 그 외 영어). + 설정에서 수동 강제(영어/한국어).
@@ -4512,6 +4515,7 @@ function enterEditAtPoint(x,y){
   if(!ui.edEdit){ui.edEdit=true;applyEdMode();}
   if(hadSel)return;                    /* (v6.1) 이미 선택 중이면 커서를 옮겨 선택을 깨지 않는다 */
   setTimeout(()=>{
+    {const s2=window.getSelection(); if(s2&&!s2.isCollapsed)return;}   /* (v7.11.11) 그 사이 선택이 생겼으면 지우지 않는다 */
     let range=null;
     if(document.caretRangeFromPoint)range=document.caretRangeFromPoint(x,y);
     else if(document.caretPositionFromPoint){const p=document.caretPositionFromPoint(x,y);if(p){range=document.createRange();range.setStart(p.offsetNode,p.offset);range.collapse(true);}}
@@ -4575,7 +4579,7 @@ $('#edBody').addEventListener('pointerdown',e=>{
 
 /* 편집 모드에서도 링크가 파랗게 보이도록 */
 
-$('#edBody').addEventListener('dblclick',e=>{ if(cur()&&cur().type!=='check')enterEditAtPoint(e.clientX,e.clientY); });
+$('#edBody').addEventListener('dblclick',e=>{ if(!ui.edEdit&&cur()&&cur().type!=='check')enterEditAtPoint(e.clientX,e.clientY); });   /* (v7.11.11) 편집 모드에선 브라우저의 단어 선택을 건드리지 않는다 */
 /* (요청3) 이미지 탭 분기: 편집 중=선택(재탭=해제) / 보기 모드에서도 탭하면 바로 선택(편집 진입) —
    ★ 노트를 닫았다 다시 열어도(보기 모드로 열려도) 이미지를 톡 치면 선택되어 이동·삭제·크기조절이 된다. */
 let lastTap=0,lastX=0,lastY=0,imgTapGuard=false;
@@ -4600,7 +4604,7 @@ $('#edBody').addEventListener('pointerup',e=>{
   if(sel && !sel.isCollapsed) { lastTap=0; return; }
   const now=Date.now();
   if(!imgTapGuard && now-lastTap<320 && Math.abs(e.clientX-lastX)<25 && Math.abs(e.clientY-lastY)<25){
-    if(cur()&&cur().type!=='check')enterEditAtPoint(e.clientX,e.clientY);
+    if(!ui.edEdit&&cur()&&cur().type!=='check')enterEditAtPoint(e.clientX,e.clientY);   /* (v7.11.11) 두 번 탭 → 커서 놓기는 보기 모드에서만. 편집 모드에서는 60ms 뒤 커서 재설정이 방금 생긴 단어 선택을 지우던 원인 */
   }
   lastTap=now;lastX=e.clientX;lastY=e.clientY;
 });
@@ -4650,7 +4654,8 @@ function buildTypePop(){
   const r2=document.createElement('div');r2.className='tprow tp1';
   [['bold','B','b'],['underline','U','u']].forEach(([cmd,lab,cls])=>{   /* (v7.6.2) Italic 제거 */
     const b=document.createElement('button');b.className='tpbiu '+cls;b.textContent=lab;
-    b.onpointerdown=e=>{e.preventDefault();tpSaveRange()};b.onclick=e=>{e.preventDefault();e.stopPropagation();execTypeCmd(cmd);b.classList.toggle('on')};
+    b.dataset.cmd=cmd;
+    b.onpointerdown=e=>{e.preventDefault();tpSaveRange()};b.onclick=e=>{e.preventDefault();e.stopPropagation();execTypeCmd(cmd);tpSyncBIU()};   /* (v7.11.11) 실제 상태로 표시 */
     r2.append(b);
   });
   /* (v7.0 요청4) 한 줄에 B I U + 글자색 3개 (+ 지움).
@@ -4729,6 +4734,8 @@ function buildTypePop(){
     toast(L('글자색을 지웠습니다','Colour cleared'));
   };
     const r3=document.createElement('div');r3.className='tprow tpcolors';
+  { const hb=document.createElement('button');hb.className='tpbox';hb.id='tpHiBtn';hb.title=L('형광 하이라이트','Highlight');hb.setAttribute('aria-label',hb.title);
+    hb.onpointerdown=e=>{e.preventDefault();tpSaveRange()};hb.onclick=e=>{e.preventDefault();e.stopPropagation();tpHiToggle();};r3.append(hb); }   /* (v7.11.11) */
   TP_COLORS.forEach(t=>{
     const b=document.createElement('button');b.className='tpdot';b.style.background=t.c;
     b.title=L(t.ko,t.en);b.setAttribute('aria-label',L(t.ko,t.en));
@@ -4872,6 +4879,21 @@ function readCurrentLh(){
   if(isFinite(v)) typeLh=lhClamp(v);
 }
 /* (v6.7.1) T창 −/＋ 버튼이 슬라이더로 대체되어 holdRepeat()/holdRepeatFs() 삭제(승인 완료) */
+/* (v7.11.11) B/U 버튼 표시 = 고른 글자의 실제 상태. 처음 열 때 회색, 적용돼 있으면 진한 색 */
+function tpWrapped(sp,sel){ if(sp.closest(sel))return true; const c=sp.firstElementChild; return !!(c&&c.matches(sel)&&c.textContent===sp.textContent&&sp.childNodes.length===1); }
+function tpSyncBIU(){
+  const sps=tpSelSpans();
+  $$('#edTypePop .tpbiu').forEach(b=>{const sel=b.dataset.cmd==='bold'?'b,strong':'u';b.classList.toggle('on',sps.length>0&&sps.every(sp=>tpWrapped(sp,sel)));});
+  const hb=$('#tpHiBtn'); if(hb)hb.classList.toggle('on',sps.length>0&&sps.every(sp=>!!(sp.style.backgroundColor||sp.closest('[style*="background"]'))));
+}
+/* (v7.11.11) 하이라이트 박스: 고른 글자의 바탕에 형광색. 다시 누르면 지움 */
+const TP_HI='#fff200';
+function tpHiToggle(){
+  const sps=tpSelSpans(); if(!sps.length){toast(L('글자를 먼저 고르세요','Select text first'));return}
+  const on=sps.every(sp=>!!sp.style.backgroundColor);
+  sps.forEach(sp=>{ if(on){sp.style.removeProperty('background-color');} else sp.style.backgroundColor=TP_HI; });
+  tpSyncBIU(); schedSave();
+}
 function execTypeCmd(cmd){ const body=$('#edBody'); body.focus(); const marked=tpSelectMarked(); if(!marked)tpRestoreRange();
   /* (v7.7.9) 기본 굵기가 700이 되면서 execCommand('bold')가 "이미 굵다"고 판단해 볼드를 해제하던 문제 —
      명령 실행 동안만 본문 기본 굵기를 400으로 내려 <b> 마크업 기준으로 토글되게 한다(저장되는 HTML엔 영향 없음) */
@@ -4886,7 +4908,7 @@ function updateTpVals(){
 $('#edTypeBtn').onclick=e=>{e.stopPropagation();
   const tp=$('#edTypePop');
   if(tp.classList.contains('show')){closeTypePop();histPop();return;}  /* (v7.5.9 요청3) × 제거 → T 재탭 또는 Back으로 닫음 */
-  tpSaveRange();buildTypePop();updateTpVals();renderTpPal();tpMark();   /* (v7.7.6) 선택 표시 유지 + OS 선택 바 숨김 */
+  tpSaveRange();buildTypePop();updateTpVals();renderTpPal();tpMark();tpSyncBIU();   /* (v7.7.6) 선택 표시 유지 + OS 선택 바 숨김 · (v7.11.11) B/U 실제 상태 */
   $('#edColorPop').classList.remove('show');$('#edMenu').classList.remove('show');
   tp.classList.add('show');histPush();
   tpFollowKeyboard();   /* (v7.10.0) 아래 고정 바 — 위치 계산 대신 키보드 높이만 반영 */
