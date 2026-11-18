@@ -283,7 +283,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-mV1cAFzGs3aTL68sEMPecp3rWwE4DyKEGNK3/WY5UrE='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-TLnX/F+kPD9wuSjiwL2z3WJL2jxjXEE6gx/Mq6CZyzM='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
 <!-- (요구3) 전화기 화면에 딱 맞게 · 자동 확대(핀치 줌 포함) 완전 금지 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#f5f2ef">
@@ -306,6 +306,8 @@
   --bg:#f5f2ef; --bg2:#efebe7; --card:#ffffff; --text:#000000; --sub:#8d857e;
   --line:#e0d9d3; --accent:#ddb2a9; --accent2:#b88d84; --bar:#fbf9f7; --chip:#ede9e5;
   --danger:#b98079; --ok:#9aa88c; --shadow:0 1px 3px rgba(90,75,65,.10);
+  --motion-fast:120ms; --motion-ui:180ms; --motion-panel:240ms;
+  --motion-ease:cubic-bezier(.2,.8,.2,1);
   /* ── 핵심 분리: 앱 UI 글자(--ui, 절대 고정 17pt)와 본문 글자(--note, 14~22pt 가변) ── */
   --ui:17pt;          /* 앱 UI·아이콘·버튼·설정창·메뉴·입력창 제목·도구. 본문 설정과 무관하게 절대 안 변함 */
   --note:14pt;        /* 사용자가 입력한 본문(에디터·목록 미리보기·체크리스트). 설정과 노트별 옵션으로만 변함 */
@@ -447,7 +449,7 @@ html[data-theme="dark"] .note.sortable::after{color:rgba(255,255,255,.28)}
 /* 화면 전환(설정·계정·폴더 등)도 조금 더 부드럽게 */
 
 /* (v6.5) 화면 전환 — 원래 .ov 로 잘못 써서 적용되지 않았다. 실제 클래스는 .overlay */
-.overlay .sheet{transition:transform .3s cubic-bezier(.2,1,.35,1), opacity .24s}
+.overlay .sheet{transition:transform var(--motion-panel) var(--motion-ease), opacity var(--motion-ui) ease-out}
 
 /* 체크리스트 항목 위·아래 이동 */
 .itemrow{transition:transform .22s cubic-bezier(.2,.8,.3,1), opacity .2s}
@@ -765,11 +767,11 @@ html[data-theme="dark"] mark{background:#8a6f62;color:#fff}
 
 /* (요구4) + → 추가 메뉴 */
 #addMenu{position:fixed;inset:0;z-index:45;background:rgba(0,0,0,.35);
-  opacity:0;visibility:hidden;transition:opacity .2s}
-#addMenu.show{opacity:1;visibility:visible}
+  opacity:0;visibility:hidden;transition:opacity var(--motion-ui) ease-out,visibility 0s linear var(--motion-ui)}
+#addMenu.show{opacity:1;visibility:visible;transition:opacity var(--motion-ui) ease-out,visibility 0s}
 #addMenu .menucard{position:absolute;right:1em;bottom:calc(4.5em + env(safe-area-inset-bottom));
   background:var(--card);border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.28);
-  padding:.4em;min-width:12em;transform:translateY(12px) scale(.96);opacity:0;transition:transform .22s,opacity .22s}
+  padding:.4em;min-width:12em;transform:translateY(12px) scale(.96);opacity:0;transition:transform var(--motion-ui) var(--motion-ease),opacity var(--motion-ui) ease-out}
 #addMenu.show .menucard{transform:translateY(0) scale(1);opacity:1}
 .menuitem{display:flex;align-items:center;gap:.6em;width:100%;background:none;border:none;color:var(--text);
   padding:.7em .8em;font-size:.8em;font-weight:600;border-radius:10px;text-align:left}
@@ -787,9 +789,9 @@ html[data-theme="dark"] mark{background:#8a6f62;color:#fff}
 .overlay{
   position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:50;display:flex;
   align-items:flex-end;justify-content:center;
-  opacity:0;visibility:hidden;transition:opacity .25s ease
+  opacity:0;visibility:hidden;transition:opacity var(--motion-ui) ease-out,visibility 0s linear var(--motion-panel)
 }
-.overlay.show{opacity:1;visibility:visible}
+.overlay.show{opacity:1;visibility:visible;transition:opacity var(--motion-ui) ease-out,visibility 0s}
 @media(min-width:640px){.overlay{align-items:center}}
 /* ══ (v6.7 PC 수정) 넓은 화면에서 하단 폴더바가 '없는 것처럼' 보이던 문제 ══
    [원인] 바 색(#eeebe7)이 배경(#f5f2ef)과 거의 같고, 칩들이 1400px 넓은 바의 왼쪽 구석에만
@@ -810,7 +812,7 @@ html[data-theme="dark"] mark{background:#8a6f62;color:#fff}
   box-sizing:border-box;                       /* (설정창 에러 방지) 패딩 포함 폭 계산 */
   flex:0 1 auto;margin:0;                       /* flex 안에서 폭이 새거나 늘어나지 않게 */
   border-radius:18px 18px 0 0;padding:.8em .8em calc(1em + env(safe-area-inset-bottom));
-  transform:translateY(24px);transition:transform .28s ease
+  transform:translateY(16px);transition:transform var(--motion-panel) var(--motion-ease)
 }
 /* (설정창 에러 방지) 모달 시트는 절대 화면 폭을 벗어나지 않는다 */
 .overlay .sheet{max-width:min(640px,calc(100vw - 1.6em))}
@@ -948,9 +950,9 @@ html[data-theme="dark"] .fh-folder{background:var(--fcbg,#3a302d);border-color:#
   position:fixed;inset:0;z-index:55;background:var(--bg);
   display:flex;flex-direction:column;
   font-size:var(--ui);                  /* ← 본문 설정과 무관, 항상 17pt 고정 */
-  transform:translateX(100%);transition:transform .28s ease;visibility:hidden
+  transform:translateX(100%);transition:transform var(--motion-panel) var(--motion-ease),visibility 0s linear var(--motion-panel);visibility:hidden
 }
-#edOverlay.show{transform:translateX(0);visibility:visible}
+#edOverlay.show{transform:translateX(0);visibility:visible;transition:transform var(--motion-panel) var(--motion-ease),visibility 0s}
 .edpanel{display:flex;flex-direction:column;height:100%;width:100%}
 /* (요구6) 첫째 줄 도구 행 */
 .edbar{
@@ -1075,10 +1077,10 @@ html[data-theme="dark"] #edBody a.plink{color:#eee;background:rgba(255,255,255,.
 #edBody a:active{background:rgba(63,110,168,.14);border-radius:3px}
 /* 링크 동작 선택 시트 */
 #linkSheet{position:fixed;inset:0;z-index:70;background:rgba(40,32,28,.34);
-  display:flex;align-items:flex-end;justify-content:center;opacity:0;visibility:hidden;transition:opacity .18s}
-#linkSheet.show{opacity:1;visibility:visible}
+  display:flex;align-items:flex-end;justify-content:center;opacity:0;visibility:hidden;transition:opacity var(--motion-ui) ease-out,visibility 0s linear var(--motion-ui)}
+#linkSheet.show{opacity:1;visibility:visible;transition:opacity var(--motion-ui) ease-out,visibility 0s}
 #linkSheet .lscard{background:var(--card);width:100%;max-width:520px;border-radius:16px 16px 0 0;
-  padding:.6em .6em calc(.8em + env(safe-area-inset-bottom));transform:translateY(16px);transition:transform .2s;
+  padding:.6em .6em calc(.8em + env(safe-area-inset-bottom));transform:translateY(16px);transition:transform var(--motion-ui) var(--motion-ease);
   box-shadow:0 -6px 26px rgba(60,45,38,.22)}
 #linkSheet.show .lscard{transform:translateY(0)}
 #linkSheet .lsurl{font-size:.62em;color:var(--sub);padding:.5em .8em .6em;word-break:break-all;
@@ -1100,9 +1102,9 @@ html[data-theme="dark"] #edBody a.plink{color:#eee;background:rgba(255,255,255,.
 /* (요구8) 선택 시 뜨는 서식(볼드 등) 플로팅 툴바 */
 #selBar{position:fixed;z-index:95;display:flex;gap:.15em;background:var(--card);   /* (요청) 상단 고정 + 높은 z-index */
   border:1px solid var(--line);border-radius:.6em;box-shadow:0 4px 16px rgba(0,0,0,.25);
-  padding:.25em;opacity:0;visibility:hidden;transform:translateY(6px);transition:opacity .15s,transform .15s;
+  padding:.25em;opacity:0;visibility:hidden;transform:translateY(6px);transition:opacity var(--motion-fast) ease-out,transform var(--motion-fast) var(--motion-ease),visibility 0s linear var(--motion-fast);
   max-width:calc(100vw - 12px);flex-wrap:wrap}
-#selBar.show{opacity:1;visibility:visible;transform:translateY(0)}
+#selBar.show{opacity:1;visibility:visible;transform:translateY(0);transition:opacity var(--motion-fast) ease-out,transform var(--motion-fast) var(--motion-ease),visibility 0s}
 #selBar .tb{background:var(--chip);border:none;color:var(--text);border-radius:.4em;
   min-width:1.9em;height:1.9em;font-size:.78em;font-weight:700}
 #selBar .tb.b{font-weight:900}#selBar .tb.i{font-style:italic}
@@ -1118,7 +1120,8 @@ html[data-theme="dark"] #edBody a.plink{color:#eee;background:rgba(255,255,255,.
   border:1px solid var(--line);border-radius:.6em;box-shadow:0 8px 24px rgba(0,0,0,.28);
   /* (v6.7) 고정 폭 280px 이라 오른쪽이 남았다 → 폭을 줄이고 슬라이더가 남는 폭을 채운다 */
   padding:0 .55em .5em;width:min(92vw,272px);   /* (v7.0) B I U + 색 3 + ⊘ 한 줄 기준 */
-  opacity:0;visibility:hidden;transform:translateY(-6px);transition:opacity .16s,transform .16s}
+  opacity:0;visibility:hidden;transform:translateY(-6px);transition:opacity var(--motion-ui) ease-out,transform var(--motion-ui) var(--motion-ease),visibility 0s linear var(--motion-ui)}
+#edTypePop.show{visibility:visible;transition:opacity var(--motion-ui) ease-out,transform var(--motion-ui) var(--motion-ease),visibility 0s}
 #edTypePop.dragging{transition:none;box-shadow:0 14px 34px rgba(0,0,0,.4)}
 /* 잡고 옮기는 손잡이 */
 #tpHandle{
@@ -1220,8 +1223,8 @@ html[data-theme="dark"] input[type=range]::-moz-range-thumb{border-color:#221f1e
 
 #edColorPop{position:absolute;z-index:70;top:2.6em;right:.4em;background:var(--card);
   border:1px solid var(--line);border-radius:.7em;box-shadow:0 8px 26px rgba(0,0,0,.25);
-  padding:.5em;display:flex;gap:.4em;opacity:0;visibility:hidden;transform:translateY(-6px);transition:.18s}
-#edColorPop.show{opacity:1;visibility:visible;transform:translateY(0)}
+  padding:.5em;display:flex;gap:.4em;opacity:0;visibility:hidden;transform:translateY(-6px);transition:opacity var(--motion-ui) ease-out,transform var(--motion-ui) var(--motion-ease),visibility 0s linear var(--motion-ui)}
+#edColorPop.show{opacity:1;visibility:visible;transform:translateY(0);transition:opacity var(--motion-ui) ease-out,transform var(--motion-ui) var(--motion-ease),visibility 0s}
 #edColorPop .swatch{width:1.7em;height:1.7em;border-radius:50%;border:2px solid var(--line)}
 #edColorPop .swatch.on{border:3px solid var(--text)}
 /* (v6.9 요청3) T창 안의 노트 색 팔레트 */
@@ -1242,8 +1245,8 @@ html[data-theme="dark"] input[type=range]::-moz-range-thumb{border-color:#221f1e
 /* 에디터 케밥(세로 점3개) 메뉴 */
 #edMenu{position:absolute;z-index:70;top:2.6em;right:.4em;background:var(--card);
   border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.28);padding:.35em;min-width:12.5em;
-  opacity:0;visibility:hidden;transform:translateY(-8px) scale(.97);transition:.2s}
-#edMenu.show{opacity:1;visibility:visible;transform:translateY(0) scale(1)}
+  opacity:0;visibility:hidden;transform:translateY(-8px) scale(.97);transition:opacity var(--motion-ui) ease-out,transform var(--motion-ui) var(--motion-ease),visibility 0s linear var(--motion-ui)}
+#edMenu.show{opacity:1;visibility:visible;transform:translateY(0) scale(1);transition:opacity var(--motion-ui) ease-out,transform var(--motion-ui) var(--motion-ease),visibility 0s}
 
 /* 선택(삭제) 모드 상단 바 (화면 최상단 고정) */
 #selMode{position:fixed;top:0;left:0;right:0;z-index:58;background:var(--accent);   /* (v7.5.3 요청2) 폴더 오버레이(z50) 위 → 폴더 상세에서도 선택바 표시 */color:#4a332e;
@@ -1345,6 +1348,10 @@ html[data-theme="dark"] #vGate .vpass:focus{background:#2a2d32}
 #grid .note{cursor:pointer;-webkit-tap-highlight-color:rgba(0,0,0,0)}
 /* (요구8) 설정 맨 아래 앱 정보·버전 */
 .appver{margin:.7em 0 .2em;font-size:.62em;color:var(--sub);text-align:center;line-height:1.7;border-top:1px solid var(--line);padding-top:.8em}
+.update-card{display:flex;align-items:center;justify-content:space-between;gap:.65em;flex-wrap:wrap;margin-top:.6em}
+#stUpdateStatus{font-size:.74em;font-weight:700;line-height:1.4;color:var(--text)}
+#stUpgradeBtn{min-width:5.5em;transition:transform var(--motion-fast) var(--motion-ease),background var(--motion-ui) ease-out,box-shadow var(--motion-ui) ease-out}
+#stUpgradeBtn:disabled{opacity:.6;cursor:wait;transform:none}
 /* (요구5) 기본 컬러 선택 스와치 */
 .dfcolors{display:flex;gap:.5em;align-items:center;flex-wrap:wrap}
 .dfcolors .sw{width:1.8em;height:1.8em;border-radius:50%;border:1px solid rgba(0,0,0,.10);cursor:pointer;padding:0;flex:none;transition:transform .12s,box-shadow .15s}
@@ -1450,6 +1457,10 @@ html[data-cols="1"]{--cardfs:1.6} html[data-cols="2"]{--cardfs:1.3} html[data-co
 #grid.list .tinner,#folderDetailGrid.folder-note-list .tinner{display:none}
 #grid.list .note .thead,#folderDetailGrid.folder-note-list .note .thead{padding:.3em .6em}
 #grid.list .note .ttl,#folderDetailGrid.folder-note-list .note .ttl{font-size:1.2em}
+/* Respect reduced-motion preferences across every component, including popovers and editor sheets. */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;transition-delay:0ms!important;scroll-behavior:auto!important}
+}
 </style>
 </head>
 <body>
@@ -1759,17 +1770,19 @@ html[data-cols="1"]{--cardfs:1.6} html[data-cols="2"]{--cardfs:1.3} html[data-co
       <div class="hint" style="margin-top:.6em" data-i18n="data_hint">⚠ Notes are stored on this phone, in this browser, at this address. If you open a different address or clear browser data, notes may not show. Tap “Backup (save to phone)” once in a while or enable Sync. Even if the app is reinstalled or deleted, the backup file lets you Import everything back.</div>
     </div>
 
-    <div class="setsec">
-      <div class="setsec" id="secData">
-        <h4 data-i18n="sec_data">Data size</h4>
-        <div class="setrow"><span data-i18n="data_notes">Notes data</span><span class="stat" id="stSizeNotes">–</span></div>
-        <div class="setrow"><span data-i18n="data_all">All app data</span><span class="stat" id="stSizeAll">–</span></div>
-        <div class="setrow"><span data-i18n="boot_ms">Start-up time (to first screen)</span><span class="stat" id="stBootMs">–</span></div>
-      </div>
-      <div class="appver">
-        <div id="stAppName" style="font-size:1.05em;letter-spacing:.02em">SoonNote</div>
-        <div id="stVersion">v6.1</div>
-      </div>
+    <div class="setsec" id="secData">
+      <h4 data-i18n="sec_data_size">Data size</h4>
+      <div class="setrow"><span data-i18n="data_notes">Notes data</span><span class="stat" id="stSizeNotes">–</span></div>
+      <div class="setrow"><span data-i18n="data_all">All app data</span><span class="stat" id="stSizeAll">–</span></div>
+      <div class="setrow"><span data-i18n="boot_ms">Start-up time (to first screen)</span><span class="stat" id="stBootMs">–</span></div>
+    </div>
+    <div class="appver">
+      <div id="stAppName" style="font-size:1.05em;letter-spacing:.02em">SoonNote</div>
+      <div id="stVersion">v7.11.13</div>
+    </div>
+    <div class="setsec update-card hidden" id="stUpdateNotice">
+      <span id="stUpdateStatus" role="status" aria-live="polite" data-i18n="update_available">A newer version is available.</span>
+      <button class="btn primary" id="stUpgradeBtn" type="button" data-i18n="upgrade">Upgrade</button>
     </div>
   </div>
 </div>
@@ -1895,7 +1908,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='SoonNote';
-const APP_VER='7.11.12';
+const APP_VER='7.11.13';
 /* ══════════ (v7.6.1) 기능 스위치 ══════════
    sync:false 로 바꾸면 동기화(Supabase)가 UI·네트워크·타이머 모두에서 비활성화된다.
    SYNC 객체와 계정 화면 코드는 남아 있되(프리미엄 대비) 어떤 경로도 실행되지 않는다.
@@ -1995,6 +2008,7 @@ const I18N={
   data_hint:{en:'⚠ Notes are stored on this phone, in this browser, at this address. If you open a different address or clear browser data, notes may not show. Tap “Backup (save to phone)” once in a while or enable Sync. Even if the app is reinstalled or deleted, the backup file lets you Import everything back.'},
   app_name:{en:'SoonNote'},
   settings_title:{en:'⚙️ Full settings'},save2:{en:'Save'},
+  update_available:{en:'A newer version is available.'},upgrade:{en:'Upgrade'},
   ac_title:{en:'☁️ Account · Sync'},ac_server:{en:'Server connection (Supabase)'},
   ac_url:{en:'Project URL'},ac_key:{en:'Public key (anon or sb_publishable)'},
   ac_save:{en:'Save · Connect'},ac_test:{en:'Test connection'},ac_login:{en:'Sign in (email)'},
@@ -2028,7 +2042,7 @@ const I18N={
   dlg_pin_set_done:{en:'Password set. Please enter it again.'},dlg_pin_enter:{en:'Enter the password'},
   dlg_pin_wrong:{en:'Wrong password'},
   vault_title:{en:'🔐 Vault'},
-  sec_data:{en:'Data size'},data_notes:{en:'Notes data'},data_all:{en:'All app data'},boot_ms:{en:'Start-up time (to first screen)',es:'Tiempo de inicio',ja:'起動時間（初期画面まで）',zh:'启动时间（到首屏）'},
+  sec_data_size:{en:'Data size'},data_notes:{en:'Notes data'},data_all:{en:'All app data'},boot_ms:{en:'Start-up time (to first screen)',es:'Tiempo de inicio',ja:'起動時間（初期画面まで）',zh:'启动时间（到首屏）'},
   link_open:{en:'Open website'},link_copy:{en:'Copy link'},link_share:{en:'Share'},link_cancel:{en:'Cancel'},
   /* ── v6 추가 키 (영문/한국어 동적 문구) ── */
   sync_ok:{en:'Synced'},sync_syncing:{en:'Syncing…'},sync_err:{en:'Error'},sync_unset:{en:'Not set'},sync_nolog:{en:'Not signed in'},
@@ -2068,7 +2082,7 @@ const I18N_KO={
   add:'추가',
   note:'메모',
   checklist:'체크리스트',
-  sec_data:'데이터 크기',data_notes:'노트 데이터',data_all:'전체 앱 데이터',boot_ms:'시작 시간 (첫 화면까지)',
+  sec_data_size:'데이터 크기',data_notes:'노트 데이터',data_all:'전체 앱 데이터',boot_ms:'시작 시간 (첫 화면까지)',
   link_open:'웹사이트 열기',
   link_copy:'주소 복사하기',
   link_share:'공유하기',
@@ -2151,7 +2165,7 @@ const I18N_KO={
   pin_set:'설정 / 변경',
   vault_unlock_time:'자동 잠금 시간',
   vault_always:'항상 비밀번호 물어보기',
-  sec_data:'데이터 / Data',
+  sec_data:'데이터 / Data',update_available:'새 버전을 사용할 수 있습니다.',upgrade:'업그레이드',
   btn_backup:'💾 백업하기 (이 기기 + 다운로드 폴더)',
   btn_restore:'♻️ 복구하기 (저장된 백업 목록)',
   btn_export_en:'📤 백업 파일 내보내기 (Google Drive·메일 등으로 공유)',
@@ -2332,7 +2346,7 @@ const I18N_JA={
   sec_vault:'保管ノート',vault_hint:'通常のノートにパスワードは不要です。保管ノートは毎回パスワードを尋ねます。',
   vault_open:'🔐 保管ノート',open:'開く',vault_pin:'保管ノートのパスワード',pin_set:'設定 / 変更',
   vault_unlock_time:'ロックを解除しておく時間',vault_always:'毎回尋ねる',
-  sec_data:'データ',btn_backup:'💾 バックアップ（この端末に保存）',btn_restore:'♻️ 復元（保存済みバックアップ）',
+  sec_data:'データ',sec_data_size:'データサイズ',update_available:'新しいバージョンを利用できます。',upgrade:'アップグレード',btn_backup:'💾 バックアップ（この端末に保存）',btn_restore:'♻️ 復元（保存済みバックアップ）',
   btn_export_en:'📤 ノートを書き出す',btn_import_en:'📥 ノートを読み込む',
   btn_wipe:'すべて削除',btn_emptytrash:'ゴミ箱を空にする',
   bk_title:'♻️ 保存済みバックアップ',bk_empty:'バックアップがありません。まず「バックアップ」を押してください。',
@@ -2482,7 +2496,7 @@ const I18N_ZH={
   sec_vault:'保险箱',vault_hint:'普通笔记无需密码。保险箱每次都会询问密码。',
   vault_open:'🔐 保险箱',open:'打开',vault_pin:'保险箱密码',pin_set:'设置 / 更改',
   vault_unlock_time:'保持解锁时长',vault_always:'每次询问',
-  sec_data:'数据',btn_backup:'💾 备份（保存到本机）',btn_restore:'♻️ 恢复（已保存的备份）',
+  sec_data:'数据',sec_data_size:'数据大小',update_available:'有新版本可用。',upgrade:'升级',btn_backup:'💾 备份（保存到本机）',btn_restore:'♻️ 恢复（已保存的备份）',
   btn_export_en:'📤 导出笔记',btn_import_en:'📥 导入笔记',
   btn_wipe:'全部删除',btn_emptytrash:'清空回收站',
   bk_title:'♻️ 已保存的备份',bk_empty:'还没有备份。请先点击"备份"。',
@@ -2632,7 +2646,7 @@ const I18N_ES={
   sec_vault:'Caja fuerte',vault_hint:'Las notas normales no necesitan contraseña. La caja fuerte la pide siempre.',
   vault_open:'🔐 Caja fuerte',open:'Abrir',vault_pin:'Contraseña de la caja fuerte',pin_set:'Establecer / Cambiar',
   vault_unlock_time:'Mantener desbloqueada',vault_always:'Preguntar siempre',
-  sec_data:'Datos',btn_backup:'💾 Copia de seguridad (en este equipo)',btn_restore:'♻️ Restaurar (copias guardadas)',
+  sec_data:'Datos',sec_data_size:'Tamaño de datos',update_available:'Hay una nueva versión disponible.',upgrade:'Actualizar',btn_backup:'💾 Copia de seguridad (en este equipo)',btn_restore:'♻️ Restaurar (copias guardadas)',
   btn_export_en:'📤 Exportar notas',btn_import_en:'📥 Importar notas',
   btn_wipe:'Eliminar todo',btn_emptytrash:'Vaciar papelera',
   bk_title:'♻️ Copias guardadas',bk_empty:'Aún no hay copias. Pulsa "Copia de seguridad" primero.',
@@ -3136,8 +3150,9 @@ function histPop(){
   clearTimeout(histPop._t);
   histPop._t=setTimeout(()=>{suppressPops=0},300);
 }
+function notifyActivityEnd(){try{document.dispatchEvent(new Event('soonnote:activity-end'))}catch(_){}}
 function ovOpen(el){ if(el.classList.contains('show'))return; el.classList.add('show'); OVS.push(el); histPush(); }
-function ovCloseUi(el){ const i=OVS.indexOf(el); if(i>-1)OVS.splice(i,1); el.classList.remove('show'); histPop(); }
+function ovCloseUi(el){ const i=OVS.indexOf(el); if(i>-1)OVS.splice(i,1); el.classList.remove('show'); histPop(); notifyActivityEnd(); }
 function ovCloseTop(){
   const el=OVS.pop();
   if(el){
@@ -3145,6 +3160,7 @@ function ovCloseTop(){
     else {if(el===$('#vGate'))VLT.pendingTransfer=null;
       if(el===$('#setOverlay')){ try{applySettingsFromUI();}catch(_){} }   /* (v7.8.0) Back으로 닫아도 설정 자동 저장 */
       el.classList.remove('show');}
+    notifyActivityEnd();
     return true
   }
   return false
@@ -3666,6 +3682,7 @@ function exitSel(fromBack){
   if(!ui.selMode){ ui.selected.clear(); return; }
   ui.selMode=false; ui.selected.clear(); $('#selMode').classList.remove('show');
   if(!fromBack) histPop();                                   /* (v6.2 요청5) */
+  notifyActivityEnd();
 }
 function toggleSel(id){ if(ui.selected.has(id))ui.selected.delete(id); else ui.selected.add(id);
   if(ui.selected.size===0){ exitSel(); } render(); }
@@ -4049,6 +4066,7 @@ function closeEditor(fromBack){
   deselectImg();$('#imgPrev').classList.add('hidden');
   scheduleReminders();render();
   if($('#folderOverlay').classList.contains('show')&&folderHub&&folderHub.page==='detail')renderFolderDetail();
+  notifyActivityEnd();
 }
 /* (v7.6.2) ✓ 저장 버튼 제거 */
 /* (v6.7) ☑ 체크박스(연필 왼쪽) = 저장하고 이전 화면으로. 보기/편집 어느 모드에서나 같은 자리 */
@@ -6602,7 +6620,7 @@ const VLT={
   },
   exitView(){
     if(!this.key){this.leave();return;}
-    ui.vault=false;ui.view=S.settings.view||'grid';ui.folder='';ui.nofolder=true;ui.trash=false;ui.search='';$('#search').value='';ui.editingId=null;exitSel();scheduleReminders();render();   /* (v7.9.3) 나가면 '노트' */toast(L('Vault는 설정한 자동 잠금 시간까지 잠금 해제 상태입니다.','Vault remains unlocked until the selected auto-lock time.'));
+    ui.vault=false;ui.view=S.settings.view||'grid';ui.folder='';ui.nofolder=true;ui.trash=false;ui.search='';$('#search').value='';ui.editingId=null;exitSel();scheduleReminders();render();   /* (v7.9.3) 나가면 '노트' */toast(L('Vault는 설정한 자동 잠금 시간까지 잠금 해제 상태입니다.','Vault remains unlocked until the selected auto-lock time.'));notifyActivityEnd();
   },
   leave(){
     this.clearAutoLock();this.clearSession();this._keyBits=null;this.pendingTransfer=null;this.photolinks={};   /* (v7.6.0) */   /* (v7.5.3 요청1) 잠김 = 세션 소멸 */
@@ -6610,7 +6628,7 @@ const VLT={
     closeFolderOverlayNow();
     {const fl=$('#fhFolderGrid'),fn=$('#folderDetailGrid'),fs=$('#fhSelectList'),ft=$('#fhTrashList');if(fl)fl.textContent='';if(fn)fn.textContent='';if(fs)fs.textContent='';if(ft)ft.textContent='';}
     if(eo&&eo.classList.contains('show')){eo.classList.remove('show');const ei=OVS.indexOf(eo);if(ei>-1)OVS.splice(ei,1);}
-    this.key=null;this.notes=[];this.folders=[];this.settings=Object.assign({},VAULT_DEF);ui.vault=false;ui.view=S.settings.view||'grid';ui.folder='';ui.nofolder=true;ui.trash=false;ui.editingId=null;exitSel();scheduleReminders();render();toast(tr('Vault locked','toast_vault_locked'));
+    this.key=null;this.notes=[];this.folders=[];this.settings=Object.assign({},VAULT_DEF);ui.vault=false;ui.view=S.settings.view||'grid';ui.folder='';ui.nofolder=true;ui.trash=false;ui.editingId=null;exitSel();scheduleReminders();render();toast(tr('Vault locked','toast_vault_locked'));notifyActivityEnd();
   },
   async unlockPass(){
     if(!hasVaultPin()){
@@ -7156,47 +7174,104 @@ document.addEventListener('visibilitychange',()=>{
 setInterval(()=>{try{if(!document.hidden)syncPinnedNotifications();}catch(_){}},60*1000);
 /* ═══════════════ PWA ═══════════════ */
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){
-  addEventListener('load',()=>{
-    navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(reg=>{   /* (v7.8.4) sw.js 는 HTTP 캐시 무시하고 매번 서버 확인 */
-      try{reg.update().catch(()=>{});}catch(_){}
-      try{navigator.serviceWorker.ready.then(()=>setTimeout(syncPinnedNotifications,800));}catch(_){}   /* (v7.5.8 요청4) */
-      /* (v6.1) 새 버전이 대기 중이면 바로 넘겨받게 한다 */
-      if(reg.waiting)reg.waiting.postMessage('SKIP_WAITING');
-      reg.addEventListener('updatefound',()=>{
-        const nw=reg.installing; if(!nw)return;
-        nw.addEventListener('statechange',()=>{
-          if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage('SKIP_WAITING');
-        });
-      });
-      /* 앱을 다시 볼 때마다 새 버전 확인 */
-      document.addEventListener('visibilitychange',()=>{ if(!document.hidden)reg.update().catch(()=>{}); });
-    }).catch(()=>{});
-  });
-  /* ══════════ (v6.6 버그수정) 노트가 갑자기 안 열리던 원인 ══════════
-     [문제] 새 서비스워커가 제어권을 잡으면 곧바로 location.reload() 를 했다.
-            그런데 이 일은 '앱을 쓰는 도중'에도 일어난다.
-            → 노트를 열자마자 화면이 새로고침되어 '안 열린다'고 느껴졌고,
-              저장 전 글자가 날아갈 수도 있었다.
-     [해결] 즉시 새로고침하지 않는다.
-            ① 노트를 편집 중이거나 화면이 켜져 있으면 미뤄 둔다
-            ② 앱을 잠시 벗어났다가 돌아올 때(또는 홈 화면일 때) 조용히 반영한다 */
-  let _swRefreshed=false, _swPending=false;
+  let _swReg=null, _swWaiting=null, _swRefreshed=false, _swPending=false, _swControllerChanged=false;
+  let _swHadController=!!navigator.serviceWorker.controller;
+  const updateText={
+    available:()=>L('새 버전을 사용할 수 있습니다.','A newer version is available.',{es:'Hay una nueva versión disponible.',ja:'新しいバージョンを利用できます。',zh:'有新版本可用。'}),
+    applying:()=>L('업데이트를 적용하고 있습니다…','Applying the update…',{es:'Aplicando la actualización…',ja:'更新を適用しています…',zh:'正在应用更新…'}),
+    queued:()=>L('현재 작업을 마치면 업데이트됩니다.','The update will be applied when your current activity is finished.',{es:'La actualización se aplicará al terminar la actividad actual.',ja:'現在の操作が終わると更新されます。',zh:'当前操作结束后将应用更新。'}),
+    upgrade:()=>L('업그레이드','Upgrade',{es:'Actualizar',ja:'アップグレード',zh:'升级'}),
+    upgrading:()=>L('업데이트 중…','Upgrading…',{es:'Actualizando…',ja:'更新中…',zh:'正在升级…'}),
+    queuedButton:()=>L('대기 중…','Queued…',{es:'En espera…',ja:'待機中…',zh:'等待中…'}),
+    failed:()=>L('업데이트를 시작하지 못했습니다. 다시 시도해 주세요.','Could not start the update. Please try again.',{es:'No se pudo iniciar la actualización. Inténtalo de nuevo.',ja:'更新を開始できませんでした。もう一度お試しください。',zh:'无法开始更新，请重试。'})
+  };
+  function swShowUpdateAvailable(worker){
+    if(worker&&worker.state!=='redundant')_swWaiting=worker;
+    const waiting=(_swReg&&_swReg.waiting)||_swWaiting;
+    if(!waiting||waiting.state==='redundant')return;
+    const box=$('#stUpdateNotice'),status=$('#stUpdateStatus'),button=$('#stUpgradeBtn');
+    if(!box||!status||!button)return;
+    status.textContent=_swPending?updateText.queued():updateText.available();
+    button.textContent=_swPending?updateText.queuedButton():updateText.upgrade();
+    button.disabled=!!_swPending;
+    box.classList.remove('hidden');
+  }
+  function swHasActiveWork(){
+    const u=(typeof ui!=='undefined')?ui:null;
+    const layerOpen=(typeof OVS!=='undefined')&&OVS.some(el=>el&&el.classList&&el.classList.contains('show'));
+    return !!(u&&(u.editingId||u.selMode||u.vault))||layerOpen;
+  }
   function swApplyUpdate(){
     if(_swRefreshed)return;
-    /* 노트 편집 중이거나 무언가 열려 있으면 절대 새로고침하지 않는다 */
-    const busy = (typeof ui!=='undefined') &&
-                 ( ui.editingId || (typeof OVS!=='undefined'&&OVS.length) ||
-                   ui.selMode || ui.vault );
-    if(busy){ _swPending=true; return; }
-    _swRefreshed=true;
-    try{ if(typeof flushEd==='function') flushEd(true); }catch(_){}
-    try{ if(typeof save==='function') save(); }catch(_){}
+    _swControllerChanged=true;
+    if(swHasActiveWork()){
+      _swPending=true;swShowUpdateAvailable(_swWaiting);
+      const status=$('#stUpdateStatus'),button=$('#stUpgradeBtn');
+      if(status)status.textContent=updateText.queued();
+      if(button){button.textContent=updateText.queuedButton();button.disabled=true;}
+      return;
+    }
+    _swPending=false;_swRefreshed=true;
+    try{if(typeof flushEd==='function')flushEd(true);}catch(_){}
+    try{if(typeof save==='function')save();}catch(_){}
     location.reload();
   }
-  navigator.serviceWorker.addEventListener('controllerchange',()=>{ swApplyUpdate(); });
-  /* 앱을 벗어났다 돌아오거나, 하던 일을 마쳤을 때 미뤄둔 업데이트를 반영 */
-  document.addEventListener('visibilitychange',()=>{ if(document.hidden&&_swPending) swApplyUpdate(); });
-  addEventListener('pagehide',()=>{ if(_swPending) _swRefreshed=true; });
+  function swTryPending(){if(_swPending&&_swControllerChanged&&!document.hidden)swApplyUpdate();}
+  document.addEventListener('soonnote:activity-end',swTryPending);
+  document.addEventListener('visibilitychange',()=>{
+    if(document.hidden&&_swPending){try{if(ui.editingId){clearTimeout(edSaveTimer);flushEd(true);}}catch(_){}try{if(typeof save==='function')save();}catch(_){}}
+    else swTryPending();
+  });
+  const upgradeButton=$('#stUpgradeBtn');
+  if(upgradeButton)upgradeButton.addEventListener('click',()=>{
+    const worker=(_swReg&&_swReg.waiting)||(_swWaiting&&_swWaiting.state==='installed'?_swWaiting:null);
+    if(!worker||worker.state==='redundant'){
+      const box=$('#stUpdateNotice');if(box)box.classList.add('hidden');
+      try{if(_swReg)_swReg.update().then(()=>{if(_swReg.waiting)swShowUpdateAvailable(_swReg.waiting);}).catch(()=>{});}catch(_){}
+      return;
+    }
+    try{if(typeof applySettingsFromUI==='function')applySettingsFromUI();}catch(_){}
+    const settings=$('#setOverlay');if(settings&&settings.classList.contains('show'))ovCloseUi(settings);
+    _swWaiting=worker;_swRefreshed=false;_swPending=false;_swControllerChanged=false;
+    const busy=swHasActiveWork(),status=$('#stUpdateStatus');
+    upgradeButton.disabled=true;
+    upgradeButton.textContent=busy?updateText.queuedButton():updateText.upgrading();
+    if(status)status.textContent=busy?updateText.queued():updateText.applying();
+    toast(busy?updateText.queued():updateText.applying());
+    /* Let Settings finish closing (and its history entry settle) before activating the worker. */
+    setTimeout(()=>{
+      if(worker.state==='redundant'){
+        upgradeButton.disabled=false;upgradeButton.textContent=updateText.upgrade();
+        if(status)status.textContent=updateText.available();
+        toast(updateText.failed());return;
+      }
+      try{worker.postMessage({type:'SKIP_WAITING',confirmed:true});}
+      catch(_){upgradeButton.disabled=false;upgradeButton.textContent=updateText.upgrade();if(status)status.textContent=updateText.available();toast(updateText.failed());}
+    },200);
+  });
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{
+    /* The first controller on a fresh install is not an update; don't reload the just-opened app. */
+    if(!_swHadController){_swHadController=true;return;}
+    swApplyUpdate();
+  });
+  addEventListener('load',()=>{
+    navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(reg=>{
+      _swReg=reg;
+      try{reg.update().catch(()=>{});}catch(_){}
+      try{navigator.serviceWorker.ready.then(()=>setTimeout(syncPinnedNotifications,800));}catch(_){}
+      /* A waiting update is announced but never activated automatically. */
+      if(reg.waiting)swShowUpdateAvailable(reg.waiting);
+      reg.addEventListener('updatefound',()=>{
+        const nw=reg.installing;if(!nw)return;
+        nw.addEventListener('statechange',()=>{
+          if(nw.state==='installed'&&(reg.waiting||navigator.serviceWorker.controller))swShowUpdateAvailable(reg.waiting||nw);
+          else if(nw.state==='redundant'&&!reg.waiting){const box=$('#stUpdateNotice');if(box)box.classList.add('hidden');_swWaiting=null;}
+        });
+      });
+      /* Check for a newer worker whenever the app returns to the foreground. */
+      document.addEventListener('visibilitychange',()=>{if(!document.hidden)reg.update().catch(()=>{});});
+    }).catch(()=>{});
+  });
 }
 </script>
 </body>

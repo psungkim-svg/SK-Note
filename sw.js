@@ -2,7 +2,7 @@
    v6.1 수정: HTML은 네트워크 우선(network-first) → 새 버전 배포 시 즉시 반영.
    나머지 정적 파일만 캐시 우선(cache-first).
    v7.5: reliable Back stack, timed Vault re-entry, and cache version raised to retire prior assets. */
-const VERSION = "7.11.12";
+const VERSION = "7.11.13";
 const CACHE = 'SoonNote-v' + VERSION;
 const ASSETS = [
   './', './index.html', './manifest.webmanifest',
@@ -18,7 +18,7 @@ self.addEventListener('install', e => {
       Promise.all(ASSETS.map(u => c.add(new Request(u, { cache: 'reload' })).catch(() => {})))
     )
   );
-  self.skipWaiting();
+  /* Updates wait for an explicit Upgrade action in Settings. */
 });
 
 self.addEventListener('activate', e => {
@@ -32,7 +32,8 @@ self.addEventListener('activate', e => {
 /* (v7.5.8 요청4) 앱이 '고정 해제'로 알림을 닫기 직전에 태그를 알려 준다 → 그 닫힘은 재게시하지 않는다. */
 const UNPIN = new Set();
 self.addEventListener('message', e => {
-  if (e.data === 'SKIP_WAITING') { self.skipWaiting(); return; }
+  /* Ignore the legacy string sent by older pages; only the explicit, confirmed action may activate. */
+  if (e.data && e.data.type === 'SKIP_WAITING' && e.data.confirmed === true) { e.waitUntil(self.skipWaiting()); return; }
   if (e.data && e.data.type === 'SK_UNPIN' && e.data.tag) {
     UNPIN.add(e.data.tag);
     setTimeout(() => UNPIN.delete(e.data.tag), 15000);
