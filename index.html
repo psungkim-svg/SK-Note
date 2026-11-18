@@ -283,7 +283,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-TLnX/F+kPD9wuSjiwL2z3WJL2jxjXEE6gx/Mq6CZyzM='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-WcNvEbY5TL1Mr80oq4AhZQ7tNUdiFF4En19jG54brQw='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
 <!-- (요구3) 전화기 화면에 딱 맞게 · 자동 확대(핀치 줌 포함) 완전 금지 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#f5f2ef">
@@ -1778,11 +1778,11 @@ html[data-cols="1"]{--cardfs:1.6} html[data-cols="2"]{--cardfs:1.3} html[data-co
     </div>
     <div class="appver">
       <div id="stAppName" style="font-size:1.05em;letter-spacing:.02em">SoonNote</div>
-      <div id="stVersion">v7.11.13</div>
+      <div id="stVersion">v7.11.14</div>
     </div>
-    <div class="setsec update-card hidden" id="stUpdateNotice">
-      <span id="stUpdateStatus" role="status" aria-live="polite" data-i18n="update_available">A newer version is available.</span>
-      <button class="btn primary" id="stUpgradeBtn" type="button" data-i18n="upgrade">Upgrade</button>
+    <div class="setsec update-card" id="stUpdateNotice">
+      <span id="stUpdateStatus" class="hidden" role="status" aria-live="polite" data-i18n="update_available">A new update is ready.</span>
+      <button class="btn primary" id="stUpgradeBtn" type="button" data-i18n="check_updates" data-update-mode="check">Check for updates</button>
     </div>
   </div>
 </div>
@@ -1908,7 +1908,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='SoonNote';
-const APP_VER='7.11.13';
+const APP_VER='7.11.14';
 /* ══════════ (v7.6.1) 기능 스위치 ══════════
    sync:false 로 바꾸면 동기화(Supabase)가 UI·네트워크·타이머 모두에서 비활성화된다.
    SYNC 객체와 계정 화면 코드는 남아 있되(프리미엄 대비) 어떤 경로도 실행되지 않는다.
@@ -2008,7 +2008,10 @@ const I18N={
   data_hint:{en:'⚠ Notes are stored on this phone, in this browser, at this address. If you open a different address or clear browser data, notes may not show. Tap “Backup (save to phone)” once in a while or enable Sync. Even if the app is reinstalled or deleted, the backup file lets you Import everything back.'},
   app_name:{en:'SoonNote'},
   settings_title:{en:'⚙️ Full settings'},save2:{en:'Save'},
-  update_available:{en:'A newer version is available.'},upgrade:{en:'Upgrade'},
+  update_available:{en:'A new update is ready.'},upgrade:{en:'Upgrade'},
+  check_updates:{en:'Check for updates'},checking_updates:{en:'Checking for updates…'},
+  update_preparing:{en:'Preparing the update…'},up_to_date:{en:'You’re using the latest version.'},
+  update_check_failed:{en:'Could not check for updates. Check your internet connection.'},
   ac_title:{en:'☁️ Account · Sync'},ac_server:{en:'Server connection (Supabase)'},
   ac_url:{en:'Project URL'},ac_key:{en:'Public key (anon or sb_publishable)'},
   ac_save:{en:'Save · Connect'},ac_test:{en:'Test connection'},ac_login:{en:'Sign in (email)'},
@@ -2165,7 +2168,9 @@ const I18N_KO={
   pin_set:'설정 / 변경',
   vault_unlock_time:'자동 잠금 시간',
   vault_always:'항상 비밀번호 물어보기',
-  sec_data:'데이터 / Data',update_available:'새 버전을 사용할 수 있습니다.',upgrade:'업그레이드',
+  sec_data:'데이터 / Data',update_available:'새 업데이트 버전이 준비되어 있습니다.',upgrade:'업그레이드',
+  check_updates:'업데이트 확인',checking_updates:'업데이트 확인 중…',update_preparing:'업데이트를 준비 중입니다…',
+  up_to_date:'현재 최신 버전입니다.',update_check_failed:'업데이트를 확인하지 못했습니다. 인터넷 연결을 확인해 주세요.',
   btn_backup:'💾 백업하기 (이 기기 + 다운로드 폴더)',
   btn_restore:'♻️ 복구하기 (저장된 백업 목록)',
   btn_export_en:'📤 백업 파일 내보내기 (Google Drive·메일 등으로 공유)',
@@ -2346,7 +2351,9 @@ const I18N_JA={
   sec_vault:'保管ノート',vault_hint:'通常のノートにパスワードは不要です。保管ノートは毎回パスワードを尋ねます。',
   vault_open:'🔐 保管ノート',open:'開く',vault_pin:'保管ノートのパスワード',pin_set:'設定 / 変更',
   vault_unlock_time:'ロックを解除しておく時間',vault_always:'毎回尋ねる',
-  sec_data:'データ',sec_data_size:'データサイズ',update_available:'新しいバージョンを利用できます。',upgrade:'アップグレード',btn_backup:'💾 バックアップ（この端末に保存）',btn_restore:'♻️ 復元（保存済みバックアップ）',
+  sec_data:'データ',sec_data_size:'データサイズ',update_available:'新しいアップデートの準備ができました。',upgrade:'アップグレード',
+  check_updates:'アップデートを確認',checking_updates:'アップデートを確認中…',update_preparing:'アップデートを準備中…',
+  up_to_date:'最新バージョンを使用しています。',update_check_failed:'アップデートを確認できませんでした。インターネット接続を確認してください。',btn_backup:'💾 バックアップ（この端末に保存）',btn_restore:'♻️ 復元（保存済みバックアップ）',
   btn_export_en:'📤 ノートを書き出す',btn_import_en:'📥 ノートを読み込む',
   btn_wipe:'すべて削除',btn_emptytrash:'ゴミ箱を空にする',
   bk_title:'♻️ 保存済みバックアップ',bk_empty:'バックアップがありません。まず「バックアップ」を押してください。',
@@ -2496,7 +2503,9 @@ const I18N_ZH={
   sec_vault:'保险箱',vault_hint:'普通笔记无需密码。保险箱每次都会询问密码。',
   vault_open:'🔐 保险箱',open:'打开',vault_pin:'保险箱密码',pin_set:'设置 / 更改',
   vault_unlock_time:'保持解锁时长',vault_always:'每次询问',
-  sec_data:'数据',sec_data_size:'数据大小',update_available:'有新版本可用。',upgrade:'升级',btn_backup:'💾 备份（保存到本机）',btn_restore:'♻️ 恢复（已保存的备份）',
+  sec_data:'数据',sec_data_size:'数据大小',update_available:'新版本更新已准备就绪。',upgrade:'升级',
+  check_updates:'检查更新',checking_updates:'正在检查更新…',update_preparing:'正在准备更新…',
+  up_to_date:'当前已是最新版本。',update_check_failed:'无法检查更新，请检查网络连接。',btn_backup:'💾 备份（保存到本机）',btn_restore:'♻️ 恢复（已保存的备份）',
   btn_export_en:'📤 导出笔记',btn_import_en:'📥 导入笔记',
   btn_wipe:'全部删除',btn_emptytrash:'清空回收站',
   bk_title:'♻️ 已保存的备份',bk_empty:'还没有备份。请先点击"备份"。',
@@ -2646,7 +2655,9 @@ const I18N_ES={
   sec_vault:'Caja fuerte',vault_hint:'Las notas normales no necesitan contraseña. La caja fuerte la pide siempre.',
   vault_open:'🔐 Caja fuerte',open:'Abrir',vault_pin:'Contraseña de la caja fuerte',pin_set:'Establecer / Cambiar',
   vault_unlock_time:'Mantener desbloqueada',vault_always:'Preguntar siempre',
-  sec_data:'Datos',sec_data_size:'Tamaño de datos',update_available:'Hay una nueva versión disponible.',upgrade:'Actualizar',btn_backup:'💾 Copia de seguridad (en este equipo)',btn_restore:'♻️ Restaurar (copias guardadas)',
+  sec_data:'Datos',sec_data_size:'Tamaño de datos',update_available:'Hay una nueva actualización lista.',upgrade:'Actualizar',
+  check_updates:'Buscar actualizaciones',checking_updates:'Buscando actualizaciones…',update_preparing:'Preparando la actualización…',
+  up_to_date:'Estás usando la versión más reciente.',update_check_failed:'No se pudieron comprobar las actualizaciones. Comprueba tu conexión a Internet.',btn_backup:'💾 Copia de seguridad (en este equipo)',btn_restore:'♻️ Restaurar (copias guardadas)',
   btn_export_en:'📤 Exportar notas',btn_import_en:'📥 Importar notas',
   btn_wipe:'Eliminar todo',btn_emptytrash:'Vaciar papelera',
   bk_title:'♻️ Copias guardadas',bk_empty:'Aún no hay copias. Pulsa "Copia de seguridad" primero.',
@@ -7174,10 +7185,17 @@ document.addEventListener('visibilitychange',()=>{
 setInterval(()=>{try{if(!document.hidden)syncPinnedNotifications();}catch(_){}},60*1000);
 /* ═══════════════ PWA ═══════════════ */
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){
-  let _swReg=null, _swWaiting=null, _swRefreshed=false, _swPending=false, _swControllerChanged=false;
+  let _swReg=null, _swObservedReg=null, _swWaiting=null, _swRefreshed=false, _swPending=false, _swControllerChanged=false;
   let _swHadController=!!navigator.serviceWorker.controller;
   const updateText={
-    available:()=>L('새 버전을 사용할 수 있습니다.','A newer version is available.',{es:'Hay una nueva versión disponible.',ja:'新しいバージョンを利用できます。',zh:'有新版本可用。'}),
+    available:()=>L('새 업데이트 버전이 준비되어 있습니다.','A new update is ready.',{es:'Hay una nueva actualización lista.',ja:'新しいアップデートの準備ができました。',zh:'新版本更新已准备就绪。'}),
+    check:()=>L('업데이트 확인','Check for updates',{es:'Buscar actualizaciones',ja:'アップデートを確認',zh:'检查更新'}),
+    checking:()=>L('업데이트 확인 중…','Checking for updates…',{es:'Buscando actualizaciones…',ja:'アップデートを確認中…',zh:'正在检查更新…'}),
+    preparing:()=>L('업데이트를 준비 중입니다…','Preparing the update…',{es:'Preparando la actualización…',ja:'アップデートを準備中…',zh:'正在准备更新…'}),
+    latest:()=>L('현재 최신 버전입니다.','You’re using the latest version.',{es:'Estás usando la versión más reciente.',ja:'最新バージョンを使用しています。',zh:'当前已是最新版本。'}),
+    confirm:()=>L('새 업데이트 버전이 준비되어 있습니다. 지금 업그레이드할까요?','A new update is ready. Upgrade now?',{es:'Hay una nueva actualización lista. ¿Actualizar ahora?',ja:'新しいアップデートの準備ができました。今すぐアップグレードしますか？',zh:'新版本更新已准备就绪。现在升级吗？'}),
+    later:()=>L('나중에','Later',{es:'Más tarde',ja:'後で',zh:'稍后'}),
+    checkFailed:()=>L('업데이트를 확인하지 못했습니다. 인터넷 연결을 확인해 주세요.','Could not check for updates. Check your internet connection.',{es:'No se pudieron comprobar las actualizaciones. Comprueba tu conexión a Internet.',ja:'アップデートを確認できませんでした。インターネット接続を確認してください。',zh:'无法检查更新，请检查网络连接。'}),
     applying:()=>L('업데이트를 적용하고 있습니다…','Applying the update…',{es:'Aplicando la actualización…',ja:'更新を適用しています…',zh:'正在应用更新…'}),
     queued:()=>L('현재 작업을 마치면 업데이트됩니다.','The update will be applied when your current activity is finished.',{es:'La actualización se aplicará al terminar la actividad actual.',ja:'現在の操作が終わると更新されます。',zh:'当前操作结束后将应用更新。'}),
     upgrade:()=>L('업그레이드','Upgrade',{es:'Actualizar',ja:'アップグレード',zh:'升级'}),
@@ -7185,16 +7203,87 @@ if('serviceWorker' in navigator&&location.protocol.startsWith('http')){
     queuedButton:()=>L('대기 중…','Queued…',{es:'En espera…',ja:'待機中…',zh:'等待中…'}),
     failed:()=>L('업데이트를 시작하지 못했습니다. 다시 시도해 주세요.','Could not start the update. Please try again.',{es:'No se pudo iniciar la actualización. Inténtalo de nuevo.',ja:'更新を開始できませんでした。もう一度お試しください。',zh:'无法开始更新，请重试。'})
   };
+  let _swChecking=false,_swOfferAfterInstall=false;
+  function swSetCheckButton(mode,text,disabled=false){
+    const b=$('#stUpgradeBtn');if(!b)return;
+    b.dataset.updateMode=mode;b.textContent=text;b.disabled=disabled;
+    if(mode==='check')b.dataset.i18n='check_updates';
+    else if(mode==='upgrade')b.dataset.i18n='upgrade';
+    else b.removeAttribute('data-i18n');
+  }
+  function swSetUpdateStatus(text,visible=true,key=''){
+    const s=$('#stUpdateStatus');if(!s)return;
+    if(key)s.dataset.i18n=key;else s.removeAttribute('data-i18n');
+    s.textContent=text;s.classList.toggle('hidden',!visible);
+  }
   function swShowUpdateAvailable(worker){
-    if(worker&&worker.state!=='redundant')_swWaiting=worker;
-    const waiting=(_swReg&&_swReg.waiting)||_swWaiting;
-    if(!waiting||waiting.state==='redundant')return;
-    const box=$('#stUpdateNotice'),status=$('#stUpdateStatus'),button=$('#stUpgradeBtn');
-    if(!box||!status||!button)return;
-    status.textContent=_swPending?updateText.queued():updateText.available();
-    button.textContent=_swPending?updateText.queuedButton():updateText.upgrade();
-    button.disabled=!!_swPending;
-    box.classList.remove('hidden');
+    if(worker&&worker.state==='installed')_swWaiting=worker;
+    const waiting=(_swReg&&_swReg.waiting)||(_swWaiting&&_swWaiting.state==='installed'?_swWaiting:null);
+    if(!waiting||waiting.state!=='installed')return false;
+    const status=$('#stUpdateStatus'),button=$('#stUpgradeBtn');
+    if(!status||!button)return false;
+    if(_swPending)swSetUpdateStatus(updateText.queued());
+    else swSetUpdateStatus(updateText.available(),true,'update_available');
+    swSetCheckButton(_swPending?'queued':'upgrade',_swPending?updateText.queuedButton():updateText.upgrade(),!!_swPending);
+    return true;
+  }
+  function swResetUpdateAction(message,hideStatus=false){
+    _swWaiting=null;
+    swSetCheckButton('check',updateText.check(),false);
+    if(hideStatus)swSetUpdateStatus('',false);
+    else if(message)swSetUpdateStatus(message,true);
+  }
+  function swObserveRegistration(reg){
+    if(!reg)return;
+    _swReg=reg;
+    if(_swObservedReg===reg)return;
+    _swObservedReg=reg;
+    if(reg.waiting)swShowUpdateAvailable(reg.waiting);
+    const watched=new WeakSet();
+    const watchInstalling=nw=>{
+      if(!nw||watched.has(nw))return;
+      watched.add(nw);
+      nw.addEventListener('statechange',()=>{
+        if(nw.state==='installed'&&reg.waiting){
+          swShowUpdateAvailable(reg.waiting);
+          if(_swOfferAfterInstall){_swOfferAfterInstall=false;swOfferUpgrade(reg.waiting);}
+        }
+        else if(nw.state==='redundant'&&!reg.waiting){
+          _swOfferAfterInstall=false;
+          if(_swChecking)swResetUpdateAction(updateText.checkFailed());
+          else swResetUpdateAction('',true);
+        }
+      });
+    };
+    reg.addEventListener('updatefound',()=>watchInstalling(reg.installing));
+    watchInstalling(reg.installing);
+  }
+  function swCheckForUpdates(){
+    if(_swChecking)return;
+    const current=(_swReg&&_swReg.waiting)||(_swWaiting&&_swWaiting.state==='installed'?_swWaiting:null);
+    if(current){swOfferUpgrade(current);return;}
+    _swChecking=true;_swOfferAfterInstall=true;
+    swSetUpdateStatus(updateText.checking());
+    swSetCheckButton('checking',updateText.checking(),true);
+    (async()=>{
+      try{
+        let reg=_swReg;
+        if(!reg)reg=await navigator.serviceWorker.getRegistration();
+        if(!reg)reg=await navigator.serviceWorker.register('sw.js',{updateViaCache:'none'});
+        swObserveRegistration(reg);
+        if(reg.waiting){_swOfferAfterInstall=false;_swWaiting=reg.waiting;swOfferUpgrade(reg.waiting);return;}
+        await reg.update();
+        if(reg.waiting){_swOfferAfterInstall=false;_swWaiting=reg.waiting;swOfferUpgrade(reg.waiting);return;}
+        if(reg.installing&&_swHadController){
+          _swWaiting=reg.installing;
+          swSetUpdateStatus(updateText.preparing());
+          swSetCheckButton('checking',updateText.preparing(),true);
+          return;
+        }
+        _swOfferAfterInstall=false;swResetUpdateAction(updateText.latest());
+      }catch(_){_swOfferAfterInstall=false;swResetUpdateAction(updateText.checkFailed());}
+      finally{_swChecking=false;}
+    })();
   }
   function swHasActiveWork(){
     const u=(typeof ui!=='undefined')?ui:null;
@@ -7206,9 +7295,8 @@ if('serviceWorker' in navigator&&location.protocol.startsWith('http')){
     _swControllerChanged=true;
     if(swHasActiveWork()){
       _swPending=true;swShowUpdateAvailable(_swWaiting);
-      const status=$('#stUpdateStatus'),button=$('#stUpgradeBtn');
-      if(status)status.textContent=updateText.queued();
-      if(button){button.textContent=updateText.queuedButton();button.disabled=true;}
+      swSetUpdateStatus(updateText.queued());
+      swSetCheckButton('queued',updateText.queuedButton(),true);
       return;
     }
     _swPending=false;_swRefreshed=true;
@@ -7223,31 +7311,43 @@ if('serviceWorker' in navigator&&location.protocol.startsWith('http')){
     else swTryPending();
   });
   const upgradeButton=$('#stUpgradeBtn');
-  if(upgradeButton)upgradeButton.addEventListener('click',()=>{
-    const worker=(_swReg&&_swReg.waiting)||(_swWaiting&&_swWaiting.state==='installed'?_swWaiting:null);
-    if(!worker||worker.state==='redundant'){
-      const box=$('#stUpdateNotice');if(box)box.classList.add('hidden');
-      try{if(_swReg)_swReg.update().then(()=>{if(_swReg.waiting)swShowUpdateAvailable(_swReg.waiting);}).catch(()=>{});}catch(_){}
-      return;
-    }
+  function swStartUpgrade(worker){
+    if(!worker||worker.state==='redundant'){swResetUpdateAction(updateText.checkFailed());return;}
     try{if(typeof applySettingsFromUI==='function')applySettingsFromUI();}catch(_){}
     const settings=$('#setOverlay');if(settings&&settings.classList.contains('show'))ovCloseUi(settings);
     _swWaiting=worker;_swRefreshed=false;_swPending=false;_swControllerChanged=false;
-    const busy=swHasActiveWork(),status=$('#stUpdateStatus');
-    upgradeButton.disabled=true;
-    upgradeButton.textContent=busy?updateText.queuedButton():updateText.upgrading();
-    if(status)status.textContent=busy?updateText.queued():updateText.applying();
+    const busy=swHasActiveWork();
+    swSetCheckButton(busy?'queued':'upgrading',busy?updateText.queuedButton():updateText.upgrading(),true);
+    swSetUpdateStatus(busy?updateText.queued():updateText.applying());
     toast(busy?updateText.queued():updateText.applying());
     /* Let Settings finish closing (and its history entry settle) before activating the worker. */
     setTimeout(()=>{
       if(worker.state==='redundant'){
-        upgradeButton.disabled=false;upgradeButton.textContent=updateText.upgrade();
-        if(status)status.textContent=updateText.available();
+        swSetCheckButton('upgrade',updateText.upgrade(),false);swSetUpdateStatus(updateText.available());
         toast(updateText.failed());return;
       }
       try{worker.postMessage({type:'SKIP_WAITING',confirmed:true});}
-      catch(_){upgradeButton.disabled=false;upgradeButton.textContent=updateText.upgrade();if(status)status.textContent=updateText.available();toast(updateText.failed());}
+      catch(_){swSetCheckButton('upgrade',updateText.upgrade(),false);swSetUpdateStatus(updateText.available());toast(updateText.failed());}
     },200);
+  }
+  let _swPromptOpen=false;
+  function swOfferUpgrade(worker){
+    if(!worker||worker.state==='redundant'){swCheckForUpdates();return;}
+    if(!swShowUpdateAvailable(worker)||_swPromptOpen)return;
+    _swPromptOpen=true;
+    dlg(updateText.confirm(),{okText:updateText.upgrade(),noText:updateText.later()})
+      .then(accepted=>{if(accepted)swStartUpgrade(worker);})
+      .catch(()=>{})
+      .finally(()=>{_swPromptOpen=false;});
+  }
+  if(upgradeButton)upgradeButton.addEventListener('click',()=>{
+    if(upgradeButton.dataset.updateMode==='upgrade'){
+      const worker=(_swReg&&_swReg.waiting)||(_swWaiting&&_swWaiting.state==='installed'?_swWaiting:null);
+      if(worker&&worker.state!=='redundant')swOfferUpgrade(worker);
+      else swCheckForUpdates();
+      return;
+    }
+    swCheckForUpdates();
   });
   navigator.serviceWorker.addEventListener('controllerchange',()=>{
     /* The first controller on a fresh install is not an update; don't reload the just-opened app. */
@@ -7256,18 +7356,9 @@ if('serviceWorker' in navigator&&location.protocol.startsWith('http')){
   });
   addEventListener('load',()=>{
     navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(reg=>{
-      _swReg=reg;
+      swObserveRegistration(reg);
       try{reg.update().catch(()=>{});}catch(_){}
       try{navigator.serviceWorker.ready.then(()=>setTimeout(syncPinnedNotifications,800));}catch(_){}
-      /* A waiting update is announced but never activated automatically. */
-      if(reg.waiting)swShowUpdateAvailable(reg.waiting);
-      reg.addEventListener('updatefound',()=>{
-        const nw=reg.installing;if(!nw)return;
-        nw.addEventListener('statechange',()=>{
-          if(nw.state==='installed'&&(reg.waiting||navigator.serviceWorker.controller))swShowUpdateAvailable(reg.waiting||nw);
-          else if(nw.state==='redundant'&&!reg.waiting){const box=$('#stUpdateNotice');if(box)box.classList.add('hidden');_swWaiting=null;}
-        });
-      });
       /* Check for a newer worker whenever the app returns to the foreground. */
       document.addEventListener('visibilitychange',()=>{if(!document.hidden)reg.update().catch(()=>{});});
     }).catch(()=>{});
