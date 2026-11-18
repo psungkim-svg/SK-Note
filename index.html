@@ -283,7 +283,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-WcNvEbY5TL1Mr80oq4AhZQ7tNUdiFF4En19jG54brQw='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-pBA/MdXUkwsoRc3/8p/jYOm05jT0GQ8sXpedUb/wlnM='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
 <!-- (요구3) 전화기 화면에 딱 맞게 · 자동 확대(핀치 줌 포함) 완전 금지 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#f5f2ef">
@@ -1423,11 +1423,17 @@ html[data-theme="dark"] #folderOverlay:not(.vault-folder),html[data-theme="dark"
 /* (v7.9.2) Vault 폴더 화면: 둥근 얇은 아웃라인(금고 안 느낌). 안쪽 여백 최소 → 노트 크기 유지 */
 #folderOverlay.vault-folder .sheet{border:2px solid #c99a9d;border-radius:20px;margin:4px;width:calc(100% - 8px);height:calc(100% - 8px);box-shadow:inset 0 0 0 3px #f3dcdd;overflow:hidden}
 /* (v7.9.2) 폴더 화면 하단 바: 일반 노트 · Vault 폴더 */
-#fhBottomBar{flex:none;display:flex;justify-content:space-evenly;align-items:center;gap:.4em;margin:0 calc(-1 * var(--fsx,.72em)) calc(-1 * (.72em + env(safe-area-inset-bottom)));padding:.3em .6em;padding-bottom:calc(.34em + env(safe-area-inset-bottom));background:#d6cfc8;box-shadow:0 -1px 3px rgba(0,0,0,.12)}
+#fhBottomBar{flex:none;display:flex;justify-content:space-between;align-items:center;gap:.4em;margin:0 calc(-1 * var(--fsx,.72em)) calc(-1 * (.72em + env(safe-area-inset-bottom)));padding:.3em .6em;padding-bottom:calc(.34em + env(safe-area-inset-bottom));background:#d6cfc8;box-shadow:0 -1px 3px rgba(0,0,0,.12)}
+#fhBottomBar #fhBarNotes{margin-right:auto}
+#fhBottomBar #fhBarVault{margin-left:auto}
 #fhBottomBar{display:flex}   /* (v7.11.12) 폴더 허브·상세·Vault 폴더에서도 하단 바 유지 */
 #folderOverlay.vault-folder #fhBottomBar{background:#dca6a6}
 #fhBottomBar .chip{display:flex;align-items:center;gap:.35em;font-weight:800;font-size:calc(var(--ui) * .81);padding:.18em .7em;min-height:0;line-height:1.25}
 #fhBottomBar .chip .vfold{flex:none;width:26px;height:26px;margin:-3px 0}
+/* (v7.11.15) Vault 하단 내비게이션: 일반 노트·V노트·V폴더 버튼을 낮고 가로로 긴 타원형으로 통일 */
+#folderNav.vault .folderbar .chip{font-size:.62em;max-width:44vw;border-radius:999px;min-height:1.45em;padding:.08em .38em;line-height:1.12}
+#folderNav.vault .folderbar .vault-folder-icon{font-size:.62em!important;width:3.3em;height:1.58em;min-width:3.3em;min-height:1.58em;box-sizing:border-box;padding:0!important;border-radius:999px;display:inline-flex;align-items:center;justify-content:center}
+#folderNav.vault .folderbar .vault-folder-icon .vfold{width:1.24em;height:1.24em}
 
 /* (v7.10.0) 하단 바 높이 115%: 일반 35.4px→40.7px, Vault 59.5px→68.5px 가 되도록 위·아래 여백만 늘린다(칩·＋ 크기는 그대로) */
 #folderNav{padding-top:calc(.1em + .117em);padding-bottom:calc(.16em + .117em + env(safe-area-inset-bottom))}
@@ -1778,7 +1784,7 @@ html[data-cols="1"]{--cardfs:1.6} html[data-cols="2"]{--cardfs:1.3} html[data-co
     </div>
     <div class="appver">
       <div id="stAppName" style="font-size:1.05em;letter-spacing:.02em">SoonNote</div>
-      <div id="stVersion">v7.11.14</div>
+      <div id="stVersion">v7.11.15</div>
     </div>
     <div class="setsec update-card" id="stUpdateNotice">
       <span id="stUpdateStatus" class="hidden" role="status" aria-live="polite" data-i18n="update_available">A new update is ready.</span>
@@ -1908,7 +1914,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='SoonNote';
-const APP_VER='7.11.14';
+const APP_VER='7.11.15';
 /* ══════════ (v7.6.1) 기능 스위치 ══════════
    sync:false 로 바꾸면 동기화(Supabase)가 UI·네트워크·타이머 모두에서 비활성화된다.
    SYNC 객체와 계정 화면 코드는 남아 있되(프리미엄 대비) 어떤 경로도 실행되지 않는다.
