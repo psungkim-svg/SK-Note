@@ -1,8 +1,17 @@
 <!DOCTYPE html>
 <!--
 ═══════════════════════════════════════════════════════════════
-  SoonNote  —  V7.7.0
+  SoonNote  —  V8.2
   (V6.0 → ... → V6.6 → V6.7 → V6.7.1)
+
+  V8.2 changes  (2026-09-12)
+   1. Added a visible Select notes button as a predictable alternative to long-press.
+   2. Long-press selection now tolerates up to 14px of touch jitter, shows pending
+      feedback, and consumes the release click so the selected card stays selected.
+   3. Shared the behavior across main notes, folder-detail notes, and folder tiles.
+   4. Manual sort distinguishes a stationary hold (select) from a held drag (reorder).
+   5. Kept Select all, Move, Delete/Trash, and Restore actions; fixed Select all so
+      changing its label cannot be mistaken for a background tap.
 
   V7.7.0 changes  (2026-09)
    1. Bottom bar chips 전체/노트/폴더 = note-title size & weight (1em --ui, 800).
@@ -283,7 +292,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-IJtNPR0Rkxz8CJAweW3K+XiyTctTc7CDxWqLLR7pPgI='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-iKfyP/NE3BYOEcJwhmbSopSlNHyQOm0dY7OvyuxNMhI='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
 <!-- (요구3) 전화기 화면에 딱 맞게 · 자동 확대(핀치 줌 포함) 완전 금지 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#f5f2ef">
@@ -724,6 +733,7 @@ main{order:1;flex:1;padding:0;max-width:1000px;width:100%;margin:0 auto;overflow
   aspect-ratio:1/1;
 }
 .note:active{transform:scale(.97)}
+.note.longpress-pending{transform:scale(.985);filter:brightness(.97);outline:2px solid var(--accent2);outline-offset:-2px;transition:transform .12s ease-out,filter .12s ease-out,outline-color .12s ease-out}
 .note.sel{outline:3px solid var(--accent);outline-offset:-3px}
 .note .thead{
   background:var(--tc,var(--chip));   /* (요구16) 제목줄 진한 2톤 */
@@ -853,6 +863,7 @@ html[data-theme="dark"] mark{background:#8a6f62;color:#fff}
 .fh-folder{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.25em;min-width:0;min-height:7.2em;padding:.7em .45em;
   color:var(--text);background:var(--card);border:1px solid var(--line);border-radius:.82em;font:inherit;text-align:center;box-shadow:var(--shadow)}
 .fh-folder:active{transform:scale(.98)}
+.fh-folder.longpress-pending{transform:scale(.985);filter:brightness(.97);transition:transform .12s ease-out,filter .12s ease-out}
 .fh-folder .fi{font-size:2.25em;line-height:1;filter:drop-shadow(0 1px 0 rgba(0,0,0,.08))}
 .fh-folder .fn{max-width:100%;font-size:.77em;font-weight:800;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* (v7.6.6) 노트 개수 = 카드 맨 아래 1/4을 차지하는 갈색 블록(폴더 이름 아래 ~ 카드 바닥, 좌우 끝까지) */
@@ -1273,8 +1284,9 @@ html[data-theme="dark"] input[type=range]::-moz-range-thumb{border-color:#221f1e
 @media(max-width:400px){
   #selMode .sbtn .lbl{display:none}
   #selMode .sbtn{padding:.42em .55em;font-size:.82em}
-  #selMode #selMove .lbl{display:inline}
+  #selMode #selAll .lbl,#selMode #selMove .lbl,#selMode #selDelete .lbl{display:inline}
   #selMode #selMove{background:rgba(255,255,255,.68);font-weight:900}
+  #selMode #selDelete{background:rgba(255,255,255,.68);font-weight:900}
 }
 #selMode .sbtn{background:rgba(255,255,255,.35);border:none;color:#4a332e;border-radius:.5em;
   padding:.4em .6em;font-size:.72em;font-weight:700;white-space:nowrap;flex:none;
@@ -1496,10 +1508,10 @@ html[data-cols="1"]{--cardfs:1.6} html[data-cols="2"]{--cardfs:1.3} html[data-co
 </head>
 <body>
 
-<div id="selMode">
+<div id="selMode" role="toolbar" aria-label="Note selection actions">
   <button class="sbtn" id="selCancel">✕ <span class="lbl" data-i18n="cancel">Cancel</span></button>
   <button class="sbtn" id="selAll">☑ <span class="lbl" data-i18n="select_all">All</span></button>
-  <span class="cnt" id="selCount">0<span data-i18n="sel_count"> selected</span></span>
+  <span class="cnt" id="selCount" aria-live="polite" aria-atomic="true">0<span data-i18n="sel_count"> selected</span></span>
   <button class="sbtn restore" id="selRestore" style="display:none"><span class="ic">↺</span> <span class="lbl" data-i18n="restore">Restore</span></button>
   <button class="sbtn" id="selMove" style="display:none">➡️ <span class="lbl" data-i18n="move">Move</span></button>   <!-- (v7.5.5 요청2) 이동: 우측 화살표, 눈에 띄게 -->
   <button class="sbtn" id="selDelete"><svg class="fh-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13M10 11v5M14 11v5"/></svg> <span class="lbl" data-i18n="delete">Delete</span></button>
@@ -1517,6 +1529,7 @@ html[data-cols="1"]{--cardfs:1.6} html[data-cols="2"]{--cardfs:1.3} html[data-co
     <input id="search" type="search" data-i18n-ph="search_ph" placeholder="Search...">
     <span class="syncdot" id="syncDot" title="Sync status"></span>
     <button class="iconbtn" id="btnView" data-i18n-title="View" title="View">▦</button>
+    <button class="iconbtn" id="btnSelect" type="button" title="Select notes" aria-label="Select notes">☑️</button>
     <!-- (요청) 구름(계정·동기화) 아이콘은 상단바에서 제거 — 설정 → 계정·동기화로 진입 -->
     <button class="iconbtn" id="btnTrash" data-i18n-title="Trash" title="Trash"><svg class="fh-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13M10 11v5M14 11v5"/></svg></button>
     <button class="iconbtn" id="btnSettings" data-i18n-title="Settings" title="Settings">⚙️</button>
@@ -1948,7 +1961,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='SoonNote';
-const APP_VER='8.1';
+const APP_VER='8.2';
 /* ══════════ (v7.6.1) 기능 스위치 ══════════
    sync:false 로 바꾸면 동기화(Supabase)가 UI·네트워크·타이머 모두에서 비활성화된다.
    SYNC 객체와 계정 화면 코드는 남아 있되(프리미엄 대비) 어떤 경로도 실행되지 않는다.
@@ -3450,6 +3463,7 @@ function render(){
     vault.onclick=()=>VLT.open();const vpin=document.createElement('div');vpin.className='pinrow vaultpin';vpin.append(vault);bar.append(vpin);   /* (v7.9.9) 🔐 은 맨 오른쪽(＋ 버튼 바로 아래) */
   }
   $('#btnTrash').classList.toggle('on',ui.trash);
+  const selectBtn=$('#btnSelect');if(selectBtn){const selectLabel=L('노트 선택','Select notes');selectBtn.title=selectLabel;selectBtn.setAttribute('aria-label',selectLabel);selectBtn.classList.toggle('hidden',!!ui.selMode||!!ui.trash);}
   $('#btnSettings').classList.remove('hidden');   /* (v7.11.6) Vault 첫 화면에서도 ⚙️ 표시 */
   $('#btnVaultMore').classList.toggle('hidden',!ui.vault);
   $('#vaultUnlockedBar').classList.toggle('hidden',!ui.vault);
@@ -3518,36 +3532,56 @@ function render(){
   try{ if(inFolderDetail())renderFolderDetail(); }catch(_){}
   updateSelBar();
 }
+/* Long press with a movement tolerance: tiny touch jitter must not cancel selection. */
+let _longPressClickGuard=null;
+document.addEventListener('pointerdown',e=>{const guard=_longPressClickGuard;if(guard&&(guard.until||guard.pointerId===e.pointerId))_longPressClickGuard=null},true);
+document.addEventListener('pointercancel',e=>{if(_longPressClickGuard&&_longPressClickGuard.pointerId===e.pointerId)_longPressClickGuard=null},true);
+document.addEventListener('pointerup',e=>{if(_longPressClickGuard&&_longPressClickGuard.pointerId===e.pointerId)_longPressClickGuard.until=Date.now()+750},true);
+document.addEventListener('click',e=>{
+  const guard=_longPressClickGuard;if(!guard)return;
+  if(!guard.until||Date.now()>guard.until){_longPressClickGuard=null;return}
+  const target=e.target instanceof Element?e.target.closest(guard.selector):null;
+  if(target&&target.dataset.id===guard.id){_longPressClickGuard=null;e.preventDefault();e.stopImmediatePropagation()}
+},true);
+function guardLongPressClick(kind,id,pointerId=null,waitForRelease=false){_longPressClickGuard={selector:kind==='folder'?'.fh-folder':'.note',id,pointerId:waitForRelease?pointerId:null,until:waitForRelease?0:Date.now()+750}}
+function showSelectionHint(){toast(L('선택 모드입니다. 노트를 더 눌러 선택한 뒤 위의 이동·삭제를 누르세요.','Selection mode: tap more notes, then choose Move or Delete above.'))}
+function bindLongPress(el,fire,{delay=420,moveLimit=14}={}){
+  let holdTimer=0,feedbackTimer=0,pointerId=null,startX=0,startY=0,fired=false;
+  const clearTimers=()=>{clearTimeout(holdTimer);clearTimeout(feedbackTimer);holdTimer=feedbackTimer=0;el.classList.remove('longpress-pending')};
+  const release=e=>{if(pointerId===null||e.pointerId!==pointerId)return;clearTimers();pointerId=null;fired=false};
+  const down=e=>{
+    if(e.isPrimary===false||(e.pointerType==='mouse'&&e.button!==0)||pointerId!==null)return;
+    pointerId=e.pointerId;startX=e.clientX;startY=e.clientY;fired=false;el._longPressConsumed=false;
+    feedbackTimer=setTimeout(()=>{if(pointerId===e.pointerId&&!fired)el.classList.add('longpress-pending')},120);
+    holdTimer=setTimeout(()=>{
+      if(pointerId!==e.pointerId)return;
+      fired=true;holdTimer=0;clearTimeout(feedbackTimer);feedbackTimer=0;el.classList.remove('longpress-pending');el._longPressConsumed=true;
+      guardLongPressClick(el.classList.contains('fh-folder')?'folder':'note',el.dataset.id,e.pointerId,true);
+      try{if(navigator.vibrate)navigator.vibrate(14)}catch(_){}
+      fire(e);
+    },delay);
+    try{el.setPointerCapture(e.pointerId)}catch(_){}
+  };
+  const move=e=>{if(pointerId!==e.pointerId||fired)return;if(Math.hypot(e.clientX-startX,e.clientY-startY)>moveLimit){el._longPressConsumed=true;release(e)}};
+  el.addEventListener('pointerdown',down,{passive:true});
+  el.addEventListener('pointermove',move,{passive:true});
+  el.addEventListener('pointerup',release,{passive:true});
+  el.addEventListener('pointercancel',release,{passive:true});
+  el.addEventListener('lostpointercapture',release);
+}
+function selectNoteByLongPress(id){const entering=!ui.selMode;if(entering)enterSel();toggleSel(id);if(entering)showSelectionHint()}
 /* (요구10) 노트 눌러 선택 → 휴지통 버튼 삭제 */
 function attachNoteHandlers(el,n){
-  /* (요구1) 첫 화면 노트박스: 길게 눌러도 OS의 복사/텍스트선택 메뉴가 절대 안 뜨게 */
   el.addEventListener('contextmenu',e=>e.preventDefault());
   el.addEventListener('selectstart',e=>{e.preventDefault();return false});
-  if(ui.trash){
-    // 휴지통: 탭하면 선택 토글 (복원/영구삭제는 상단 바)
-    el.onclick=()=>{ if(!ui.selMode)enterSel(); toggleSel(n.id); };
-    return;
-  }
-  if(ui.selMode){ el.onclick=()=>toggleSel(n.id); }
-  else{ el.onclick=()=>{ if(el._justDragged)return; openEditor(n.id); }; }
+  if(ui.trash){el.onclick=()=>{if(!ui.selMode)enterSel();toggleSel(n.id)};return}
+  if(ui.selMode){el.onclick=()=>toggleSel(n.id)}
+  else{el.onclick=()=>{if(el._longPressConsumed){el._longPressConsumed=false;return}if(!el._justDragged)openEditor(n.id)}}
 
-  /* (v6.4) '수동 정렬' 모드에서는 길게 누르기 = 순서 바꾸기.
-     예전에는 선택모드 진입(500ms)과 끌기(400ms)가 동시에 걸려 서로 방해했다. */
-  const sortMode=(curSettings().sort==='manual'&&!ui.selMode&&!ui.trash);
-  if(sortMode){
-    el.classList.add('sortable');
-    enableTouchSort(el,n);
-    return;                       // 선택모드 롱프레스는 달지 않는다
-  }
-
-  // 길게 누르면 선택 모드
-  let pressT=null;
-  const start=()=>{ pressT=setTimeout(()=>{ if(!ui.selMode)enterSel(); toggleSel(n.id); },500); };
-  const cancel=()=>{ clearTimeout(pressT); };
-  el.addEventListener('pointerdown',start);
-  el.addEventListener('pointerup',cancel);
-  el.addEventListener('pointermove',cancel);
-  el.addEventListener('pointercancel',cancel);
+  /* 수동 정렬: 꾹 눌러 멈추면 선택, 누른 채 움직이면 순서 변경. */
+  const sortMode=curSettings().sort==='manual'&&!ui.selMode&&!ui.trash;
+  if(sortMode){el.classList.add('sortable');enableTouchSort(el,n);return}
+  bindLongPress(el,()=>selectNoteByLongPress(n.id));
 }
 
 /* ══════════════ (v6.4) 손가락으로 끌어 순서 바꾸기 ══════════════
@@ -3557,34 +3591,42 @@ function attachNoteHandlers(el,n){
 let _sortState=null;
 
 function enableTouchSort(el,n){
-  let holdT=null, started=false;
-  let sx=0, sy=0;
-
-  const begin=(e)=>{
-    if(e.button!==undefined&&e.button!==0)return;
-    sx=e.clientX; sy=e.clientY;
-    const pid=e.pointerId;
-    clearTimeout(holdT);
-    /* 400ms 길게 누르면 '집어 올린다' — 그냥 탭하면 노트가 열린다 */
-    holdT=setTimeout(()=>{
-      started=true;
-      el.style.touchAction='none';        /* (v6.5) 취소 방지 — 끌기 직전에 먼저 끈다 */
+  let holdT=0,feedbackT=0,armed=false,started=false,pid=null,sx=0,sy=0;
+  const clearTimers=()=>{clearTimeout(holdT);clearTimeout(feedbackT);holdT=feedbackT=0;el.classList.remove('longpress-pending');el.style.touchAction=''};
+  const begin=e=>{
+    if(e.isPrimary===false||(e.pointerType==='mouse'&&e.button!==0)||pid!==null)return;
+    sx=e.clientX;sy=e.clientY;pid=e.pointerId;armed=false;started=false;el._longPressConsumed=false;
+    feedbackT=setTimeout(()=>{if(pid===e.pointerId&&!armed)el.classList.add('longpress-pending')},120);
+    /* 꾹 누르고 멈추면 선택; 누른 채 충분히 움직이면 수동 정렬을 시작 */
+    holdT=setTimeout(()=>{if(pid!==e.pointerId)return;holdT=0;armed=true;el.style.touchAction='none';el.classList.add('longpress-pending')},420);
+    try{el.setPointerCapture(e.pointerId)}catch(_){}
+  };
+  const moveCheck=e=>{
+    if(pid!==e.pointerId||started)return;
+    const d=Math.hypot(e.clientX-sx,e.clientY-sy);
+    if(!armed){if(d>14){el._longPressConsumed=true;clearTimers();pid=null}return}
+    if(d>18){
+      clearTimers();started=true;el._longPressConsumed=true;
       startDrag(el,n,sx,sy,pid);
-      if(navigator.vibrate)try{navigator.vibrate(18)}catch(_){}
-    },400);
+      const st=_sortState;if(st){el.style.left=(e.clientX-st.offX)+'px';el.style.top=(e.clientY-st.offY)+'px'}
+    }
   };
-  const moveCheck=(e)=>{
-    if(started)return;
-    /* 아직 집어 올리기 전에 '많이' 움직이면 = 스크롤하려는 것 → 취소.
-       (v6.4) 손가락은 가만히 있어도 미세하게 흔들리므로 여유를 둔다 */
-    if(Math.abs(e.clientX-sx)>14||Math.abs(e.clientY-sy)>14) clearTimeout(holdT);
+  const end=e=>{
+    if(pid!==e.pointerId)return;
+    const shouldSelect=armed&&!started;
+    clearTimers();pid=null;armed=false;started=false;
+    if(shouldSelect){el._longPressConsumed=true;guardLongPressClick('note',n.id);selectNoteByLongPress(n.id)}
   };
-  const end=()=>{ clearTimeout(holdT); started=false; };
-
-  el.addEventListener('pointerdown',begin);
-  el.addEventListener('pointermove',moveCheck);
-  el.addEventListener('pointerup',end);
-  el.addEventListener('pointercancel',end);
+  const cancel=e=>{
+    if(pid!==e.pointerId)return;
+    clearTimers();pid=null;armed=false;
+    if(!started)started=false;
+  };
+  el.addEventListener('pointerdown',begin,{passive:true});
+  el.addEventListener('pointermove',moveCheck,{passive:true});
+  el.addEventListener('pointerup',end,{passive:true});
+  el.addEventListener('pointercancel',cancel,{passive:true});
+  el.addEventListener('lostpointercapture',cancel);
 }
 
 function startDrag(el,n,sx,sy,pid){
@@ -3653,7 +3695,8 @@ function startDrag(el,n,sx,sy,pid){
     const t=ev.touches[0];
     onMove({clientX:t.clientX,clientY:t.clientY,preventDefault(){}});
   };
-  const onUp=()=>{
+  const onUp=e=>{
+    if(e&&(e.type==='pointerup'||e.type==='touchend'))guardLongPressClick('note',n.id);
     el.removeEventListener('pointermove',onMove);
     el.removeEventListener('pointerup',onUp);
     el.removeEventListener('touchmove',onTouchMove);
@@ -3727,7 +3770,9 @@ function commitOrder(ids){
   touch(); persistActive(); render();
   if(!ui.vault) syncSoon();
 }
-function enterSel(){ ui.selMode=true; $('#selMode').classList.add('show'); histPush(); }   /* (v6.2 요청5) */
+function enterSel(){ ui.selMode=true; $('#selMode').classList.add('show'); histPush(); }
+function beginNoteSelection(){if(!selectionPool().length){toast(L('선택할 노트가 없습니다.','There are no notes to select.'));return}if(!ui.selMode)enterSel();render();showSelectionHint()}
+$('#btnSelect').onclick=beginNoteSelection;
 function exitSel(fromBack){
   if(!ui.selMode){ ui.selected.clear(); return; }
   ui.selMode=false; ui.selected.clear(); $('#selMode').classList.remove('show');
@@ -3768,17 +3813,25 @@ function updateSelBar(){
   /* (v6.4) 휴지통에서는 아무것도 안 골랐어도 상단 바를 띄워
      '전체 선택'을 바로 쓸 수 있게 한다 */
   const show=ui.selMode||ui.trash;
-  $('#selMode').classList.toggle('show',show);
-  $('#selMode').classList.toggle('trashbar',!!ui.trash);
+  const selBar=$('#selMode');
+  selBar.classList.toggle('show',show);
+  selBar.classList.toggle('trashbar',!!ui.trash);
+  selBar.setAttribute('aria-label',L('노트 선택 작업','Note selection actions'));
   const cntEl=$('#selCount');
   cntEl.textContent=ui.selected.size+L('개 선택',' selected');
+  cntEl.setAttribute('aria-label',L('선택한 노트 '+ui.selected.size+'개',''+ui.selected.size+' notes selected'));
   /* (v6.4) 휴지통에서는 개수를 배너에 표시하므로 상단바에서는 숨겨 자리를 넓힌다 */
   cntEl.style.display=ui.trash?'none':'';
   cntEl.style.flex=ui.trash?'0':'1';
-  $('#selRestore').style.display=ui.trash?'':'none';
-  $('#selDelete').innerHTML='<svg class="fh-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13M10 11v5M14 11v5"/></svg> <span class="lbl">'+(ui.trash?L('영구삭제','Delete forever'):L('삭제','Delete'))+'</span>';
+  const restoreBtn=$('#selRestore'),deleteBtn=$('#selDelete');
+  restoreBtn.style.display=ui.trash?'':'none';
+  const deleteText=ui.trash?L('영구삭제','Delete forever'):L('삭제','Delete');
+  const deleteAction=ui.trash?L('선택한 노트를 영구 삭제','Permanently delete selected notes'):L('선택한 노트를 휴지통으로 이동','Move selected notes to Trash');
+  deleteBtn.innerHTML='<svg class="fh-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13M10 11v5M14 11v5"/></svg> <span class="lbl">'+deleteText+'</span>';
+  deleteBtn.title=deleteAction;deleteBtn.setAttribute('aria-label',deleteAction);
+  const restoreAction=L('선택한 노트 복원','Restore selected notes');restoreBtn.title=restoreAction;restoreBtn.setAttribute('aria-label',restoreAction);
   const none=ui.selected.size===0;
-  $('#selRestore').disabled=none; $('#selDelete').disabled=none;
+  restoreBtn.disabled=none;deleteBtn.disabled=none;
   /* (v7.5.4 요청2) 이동 버튼: 선택 모드(휴지통 제외)에서만, 휴지통 좌측에 표시 */
   const mv=$('#selMove');
   if(mv){const actionLabel=L('선택한 노트 이동','Move selected notes');mv.style.display=(ui.selMode&&!ui.trash)?'':'none';mv.disabled=none;mv.title=actionLabel;mv.setAttribute('aria-label',actionLabel);mv.innerHTML='➡️ <span class="lbl">'+L('이동','Move')+'</span>';   /* (v7.11.18) 모바일에서도 이동 글자·접근성 라벨 유지 */}
@@ -3790,12 +3843,13 @@ function updateSelBar(){
   const allSel=total>0&&ui.selected.size>=total;
   const sa=$('#selAll');
   if(sa){
-    sa.innerHTML=(allSel?'☐':'☑')+' <span class="lbl">'+(allSel?L('전체 해제','None'):L('전체 선택','All'))+'</span>';
-    sa.style.display=total>0?'':'none';
+    const allLabel=allSel?L('전체 해제','Clear all'):L('전체 선택','Select all');
+    sa.innerHTML=(allSel?'☐':'☑')+' <span class="lbl">'+allLabel+'</span>';
+    sa.title=allLabel;sa.setAttribute('aria-label',allLabel);sa.style.display=total>0?'':'none';
   }
   /* 취소 버튼: 휴지통에서는 '휴지통 나가기'로 동작 */
   const sc=$('#selCancel');
-  if(sc)sc.innerHTML='✕ <span class="lbl">'+(ui.trash?L('나가기','Exit'):L('취소','Cancel'))+'</span>';
+  if(sc){const cancelLabel=ui.trash?L('휴지통 나가기','Exit trash'):L('선택 취소','Cancel selection');sc.innerHTML='✕ <span class="lbl">'+(ui.trash?L('나가기','Exit'):L('취소','Cancel'))+'</span>';sc.title=cancelLabel;sc.setAttribute('aria-label',cancelLabel)}
   updateSearchSelectionLocation();
 }
 $('#selCancel').onclick=()=>{
@@ -3804,7 +3858,8 @@ $('#selCancel').onclick=()=>{
   exitSel(); render();
 };
 /* (v6.4) 전체 선택 / 전체 해제 */
-$('#selAll').onclick=()=>{
+$('#selAll').onclick=e=>{
+  e.stopPropagation();  /* Replacing the button label detaches the click target; keep the global background handler from treating it as a blank tap. */
   const arr=selectionPool();   /* (v7.5.3 요청2) 폴더 상세에서는 해당 폴더 노트만 */
   if(!arr.length)return;
   const allSel=ui.selected.size>=arr.length;
@@ -5293,33 +5348,21 @@ function folderNoteCard(n,q){const dark=isDark(),PAL=dark?COLORS_D:COLORS,HEAD=d
   el.innerHTML=`${showChk?`<span class="selbox">✓</span>`:''}<div class="thead"><div class="ttl">${hq(n.title,q)||L('제목 없음','No title')}</div><span class="badges">${n.pinned?'📌':''}${rem?'⏰':''}${n.type==='check'?'☑️':''}</span></div><div class="tinner">${body}</div>`;
   attachFolderNoteSelection(el,n);
   return el}
-/* (v7.9.9) 폴더 카드: 500ms 꾹 누르면 선택 모드+체크, 선택 모드에서는 탭=토글, 평소 탭=열기 (노트 카드와 동일 방식) */
+/* Folder tiles share the same jitter-tolerant long-press selection behavior. */
 function attachFolderCardSelection(el,id){
   el.addEventListener('contextmenu',e=>e.preventDefault());
-  if(folderHub.fselOn){ el.onclick=()=>toggleFolderSel(id); return; }
-  el.onclick=()=>{ if(el._lp){el._lp=false;return} openFolderDetail(id) };
-  let pressT=null;
-  const start=()=>{ el._lp=false; pressT=setTimeout(()=>{ el._lp=true; folderHub.fselOn=true; folderHub.fsel.add(id); renderFolderHub(); },500); };
-  const cancel=()=>{ clearTimeout(pressT); };
-  el.addEventListener('pointerdown',start);
-  el.addEventListener('pointerup',cancel);
-  el.addEventListener('pointermove',cancel);
-  el.addEventListener('pointercancel',cancel);
+  if(folderHub.fselOn){el.onclick=()=>toggleFolderSel(id);return}
+  el.onclick=()=>{if(el._longPressConsumed){el._longPressConsumed=false;return}openFolderDetail(id)};
+  bindLongPress(el,()=>{folderHub.fselOn=true;folderHub.fsel.add(id);renderFolderHub()});
 }
-/* (v7.5.3 요청2) 폴더 상세 노트 카드의 선택 핸들러 (메인 화면과 동일: 500ms 롱프레스=선택, 탭=토글) */
+/* 폴더 상세 노트도 첫 화면과 같은 jitter-tolerant long-press selection 사용 */
 function attachFolderNoteSelection(el,n){
   el.addEventListener('contextmenu',e=>e.preventDefault());
   el.addEventListener('selectstart',e=>{e.preventDefault();return false});
-  if(ui.selMode){ el.onclick=()=>toggleSel(n.id); }
+  if(ui.selMode)el.onclick=()=>toggleSel(n.id);
   else{
-    el.onclick=()=>openEditor(n.id);
-    let pressT=null;
-    const start=()=>{ pressT=setTimeout(()=>{ if(!ui.selMode)enterSel(); toggleSel(n.id); },500); };
-    const cancel=()=>{ clearTimeout(pressT); };
-    el.addEventListener('pointerdown',start);
-    el.addEventListener('pointerup',cancel);
-    el.addEventListener('pointermove',cancel);
-    el.addEventListener('pointercancel',cancel);
+    el.onclick=()=>{if(el._longPressConsumed){el._longPressConsumed=false;return}openEditor(n.id)};
+    bindLongPress(el,()=>selectNoteByLongPress(n.id));
   }
 }
 function renderFolderDetail(){const f=folderRaw();if(!f||f.deleted){folderHubBack();return}setFolderHubPage('detail');vaultFolderStatus();$('#fdTitle').textContent=folderName(f);$('#fdSearch').placeholder=L('이 폴더에서 노트 검색','Search this folder');$('#fdSearchRow').classList.toggle('hidden',!folderHub.detailSearchOpen);const q=$('#fdSearch').value.trim().toLowerCase(),g=$('#folderDetailGrid'),sc=curSettings(),view=folderNoteView(sc);g.className='folder-note-'+view;g.style.setProperty('--folder-note-cols',boxCols());   /* (v7.8.3) 첫 화면과 같은 한 줄 개수 */g.innerHTML='';const arr=sortDetailNotes(NOTES().filter(n=>!n.deleted&&n.folder===f.id&&fHit(n,q)));arr.forEach(n=>g.append(folderNoteCard(n,q)));if(!arr.length){const e=document.createElement('div');e.className='fh-empty';e.textContent=q?L('검색 결과가 없습니다.','Nothing found.'):L('이 폴더에는 아직 노트가 없습니다. 아래의 ＋로 새 노트를 만드세요.','This folder has no notes yet. Use the + button below to create one.');g.append(e)}}
