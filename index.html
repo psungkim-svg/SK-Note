@@ -283,7 +283,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-topKP8fbXHAAsq8PyjWCHQiqGxi3oBV1rClwEkZyG9E='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-IJtNPR0Rkxz8CJAweW3K+XiyTctTc7CDxWqLLR7pPgI='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; form-action 'self'; upgrade-insecure-requests">
 <!-- (요구3) 전화기 화면에 딱 맞게 · 자동 확대(핀치 줌 포함) 완전 금지 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#f5f2ef">
@@ -1449,12 +1449,16 @@ html[data-theme="dark"] #folderOverlay:not(.vault-folder),html[data-theme="dark"
 #folderOverlay.vault-folder #fhBottomBar{background:#dca6a6}
 #fhBottomBar .chip{display:flex;align-items:center;gap:.35em;font-weight:800;font-size:calc(var(--ui) * .81);padding:.18em .7em;min-height:0;line-height:1.25}
 #fhBottomBar .chip .vfold{flex:none;width:26px;height:26px;margin:-3px 0}
-/* (v7.11.15) Vault 하단 내비게이션: 일반 노트·V노트·V폴더 버튼을 낮고 가로로 긴 타원형으로 통일 */
+/* (v8.1) Vault 하단: 일반 노트·V노트·폴더 아이콘+V폴더 라벨을 표시 */
+#folderNav.vault{padding-left:.39em;padding-right:.39em}
+#folderNav.vault .folderbar{gap:.10em}
+#folderNav.vault #folderBar .pinrow{margin-left:0;padding-left:.08em}
 #folderNav.vault .folderbar .chip{font-size:calc(var(--ui) * .81);max-width:58vw;border-radius:999px;min-height:0;padding:.18em .55em;line-height:1.25}
-#folderNav.vault .folderbar .vault-folder-icon{font-size:calc(var(--ui) * .81)!important;width:auto;height:auto;min-width:0;min-height:0;box-sizing:border-box;padding:.18em .55em!important;border-radius:999px;display:inline-flex;align-items:center;justify-content:center}
-#folderNav.vault .folderbar .vault-folder-icon .vfold{width:1.24em;height:1.24em}
-/* (v7.11.17) Narrow-screen Vault footer: preserve control size while preventing horizontal scroll overflow. */
-@media(max-width:340px){#folderNav.vault{padding-left:.32em;padding-right:.32em}#folderNav.vault .folderbar{gap:.14em}}
+#folderNav.vault .folderbar .vault-folder-icon{font-size:calc(var(--ui) * .81)!important;width:auto;height:auto;min-width:0;min-height:0;box-sizing:border-box;padding:.18em .55em!important;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;gap:.2em}
+#folderNav.vault .folderbar .vault-folder-icon .vfold{width:1.12em;height:1.12em}
+#folderNav.vault .folderbar .vault-folder-label{white-space:nowrap;font-weight:800}
+/* Narrow Vault footer: keep the original control sizing; the V folder icon stays visible and labelled for assistive tech. */
+@media(max-width:360px){#folderNav.vault{padding-left:.32em;padding-right:.32em}#folderNav.vault .folderbar{gap:.14em}#folderNav.vault #folderBar .pinrow{padding-left:.08em}#folderNav.vault .folderbar .vault-folder-label{display:none}#folderNav.vault .folderbar .vault-folder-icon .vfold{width:1.24em;height:1.24em}}
 
 /* (v7.10.0) 하단 바 높이 115%: 일반 35.4px→40.7px, Vault 59.5px→68.5px 가 되도록 위·아래 여백만 늘린다(칩·＋ 크기는 그대로) */
 #folderNav{padding-top:calc(.1em + .117em);padding-bottom:calc(.16em + .117em + env(safe-area-inset-bottom))}
@@ -1944,7 +1948,7 @@ const STORE=(()=>{try{const t='__cn__';localStorage.setItem(t,'1');localStorage.
    헤더 배지·설정창·서비스워커 캐시 이름이 서로 어긋나면 배포 확인이 무의미해진다.
    ★ 새 버전을 낼 때: 아래 APP_VER 과 sw.js 의 VERSION 을 함께 올린다.            */
 const APP_NAME='SoonNote';
-const APP_VER='8.0';
+const APP_VER='8.1';
 /* ══════════ (v7.6.1) 기능 스위치 ══════════
    sync:false 로 바꾸면 동기화(Supabase)가 UI·네트워크·타이머 모두에서 비활성화된다.
    SYNC 객체와 계정 화면 코드는 남아 있되(프리미엄 대비) 어떤 경로도 실행되지 않는다.
@@ -3409,7 +3413,7 @@ function render(){
     nfc.textContent='V'+tr('Notes','chip_notes');nfc.title=nfc.textContent;   /* (v7.9.2) Vault: 'V노트' */
     nfc.onclick=()=>{ui.folder='';ui.nofolder=true;ui.trash=false;exitSel();render()};bar.append(nfc);
     const pinv=document.createElement('div');pinv.className='pinrow';bar.append(pinv);
-    const folders=document.createElement('button');folders.className='chip vault-folder-icon';folders.innerHTML=VFOLDER_SVG;   /* (v7.9.2) V 폴더 아이콘 */folders.title=tr('Vault folders','vault_folder_mgr');folders.setAttribute('aria-label',folders.title);folders.onclick=openFolderMgr;pinv.append(folders);
+    const folders=document.createElement('button');folders.className='chip vault-folder-icon';folders.innerHTML=VFOLDER_SVG+'<span class="vault-folder-label">'+L('폴더','Folders')+'</span>';folders.title=L('Vault 폴더','Vault folders');folders.setAttribute('aria-label',L('V폴더 열기','Open V Folders'));folders.onclick=openFolderMgr;pinv.append(folders);
     /* (요청) 상단바 로고 텍스트("SK노트") 제거 — 검색창이 넓게 차지 */
     const lt=$('#logoText'); if(lt){lt.innerHTML='';lt.title=tr('🔐 Vault','vault_title');}
   }else{

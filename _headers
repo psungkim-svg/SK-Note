@@ -1,4 +1,4 @@
-# Cloudflare Pages 헤더 파일 (v8.0) — 이 파일을 index.html 과 같은 폴더에 두면 자동 적용됩니다.
+# Cloudflare Pages 헤더 파일 (v8.1) — 이 파일을 index.html 과 같은 폴더에 두면 자동 적용됩니다.
 /*
   X-Content-Type-Options: nosniff
   Referrer-Policy: no-referrer
@@ -6,11 +6,11 @@
   Strict-Transport-Security: max-age=31536000; includeSubDomains
 
 /
-  Content-Security-Policy: default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-topKP8fbXHAAsq8PyjWCHQiqGxi3oBV1rClwEkZyG9E='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-IJtNPR0Rkxz8CJAweW3K+XiyTctTc7CDxWqLLR7pPgI='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests
   Cache-Control: no-cache
 
 /index.html
-  Content-Security-Policy: default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-topKP8fbXHAAsq8PyjWCHQiqGxi3oBV1rClwEkZyG9E='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' 'sha256-IJtNPR0Rkxz8CJAweW3K+XiyTctTc7CDxWqLLR7pPgI='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' blob:; manifest-src 'self'; worker-src 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests
   Cache-Control: no-cache
 
 /sw.js
